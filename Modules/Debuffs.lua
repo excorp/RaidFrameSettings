@@ -197,14 +197,14 @@ function Debuffs:OnEnable()
         -- set placed aura / other aura
         local frameNum = 1
         frame.debuffs:Iterate(function(auraInstanceID, aura)
+            if blacklist[aura.spellId] then
+                return false
+            end
+
             if userPlaced[aura.spellId] then
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
-                return false
-            end
-
-            if blacklist[aura.spellId] then
                 return false
             end
 

@@ -131,14 +131,14 @@ function Buffs:OnEnable()
         -- set placed aura / other aura
         local frameNum = 1
         frame.buffs:Iterate(function(auraInstanceID, aura)
+            if blacklist[aura.spellId] then
+                return false
+            end
+            
             if userPlaced[aura.spellId] then
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 CompactUnitFrame_UtilSetBuff(buffFrame, aura)
-                return false
-            end
-
-            if blacklist[aura.spellId] then
                 return false
             end
 

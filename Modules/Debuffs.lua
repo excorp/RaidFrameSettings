@@ -125,17 +125,6 @@ function Debuffs:OnEnable()
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
 
-
-    local function onProcessAura(frame, aura)
-        if not frame_registry[frame] or not frame.debuffs or not aura.isHarmful then
-            return
-        end
-        if whitelist[aura.spellId] then
-            frame.debuffs[aura.auraInstanceID] = aura
-        end
-    end
-    self:HookFunc("CompactUnitFrame_ProcessAura", onProcessAura)
-
     local onSetDeuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
@@ -226,12 +215,23 @@ function Debuffs:OnEnable()
             end
             return false
         end)
+        for _, aura in pairs(frame_registry[frame].debuffs) do
+            if userPlaced[aura.spellId] then
+                local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
+            elseif frameNum <= frame_registry[frame].maxDebuffs then
+                local debuffFrame = frame.debuffFrames[frameNum] or frame_registry[frame].extraDebuffFrames[frameNum]
+                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
+                frameNum = frameNum + 1
+            end
+        end
 
         -- hide left aura frames
         for i = 1, maxUserPlaced do
             local idx = frame_registry[frame].placedAuraStart + i - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            if not debuffFrame.auraInstanceID or not frame.debuffs[debuffFrame.auraInstanceID] then
+            if not debuffFrame.auraInstanceID or (not frame.debuffs[debuffFrame.auraInstanceID] and not frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
                 debuffFrame:Hide()
                 CooldownFrame_Clear(debuffFrame.cooldown)
             end
@@ -246,6 +246,58 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
 
+    local function onUpdateAuras(frame, unitAuraUpdateInfo)
+        if not frame_registry[frame] or not frame.debuffs then
+            return
+        end
+        local dirty
+        if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate then
+            for k in pairs(frame_registry[frame].debuffs) do
+                frame_registry[frame].debuffs[k] = nil
+                dirty = true
+            end
+            local batchCount = nil
+            local usePackedAura = true
+            local function HandleAura(aura)
+                if aura.isHarmful and not frame.debuffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] then
+                    frame_registry[frame].debuffs[aura.auraInstanceID] = aura
+                    dirty = true
+                end
+            end
+            AuraUtil.ForEachAura(frame.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful), batchCount, HandleAura, usePackedAura);
+        else
+            if unitAuraUpdateInfo.addedAuras ~= nil then
+                for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                    if aura.isHarmful and not frame.debuffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] then
+                        frame_registry[frame].debuffs[aura.auraInstanceID] = aura
+                        dirty = true
+                    end
+                end
+            end
+            if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
+                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
+                    if aura and aura.isHarmful and not frame.debuffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] then
+                        frame_registry[frame].debuffs[aura.auraInstanceID] = aura
+                        dirty = true
+                    end
+                end
+            end
+            if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                    if frame_registry[frame].debuffs[auraInstanceID] then
+                        frame_registry[frame].debuffs[auraInstanceID] = nil
+                        dirty = true
+                    end
+                end
+            end
+        end
+        if dirty then
+            onHideAllDebuffs(frame)
+        end
+    end
+    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+
     local function onFrameSetup(frame)
         if frame.maxDebuffs == 0 then
             return
@@ -258,6 +310,7 @@ function Debuffs:OnEnable()
                 lockdown          = false,
                 dirty             = true,
                 extraDebuffFrames = {},
+                debuffs           = {},
             }
         end
 

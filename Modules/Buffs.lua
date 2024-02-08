@@ -106,16 +106,6 @@ function Buffs:OnEnable()
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
 
-    local function onProcessAura(frame, aura)
-        if not frame_registry[frame] or not frame.buffs or not aura.isHelpful then
-            return
-        end
-        if whitelist[aura.spellId] and (whitelist[aura.spellId].other or UnitIsUnit(aura.sourceUnit, "player")) then
-            frame.buffs[aura.auraInstanceID] = aura
-        end
-    end
-    self:HookFunc("CompactUnitFrame_ProcessAura", onProcessAura)
-
     local onSetBuff = function(buffFrame, aura)
         local cooldown = buffFrame.cooldown
         CDT:StartCooldownText(cooldown)
@@ -138,16 +128,6 @@ function Buffs:OnEnable()
             return
         end
 
-        -- remove blacklisted aura
-        --[[
-        frame.buffs:Iterate(function(auraInstanceID, aura)
-            if blacklist[aura.spellId] then
-                frame.buffs[aura.auraInstanceID] = nil
-                return false
-            end
-        end)
-        ]]
-
         -- set placed aura / other aura
         local frameNum = 1
         frame.buffs:Iterate(function(auraInstanceID, aura)
@@ -169,12 +149,23 @@ function Buffs:OnEnable()
             end
             return false
         end)
+        for _, aura in pairs(frame_registry[frame].buffs) do
+            if userPlaced[aura.spellId] then
+                local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
+                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                CompactUnitFrame_UtilSetBuff(buffFrame, aura)
+            elseif frameNum <= frame_registry[frame].maxBuffs then
+                local buffFrame = frame.buffFrames[frameNum] or frame_registry[frame].extraBuffFrames[frameNum]
+                CompactUnitFrame_UtilSetBuff(buffFrame, aura)
+                frameNum = frameNum + 1
+            end
+        end
 
         -- hide left aura frames
         for i = 1, maxUserPlaced do
             local idx = frame_registry[frame].placedAuraStart + i - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-            if not buffFrame.auraInstanceID or not frame.buffs[buffFrame.auraInstanceID] then
+            if not buffFrame.auraInstanceID or (not frame.buffs[buffFrame.auraInstanceID] and not frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
                 buffFrame:Hide()
                 CooldownFrame_Clear(buffFrame.cooldown)
             end
@@ -186,6 +177,58 @@ function Buffs:OnEnable()
         end
     end
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
+
+    local function onUpdateAuras(frame, unitAuraUpdateInfo)
+        if not frame_registry[frame] or not frame.buffs then
+            return
+        end
+        local dirty
+        if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate then
+            for k in pairs(frame_registry[frame].buffs) do
+                frame_registry[frame].buffs[k] = nil
+                dirty = true
+            end
+            local batchCount = nil
+            local usePackedAura = true
+            local function HandleAura(aura)
+                if aura.isHelpful and not frame.buffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] and (whitelist[aura.spellId].other or UnitIsUnit(aura.sourceUnit, "player")) then
+                    frame_registry[frame].buffs[aura.auraInstanceID] = aura
+                    dirty = true
+                end
+            end
+            AuraUtil.ForEachAura(frame.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), batchCount, HandleAura, usePackedAura);
+        else
+            if unitAuraUpdateInfo.addedAuras ~= nil then
+                for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                    if aura.isHelpful and not frame.buffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] and (whitelist[aura.spellId].other or UnitIsUnit(aura.sourceUnit, "player")) then
+                        frame_registry[frame].buffs[aura.auraInstanceID] = aura
+                        dirty = true
+                    end
+                end
+            end
+            if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
+                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
+                    if aura and aura.isHelpful and not frame.buffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] and (whitelist[aura.spellId].other or UnitIsUnit(aura.sourceUnit, "player")) then
+                        frame_registry[frame].buffs[aura.auraInstanceID] = aura
+                        dirty = true
+                    end
+                end
+            end
+            if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                    if frame_registry[frame].buffs[auraInstanceID] then
+                        frame_registry[frame].buffs[auraInstanceID] = nil
+                        dirty = true
+                    end
+                end
+            end
+        end
+        if dirty then
+            onHideAllBuffs(frame)
+        end
+    end
+    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
     local function onFrameSetup(frame)
         if frame.maxBuffs == 0 then
@@ -199,6 +242,7 @@ function Buffs:OnEnable()
                 lockdown        = false,
                 dirty           = true,
                 extraBuffFrames = {},
+                buffs           = {},
             }
         end
 

@@ -40,6 +40,15 @@ function Debuffs:OnEnable()
     }
     local Bleeds = addonTable.Bleeds
 
+    if addon.db.profile.Module.AuraHighlight then
+        local dbObj = addon.db.profile.AuraHighlight.DebuffColors
+        debuffColors.Curse = dbObj.Curse
+        debuffColors.Disease = dbObj.Disease
+        debuffColors.Magic = dbObj.Magic
+        debuffColors.Poison = dbObj.Poison
+        debuffColors.Bleed = dbObj.Bleed
+    end
+
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
     
     local frameOpt = CopyTable(addon.db.profile.Debuffs.DebuffFramesDisplay)
@@ -134,17 +143,19 @@ function Debuffs:OnEnable()
         cooldown:SetDrawEdge(frameOpt.edge)
 
         local color = durationOpt.fontColor
-        if durationOpt.debuffColor then
-            if aura.dispelName then
-                color = debuffColors[aura.dispelName]
-            end
-            if Bleeds[aura.spellId] then
-                color = debuffColors.Bleed
-            end
+        if aura.dispelName then
+            color = debuffColors[aura.dispelName]
+        end
+        if Bleeds[aura.spellId] then
+            color = debuffColors.Bleed
+        end
+        debuffFrame.border:SetVertexColor(color.r, color.g, color.b)
+
+        if not durationOpt.debuffColor then
+            color = durationOpt.fontColor
         end
         local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
         cooldownText:SetVertexColor(color.r, color.g, color.b)
-        debuffFrame.border:SetVertexColor(color.r, color.g, color.b)
 
         if aura and (aura.isBossAura or increase[aura.spellId]) then
             debuffFrame:SetSize(boss_width, boss_height)

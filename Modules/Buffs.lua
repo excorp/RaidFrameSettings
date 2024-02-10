@@ -30,8 +30,14 @@ local SetDrawEdge = SetDrawEdge
 local next = next
 
 local frame_registry = {}
+-- local org_SpellGetVisibilityInfo
+local module_enabled
+local blacklist = {}
+local whitelist = {}
 
 function Buffs:OnEnable()
+    module_enabled = true
+
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
 
     local frameOpt = CopyTable(addon.db.profile.Buffs.BuffFramesDisplay)
@@ -49,12 +55,16 @@ function Buffs:OnEnable()
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
     --blacklist
-    local blacklist = {}
+    for k in pairs(blacklist) do
+        blacklist[k] = nil
+    end
     for spellId, value in pairs(addon.db.profile.Buffs.Blacklist) do
         blacklist[tonumber(spellId)] = true
     end
     --whitelist
-    local whitelist = {}
+    for k in pairs(whitelist) do
+        whitelist[k] = nil
+    end
     for spellId, value in pairs(addon.db.profile.Buffs.Whitelist) do
         whitelist[tonumber(spellId)] = value
     end
@@ -106,6 +116,44 @@ function Buffs:OnEnable()
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
 
+    if not AuraUtil.org_ShouldDisplayBuff then
+        AuraUtil.org_ShouldDisplayBuff = AuraUtil.ShouldDisplayBuff
+        AuraUtil.ShouldDisplayBuff = function(unitCaster, spellId, canApplyAura)
+            DevTool:AddData({unitCaster, spellId, canApplyAura}, "not enabled ShouldDisplayBuff()")
+
+            if module_enabled then
+                DevTool:AddData({unitCaster, spellId, canApplyAura}, "ShouldDisplayBuff()")
+                if blacklist[spellId] then
+                    return false
+                elseif whitelist[spellId] then
+                    if whitelist[spellId].other then
+                        return true
+                    end
+                    return unitCaster == "player" or unitCaster == "pet" or unitCaster == "vehicle"
+                end
+            end
+            return AuraUtil.org_ShouldDisplayBuff(unitCaster, spellId, canApplyAura)
+        end
+    end
+    --[[
+    if not org_SpellGetVisibilityInfo then
+        org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
+        SpellGetVisibilityInfo = function(spellId, visType)
+            if module_enabled then
+                if blacklist[spellId] then
+                    return true, false, false
+                elseif whitelist[spellId] then
+                    if whitelist[spellId].other then
+                        return true, false, true
+                    end
+                    return false
+                end
+            end
+            return org_SpellGetVisibilityInfo(spellId, visType)
+        end
+    end
+    ]]
+
     local onSetBuff = function(buffFrame, aura)
         local cooldown = buffFrame.cooldown
         CDT:StartCooldownText(cooldown)
@@ -131,10 +179,12 @@ function Buffs:OnEnable()
         -- set placed aura / other aura
         local frameNum = 1
         frame.buffs:Iterate(function(auraInstanceID, aura)
+            --[[
             if blacklist[aura.spellId] then
                 return false
             end
-            
+            ]]
+
             if userPlaced[aura.spellId] then
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
@@ -178,6 +228,7 @@ function Buffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
 
+    --[[
     local function onUpdateAuras(frame, unitAuraUpdateInfo)
         if not frame_registry[frame] or not frame.buffs then
             return
@@ -229,6 +280,7 @@ function Buffs:OnEnable()
         end
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+    ]]
 
     local function onFrameSetup(frame)
         if frame.maxBuffs == 0 then
@@ -373,6 +425,8 @@ end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Buffs:OnDisable()
+    module_enabled = false
+
     self:DisableHooks()
     local restoreBuffFrames = function(frame)
         if frame_registry[frame] then

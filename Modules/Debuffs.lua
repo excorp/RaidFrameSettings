@@ -29,8 +29,14 @@ local IsForbidden = IsForbidden
 local next = next
 
 local frame_registry = {}
+-- local org_SpellGetVisibilityInfo
+local module_enabled
+local blacklist = {}
+local whitelist = {}
 
 function Debuffs:OnEnable()
+    module_enabled = true
+
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
         Disease = { r = 0.6, g = 0.4, b = 0.0 },
@@ -66,12 +72,16 @@ function Debuffs:OnEnable()
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
     --blacklist
-    local blacklist = {}
+    for k in pairs(blacklist) do
+        blacklist[k] = nil
+    end
     for spellId, value in pairs(addon.db.profile.Debuffs.Blacklist) do
         blacklist[tonumber(spellId)] = true
     end
     --whitelist
-    local whitelist = {}
+    for k in pairs(whitelist) do
+        whitelist[k] = nil
+    end
     for spellId, value in pairs(addon.db.profile.Debuffs.Whitelist) do
         whitelist[tonumber(spellId)] = value
     end
@@ -133,6 +143,38 @@ function Debuffs:OnEnable()
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
+
+    if not AuraUtil.org_ShouldDisplayDebuff then
+        AuraUtil.org_ShouldDisplayDebuff = AuraUtil.ShouldDisplayDebuff
+        AuraUtil.ShouldDisplayDebuff = function(unitCaster, spellId)
+            DevTool:AddData({unitCaster, spellId, canApplyAura}, "not enabled ShouldDisplayDebuff()")
+
+            if module_enabled then
+                DevTool:AddData({unitCaster, spellId, canApplyAura}, "ShouldDisplayDebuff()")
+                if blacklist[spellId] then
+                    return false
+                elseif whitelist[spellId] then
+                    return true
+                end
+            end
+            return AuraUtil.org_ShouldDisplayDebuff(unitCaster, spellId, canApplyAura)
+        end
+    end
+    --[[
+    if not org_SpellGetVisibilityInfo then
+        org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
+        SpellGetVisibilityInfo = function(spellId, visType)
+            if module_enabled then
+                if blacklist[spellId] then
+                    return true, false, false
+                elseif whitelist[spellId] then
+                    return false
+                end
+            end
+            return org_SpellGetVisibilityInfo(spellId, visType)
+        end
+    end
+    ]]
 
     local onSetDeuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -208,9 +250,11 @@ function Debuffs:OnEnable()
         -- set placed aura / other aura
         local frameNum = 1
         frame.debuffs:Iterate(function(auraInstanceID, aura)
+            --[[
             if blacklist[aura.spellId] then
                 return false
             end
+            ]]
 
             if userPlaced[aura.spellId] then
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
@@ -257,6 +301,7 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
 
+    --[[
     local function onUpdateAuras(frame, unitAuraUpdateInfo)
         if not frame_registry[frame] or not frame.debuffs then
             return
@@ -308,6 +353,7 @@ function Debuffs:OnEnable()
         end
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+    ]]
 
     local function onFrameSetup(frame)
         if frame.maxDebuffs == 0 then
@@ -456,11 +502,12 @@ function Debuffs:OnEnable()
             end
         end
     end)
-
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Debuffs:OnDisable()
+    module_enabled = false
+
     self:DisableHooks()
     local restoreDebuffFrames = function(frame)
         if frame_registry[frame] then

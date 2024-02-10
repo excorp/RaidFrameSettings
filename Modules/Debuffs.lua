@@ -29,8 +29,14 @@ local IsForbidden = IsForbidden
 local next = next
 
 local frame_registry = {}
+local org_SpellGetVisibilityInfo
+local module_enabled
+local blacklist = {}
+local whitelist = {}
 
 function Debuffs:OnEnable()
+    module_enabled = true
+
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
         Disease = { r = 0.6, g = 0.4, b = 0.0 },
@@ -66,12 +72,16 @@ function Debuffs:OnEnable()
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
     --blacklist
-    local blacklist = {}
+    for k in pairs(blacklist) do
+        blacklist[k] = nil
+    end
     for spellId, value in pairs(addon.db.profile.Debuffs.Blacklist) do
         blacklist[tonumber(spellId)] = true
     end
     --whitelist
-    local whitelist = {}
+    for k in pairs(whitelist) do
+        whitelist[k] = nil
+    end
     for spellId, value in pairs(addon.db.profile.Debuffs.Whitelist) do
         whitelist[tonumber(spellId)] = value
     end
@@ -133,6 +143,20 @@ function Debuffs:OnEnable()
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
+
+    if not org_SpellGetVisibilityInfo then
+        org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
+        SpellGetVisibilityInfo = function(spellId, visType)
+            if module_enabled then
+                if blacklist[spellId] then
+                    return true, false, false
+                elseif whitelist[spellId] then
+                    return false
+                end
+            end
+            return org_SpellGetVisibilityInfo(spellId, visType)
+        end
+    end
 
     local onSetDeuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -208,10 +232,6 @@ function Debuffs:OnEnable()
         -- set placed aura / other aura
         local frameNum = 1
         frame.debuffs:Iterate(function(auraInstanceID, aura)
-            if blacklist[aura.spellId] then
-                return false
-            end
-
             if userPlaced[aura.spellId] then
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
@@ -256,58 +276,6 @@ function Debuffs:OnEnable()
         onUpdatePrivateAuras(frame)
     end
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
-
-    local function onUpdateAuras(frame, unitAuraUpdateInfo)
-        if not frame_registry[frame] or not frame.debuffs then
-            return
-        end
-        local dirty
-        if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate then
-            for k in pairs(frame_registry[frame].debuffs) do
-                frame_registry[frame].debuffs[k] = nil
-                dirty = true
-            end
-            local batchCount = nil
-            local usePackedAura = true
-            local function HandleAura(aura)
-                if aura.isHarmful and not frame.debuffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] then
-                    frame_registry[frame].debuffs[aura.auraInstanceID] = aura
-                    dirty = true
-                end
-            end
-            AuraUtil.ForEachAura(frame.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful), batchCount, HandleAura, usePackedAura);
-        else
-            if unitAuraUpdateInfo.addedAuras ~= nil then
-                for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                    if aura.isHarmful and not frame.debuffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] then
-                        frame_registry[frame].debuffs[aura.auraInstanceID] = aura
-                        dirty = true
-                    end
-                end
-            end
-            if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
-                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
-                    if aura and aura.isHarmful and not frame.debuffs[aura.auraInstanceID] and not blacklist[aura.spellId] and whitelist[aura.spellId] then
-                        frame_registry[frame].debuffs[aura.auraInstanceID] = aura
-                        dirty = true
-                    end
-                end
-            end
-            if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
-                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                    if frame_registry[frame].debuffs[auraInstanceID] then
-                        frame_registry[frame].debuffs[auraInstanceID] = nil
-                        dirty = true
-                    end
-                end
-            end
-        end
-        if dirty then
-            onHideAllDebuffs(frame)
-        end
-    end
-    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
     local function onFrameSetup(frame)
         if frame.maxDebuffs == 0 then
@@ -457,10 +425,17 @@ function Debuffs:OnEnable()
         end
     end)
 
+    if InCombatLockdown() then
+        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
+    else
+        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
+    end
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Debuffs:OnDisable()
+    module_enabled = false
+
     self:DisableHooks()
     local restoreDebuffFrames = function(frame)
         if frame_registry[frame] then
@@ -513,4 +488,10 @@ function Debuffs:OnDisable()
     end
     addon:IterateRoster(restoreDebuffFrames)
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    
+    if InCombatLockdown() then
+        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
+    else
+        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
+    end
 end

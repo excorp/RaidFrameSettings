@@ -147,7 +147,10 @@ function Debuffs:OnEnable()
     if not AuraUtil.org_ShouldDisplayDebuff then
         AuraUtil.org_ShouldDisplayDebuff = AuraUtil.ShouldDisplayDebuff
         AuraUtil.ShouldDisplayDebuff = function(unitCaster, spellId)
+            DevTool:AddData({unitCaster, spellId, canApplyAura}, "not enabled ShouldDisplayDebuff()")
+
             if module_enabled then
+                DevTool:AddData({unitCaster, spellId, canApplyAura}, "ShouldDisplayDebuff()")
                 if blacklist[spellId] then
                     return false
                 elseif whitelist[spellId] then

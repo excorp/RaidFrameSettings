@@ -119,10 +119,7 @@ function Buffs:OnEnable()
     if not AuraUtil.org_ShouldDisplayBuff then
         AuraUtil.org_ShouldDisplayBuff = AuraUtil.ShouldDisplayBuff
         AuraUtil.ShouldDisplayBuff = function(unitCaster, spellId, canApplyAura)
-            DevTool:AddData({unitCaster, spellId, canApplyAura}, "not enabled ShouldDisplayBuff()")
-
             if module_enabled then
-                DevTool:AddData({unitCaster, spellId, canApplyAura}, "ShouldDisplayBuff()")
                 if blacklist[spellId] then
                     return false
                 elseif whitelist[spellId] then

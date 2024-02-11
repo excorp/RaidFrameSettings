@@ -246,23 +246,12 @@ function Debuffs:OnEnable()
             end
             return false
         end)
-        for _, aura in pairs(frame_registry[frame].debuffs) do
-            if userPlaced[aura.spellId] then
-                local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
-            elseif frameNum <= frame_registry[frame].maxDebuffs then
-                local debuffFrame = frame.debuffFrames[frameNum] or frame_registry[frame].extraDebuffFrames[frameNum]
-                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
-                frameNum = frameNum + 1
-            end
-        end
 
         -- hide left aura frames
         for i = 1, maxUserPlaced do
             local idx = frame_registry[frame].placedAuraStart + i - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            if not debuffFrame.auraInstanceID or (not frame.debuffs[debuffFrame.auraInstanceID] and not frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
+            if not debuffFrame.auraInstanceID or not frame.debuffs[debuffFrame.auraInstanceID] then
                 debuffFrame:Hide()
                 CooldownFrame_Clear(debuffFrame.cooldown)
             end
@@ -289,7 +278,6 @@ function Debuffs:OnEnable()
                 lockdown          = false,
                 dirty             = true,
                 extraDebuffFrames = {},
-                debuffs           = {},
             }
         end
 

@@ -175,23 +175,12 @@ function Buffs:OnEnable()
             end
             return false
         end)
-        for _, aura in pairs(frame_registry[frame].buffs) do
-            if userPlaced[aura.spellId] then
-                local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
-                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                CompactUnitFrame_UtilSetBuff(buffFrame, aura)
-            elseif frameNum <= frame_registry[frame].maxBuffs then
-                local buffFrame = frame.buffFrames[frameNum] or frame_registry[frame].extraBuffFrames[frameNum]
-                CompactUnitFrame_UtilSetBuff(buffFrame, aura)
-                frameNum = frameNum + 1
-            end
-        end
 
         -- hide left aura frames
         for i = 1, maxUserPlaced do
             local idx = frame_registry[frame].placedAuraStart + i - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-            if not buffFrame.auraInstanceID or (not frame.buffs[buffFrame.auraInstanceID] and not frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
+            if not buffFrame.auraInstanceID or not frame.buffs[buffFrame.auraInstanceID] then
                 buffFrame:Hide()
                 CooldownFrame_Clear(buffFrame.cooldown)
             end
@@ -216,7 +205,6 @@ function Buffs:OnEnable()
                 lockdown        = false,
                 dirty           = true,
                 extraBuffFrames = {},
-                buffs           = {},
             }
         end
 

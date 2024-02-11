@@ -159,7 +159,7 @@ function Debuffs:OnEnable()
     end
 
     local onSetDeuff = function(debuffFrame, aura)
-        if debuffFrame:IsForbidden() or debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+        if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
         local cooldown = debuffFrame.cooldown
@@ -201,7 +201,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDeuff)
 
     local function onUpdatePrivateAuras(frame)
-        if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or frame:IsVisible()then
+        if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible()then
             return
         end
 
@@ -225,7 +225,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
     local onHideAllDebuffs = function(frame)
-        if not frame_registry[frame] or frame:IsForbidden() or frame:IsVisible() then
+        if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
 
@@ -278,7 +278,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
 
     local function onFrameSetup(frame)
-        if frame.maxDebuffs == 0 or not frame.debuff then
+        if frame.maxDebuffs == 0 or not frame.debuffs then
             return
         end
 

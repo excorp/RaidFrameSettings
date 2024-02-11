@@ -134,7 +134,7 @@ function Buffs:OnEnable()
     end
 
     local onSetBuff = function(buffFrame, aura)
-        if buffFrame:IsForbidden() or buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+        if buffFrame:IsForbidden() or not buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
         local cooldown = buffFrame.cooldown
@@ -154,7 +154,7 @@ function Buffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
     local onHideAllBuffs = function(frame)
-        if not frame_registry[frame] or frame:IsForbidden() or frame:IsVisible() then
+        if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
 

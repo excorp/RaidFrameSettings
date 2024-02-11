@@ -133,14 +133,16 @@ function Buffs:OnEnable()
         end
     end
 
-
     local onSetBuff = function(buffFrame, aura)
+        if buffFrame:IsForbidden() or buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+            return
+        end
         local cooldown = buffFrame.cooldown
-        CDT:StartCooldownText(cooldown)
-        cooldown:SetDrawEdge(frameOpt.edge)
         if not cooldown.count then
             return
         end
+        CDT:StartCooldownText(cooldown)
+        cooldown:SetDrawEdge(frameOpt.edge)
         if buffFrame.count:IsShown() then
             cooldown.count:SetText(buffFrame.count:GetText())
             cooldown.count:Show()
@@ -152,7 +154,7 @@ function Buffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
     local onHideAllBuffs = function(frame)
-        if not frame_registry[frame] or not frame.buffs or not frame:IsVisible() then
+        if not frame_registry[frame] or frame:IsForbidden() or frame:IsVisible() then
             return
         end
 
@@ -203,7 +205,7 @@ function Buffs:OnEnable()
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
 
     local function onFrameSetup(frame)
-        if frame.maxBuffs == 0 then
+        if frame.maxBuffs == 0 or not frame.buffs then
             return
         end
 

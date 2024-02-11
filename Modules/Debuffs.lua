@@ -56,7 +56,7 @@ function Debuffs:OnEnable()
     end
 
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
-    
+
     local frameOpt = CopyTable(addon.db.profile.Debuffs.DebuffFramesDisplay)
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     --Timer
@@ -159,10 +159,13 @@ function Debuffs:OnEnable()
     end
 
     local onSetDeuff = function(debuffFrame, aura)
-        if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+        if debuffFrame:IsForbidden() or debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
         local cooldown = debuffFrame.cooldown
+        if not cooldown.count then
+            return
+        end
         CDT:StartCooldownText(cooldown)
         cooldown:SetDrawEdge(frameOpt.edge)
 
@@ -187,9 +190,6 @@ function Debuffs:OnEnable()
             debuffFrame:SetSize(width, height)
         end
 
-        if not cooldown.count then
-            return
-        end
         if debuffFrame.count:IsShown() then
             cooldown.count:SetText(debuffFrame.count:GetText())
             cooldown.count:Show()
@@ -201,7 +201,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDeuff)
 
     local function onUpdatePrivateAuras(frame)
-        if not frame.PrivateAuraAnchors or not frame_registry[frame] then
+        if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or frame:IsVisible()then
             return
         end
 
@@ -225,7 +225,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
     local onHideAllDebuffs = function(frame)
-        if not frame_registry[frame] or not frame.debuffs or not frame:IsVisible() then
+        if not frame_registry[frame] or frame:IsForbidden() or frame:IsVisible() then
             return
         end
 
@@ -278,7 +278,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
 
     local function onFrameSetup(frame)
-        if frame.maxDebuffs == 0 then
+        if frame.maxDebuffs == 0 or not frame.debuff then
             return
         end
 

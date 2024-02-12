@@ -29,13 +29,33 @@ local IsForbidden = IsForbidden
 local next = next
 
 local frame_registry = {}
-local org_SpellGetVisibilityInfo
+local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
 local module_enabled
 local blacklist = {}
 local whitelist = {}
 
+SpellGetVisibilityInfo = function(spellId, visType)
+    if module_enabled then
+        if blacklist[spellId] then
+            return true, false, false
+        elseif whitelist[spellId] then
+            return false
+        end
+    end
+    return org_SpellGetVisibilityInfo(spellId, visType)
+end
+
+function Debuffs:SetSpellGetVisibilityInfo(enabled)
+    module_enabled = enabled
+    if InCombatLockdown() then
+        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
+    else
+        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
+    end
+end
+
 function Debuffs:OnEnable()
-    module_enabled = true
+    self:SetSpellGetVisibilityInfo(true)
 
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
@@ -143,20 +163,6 @@ function Debuffs:OnEnable()
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
-
-    if not org_SpellGetVisibilityInfo then
-        org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
-        SpellGetVisibilityInfo = function(spellId, visType)
-            if module_enabled then
-                if blacklist[spellId] then
-                    return true, false, false
-                elseif whitelist[spellId] then
-                    return false
-                end
-            end
-            return org_SpellGetVisibilityInfo(spellId, visType)
-        end
-    end
 
     local onSetDeuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -398,12 +404,6 @@ function Debuffs:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
-    if InCombatLockdown() then
-        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
-    else
-        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-    end
-
     for _, v in pairs(frame_registry) do
         v.dirty = true
     end
@@ -423,14 +423,9 @@ end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Debuffs:OnDisable()
-    module_enabled = false
-    if InCombatLockdown() then
-        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
-    else
-        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-    end
-
     self:DisableHooks()
+    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    self:SetSpellGetVisibilityInfo(false)
     local restoreDebuffFrames = function(frame)
         if not frame_registry[frame] then
             return
@@ -482,5 +477,4 @@ function Debuffs:OnDisable()
         CompactUnitFrame_UpdateAuras(frame)
     end
     addon:IterateRoster(restoreDebuffFrames)
-    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 end

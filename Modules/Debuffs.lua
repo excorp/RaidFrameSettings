@@ -398,6 +398,12 @@ function Debuffs:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
+    if InCombatLockdown() then
+        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
+    else
+        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
+    end
+
     for _, v in pairs(frame_registry) do
         v.dirty = true
     end
@@ -413,17 +419,16 @@ function Debuffs:OnEnable()
             end
         end
     end)
-
-    if InCombatLockdown() then
-        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
-    else
-        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-    end
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Debuffs:OnDisable()
     module_enabled = false
+    if InCombatLockdown() then
+        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
+    else
+        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
+    end
 
     self:DisableHooks()
     local restoreDebuffFrames = function(frame)
@@ -478,10 +483,4 @@ function Debuffs:OnDisable()
     end
     addon:IterateRoster(restoreDebuffFrames)
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-    
-    if InCombatLockdown() then
-        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
-    else
-        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-    end
 end

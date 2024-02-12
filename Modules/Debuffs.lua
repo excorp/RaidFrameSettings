@@ -281,13 +281,14 @@ function Debuffs:OnEnable()
             }
         end
 
+        if InCombatLockdown() then
+            frame_registry[frame].lockdown = true
+            return
+        end
+        frame_registry[frame].lockdown = false
+
         if frame_registry[frame].dirty then
-            if InCombatLockdown() then
-                frame_registry[frame].lockdown = true
-                return
-            end
             frame_registry[frame].maxDebuffs = frameOpt.maxdebuffs
-            frame_registry[frame].lockdown = false
             frame_registry[frame].dirty = false
 
             local placedAuraStart = frame.maxDebuffs + 1
@@ -426,14 +427,15 @@ function Debuffs:OnDisable()
 
     self:DisableHooks()
     local restoreDebuffFrames = function(frame)
-        if frame_registry[frame] then
-            frame_registry[frame].dirty = true
-            for _, debuffFrame in pairs(frame.debuffFrames) do
-                debuffFrame:Hide()
-            end
-            for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
-                extraDebuffFrame:Hide()
-            end
+        if not frame_registry[frame] then
+            return
+        end
+        frame_registry[frame].dirty = true
+        for _, debuffFrame in pairs(frame.debuffFrames) do
+            debuffFrame:Hide()
+        end
+        for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
+            extraDebuffFrame:Hide()
         end
 
         local frameWidth = frame:GetWidth()

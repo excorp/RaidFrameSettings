@@ -208,13 +208,14 @@ function Buffs:OnEnable()
             }
         end
 
+        if InCombatLockdown() then
+            frame_registry[frame].lockdown = true
+            return
+        end
+        frame_registry[frame].lockdown = false
+
         if frame_registry[frame].dirty then
-            if InCombatLockdown() then
-                frame_registry[frame].lockdown = true
-                return
-            end
             frame_registry[frame].maxBuffs = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs
-            frame_registry[frame].lockdown = false
             frame_registry[frame].dirty = false
 
             local placedAuraStart = frame.maxBuffs + 1
@@ -345,14 +346,15 @@ function Buffs:OnDisable()
 
     self:DisableHooks()
     local restoreBuffFrames = function(frame)
-        if frame_registry[frame] then
-            frame_registry[frame].dirty = true
-            for _, buffFrame in pairs(frame.buffFrames) do
-                buffFrame:Hide()
-            end
-            for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
-                extraBuffFrame:Hide()
-            end
+        if not frame_registry[frame] then
+            return
+        end
+        frame_registry[frame].dirty = true
+        for _, buffFrame in pairs(frame.buffFrames) do
+            buffFrame:Hide()
+        end
+        for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
+            extraBuffFrame:Hide()
         end
 
         local frameWidth = frame:GetWidth()

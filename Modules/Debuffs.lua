@@ -29,11 +29,11 @@ local IsForbidden = IsForbidden
 local next = next
 
 local frame_registry = {}
-local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
 local module_enabled
 local blacklist = {}
 local whitelist = {}
 
+local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
 SpellGetVisibilityInfo = function(spellId, visType)
     if module_enabled then
         if blacklist[spellId] then
@@ -244,7 +244,6 @@ function Debuffs:OnEnable()
                 CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
                 return false
             end
-
             if frameNum <= frame_registry[frame].maxDebuffs then
                 local debuffFrame = frame.debuffFrames[frameNum] or frame_registry[frame].extraDebuffFrames[frameNum]
                 CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)

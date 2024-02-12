@@ -286,14 +286,12 @@ function Debuffs:OnEnable()
             }
         end
 
-        if InCombatLockdown() then
-            frame_registry[frame].lockdown = true
-            return
-        end
-        frame_registry[frame].lockdown = false
-
         if frame_registry[frame].dirty then
-            frame_registry[frame].maxDebuffs = frameOpt.maxdebuffs
+            if InCombatLockdown() then
+                frame_registry[frame].lockdown = true
+                return
+            end
+            frame_registry[frame].lockdown = false
             frame_registry[frame].dirty = false
 
             local placedAuraStart = frame.maxDebuffs + 1
@@ -399,7 +397,7 @@ function Debuffs:OnEnable()
             resizeDebuffFrame(debuffFrame)
         end
 
-        onHideAllDebuffs(frame)
+        CompactUnitFrame_UpdateAuras(frame)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -408,7 +406,6 @@ function Debuffs:OnEnable()
     end
     addon:IterateRoster(function(frame)
         onFrameSetup(frame)
-        CompactUnitFrame_UpdateAuras(frame)
     end)
 
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()

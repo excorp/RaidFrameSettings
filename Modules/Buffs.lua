@@ -213,14 +213,13 @@ function Buffs:OnEnable()
             }
         end
 
-        if InCombatLockdown() then
-            frame_registry[frame].lockdown = true
-            return
-        end
-        frame_registry[frame].lockdown = false
-
         if frame_registry[frame].dirty then
             frame_registry[frame].maxBuffs = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs
+            if InCombatLockdown() then
+                frame_registry[frame].lockdown = true
+                return
+            end
+            frame_registry[frame].lockdown = false
             frame_registry[frame].dirty = false
 
             local placedAuraStart = frame.maxBuffs + 1
@@ -316,7 +315,7 @@ function Buffs:OnEnable()
             resizeBuffFrame(buffFrame)
         end
 
-        onHideAllBuffs(frame)
+        CompactUnitFrame_UpdateAuras(frame)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -325,9 +324,6 @@ function Buffs:OnEnable()
     end
     addon:IterateRoster(function(frame)
         onFrameSetup(frame)
-        if frame_registry[frame] then
-            CompactUnitFrame_UpdateAuras(frame)
-        end
     end)
 
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()

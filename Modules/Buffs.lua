@@ -30,11 +30,11 @@ local SetDrawEdge = SetDrawEdge
 local next = next
 
 local frame_registry = {}
-local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
 local module_enabled
 local blacklist = {}
 local whitelist = {}
 
+local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
 SpellGetVisibilityInfo = function(spellId, visType)
     if module_enabled then
         if blacklist[spellId] then
@@ -173,7 +173,6 @@ function Buffs:OnEnable()
                 CompactUnitFrame_UtilSetBuff(buffFrame, aura)
                 return false
             end
-
             if frameNum <= frame_registry[frame].maxBuffs then
                 local buffFrame = frame.buffFrames[frameNum] or frame_registry[frame].extraBuffFrames[frameNum]
                 CompactUnitFrame_UtilSetBuff(buffFrame, aura)

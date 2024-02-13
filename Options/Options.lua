@@ -2298,8 +2298,8 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     dbObj.width = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                softMin = -100,
-                softMax = 100,
+                min = 1,
+                max = 50,
                 step = 1,
                 width = 0.8,
             },
@@ -2315,8 +2315,8 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     dbObj.height = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                softMin = -100,
-                softMax = 100,
+                min = 1,
+                max = 50,
                 step = 1,
                 width = 0.8,
             },

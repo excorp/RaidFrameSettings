@@ -163,7 +163,7 @@ function Debuffs:OnEnable()
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
 
-    local onSetDeuff = function(debuffFrame, aura)
+    local onSetDebuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -199,7 +199,7 @@ function Debuffs:OnEnable()
             end
         end
     end
-    self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDeuff)
+    self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDebuff)
 
     local function onUpdatePrivateAuras(frame)
         if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible()then

@@ -51,11 +51,9 @@ end
 
 function Buffs:SetSpellGetVisibilityInfo(enabled)
     module_enabled = enabled
-    if InCombatLockdown() then
-        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
-    else
-        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-    end
+    -- Trigger an event to initialize the local value of cachedVisualizationInfo in AuraUtil
+    -- Only use the PLAYER_REGEN_ENABLED event because the module is only enabled/disabled when not in combat
+    EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
 end
 
 function Buffs:OnEnable()
@@ -198,7 +196,6 @@ function Buffs:OnEnable()
             frame_registry[frame] = {
                 maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
                 placedAuraStart = 0,
-                lockdown        = false,
                 dirty           = true,
                 extraBuffFrames = {},
             }
@@ -206,11 +203,6 @@ function Buffs:OnEnable()
 
         if frame_registry[frame].dirty then
             frame_registry[frame].maxBuffs = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs
-            if InCombatLockdown() then
-                frame_registry[frame].lockdown = true
-                return
-            end
-            frame_registry[frame].lockdown = false
             frame_registry[frame].dirty = false
 
             local placedAuraStart = frame.maxBuffs + 1
@@ -316,14 +308,6 @@ function Buffs:OnEnable()
     addon:IterateRoster(function(frame)
         onFrameSetup(frame)
     end)
-
-    self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        for frame, v in pairs(frame_registry) do
-            if v.lockdown and v.dirty then
-                onFrameSetup(frame)
-            end
-        end
-    end)
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
@@ -344,7 +328,6 @@ function Buffs:OnDisable()
         if not frame_registry[frame] then
             return
         end
-        frame_registry[frame].dirty = true
         for _, buffFrame in pairs(frame.buffFrames) do
             buffFrame:Hide()
         end

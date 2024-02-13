@@ -47,11 +47,9 @@ end
 
 function Debuffs:SetSpellGetVisibilityInfo(enabled)
     module_enabled = enabled
-    if InCombatLockdown() then
-        EventRegistry:TriggerEvent("PLAYER_REGEN_DISABLED")
-    else
-        EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-    end
+    -- Trigger an event to initialize the local value of cachedVisualizationInfo in AuraUtil
+    -- Only use the PLAYER_REGEN_ENABLED event because the module is only enabled/disabled when not in combat
+    EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
 end
 
 function Debuffs:OnEnable()
@@ -270,20 +268,13 @@ function Debuffs:OnEnable()
             frame_registry[frame] = {
                 maxDebuffs        = frameOpt.maxdebuffs,
                 placedAuraStart   = 0,
-                lockdown          = false,
                 dirty             = true,
                 extraDebuffFrames = {},
             }
         end
 
         if frame_registry[frame].dirty then
-            if InCombatLockdown() then
-                frame_registry[frame].lockdown = true
-                return
-            end
-            frame_registry[frame].lockdown = false
             frame_registry[frame].dirty = false
-
             local placedAuraStart = frame.maxDebuffs + 1
             for i = frame.maxDebuffs + 1, frame_registry[frame].maxDebuffs do
                 local debuffFrame = frame.debuffFrames[i] or frame_registry[frame].extraDebuffFrames[i]
@@ -397,14 +388,6 @@ function Debuffs:OnEnable()
     addon:IterateRoster(function(frame)
         onFrameSetup(frame)
     end)
-
-    self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        for frame, v in pairs(frame_registry) do
-            if v.lockdown and v.dirty then
-                onFrameSetup(frame)
-            end
-        end
-    end)
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
@@ -425,7 +408,7 @@ function Debuffs:OnDisable()
         if not frame_registry[frame] then
             return
         end
-        frame_registry[frame].dirty = true
+        frame_registry[frame] = true
         for _, debuffFrame in pairs(frame.debuffFrames) do
             debuffFrame:Hide()
         end

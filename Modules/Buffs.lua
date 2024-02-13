@@ -87,6 +87,11 @@ function Buffs:OnEnable()
     for spellId, value in pairs(addon.db.profile.Buffs.Whitelist) do
         whitelist[tonumber(spellId)] = value
     end
+    --increase
+    local increase = {}
+    for spellId, value in pairs(addon.db.profile.Buffs.Increase) do
+        increase[tonumber(spellId)] = true
+    end
     --user placed
     local userPlaced = {}
     local userPlacedIdx = 1
@@ -98,6 +103,9 @@ function Buffs:OnEnable()
             relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint),
             xOffset = auraInfo.xOffset,
             yOffset = auraInfo.yOffset,
+            setSize = auraInfo.setSize,
+            width = auraInfo.width,
+            height = auraInfo.height,
         }
         userPlacedIdx = userPlacedIdx + 1
     end
@@ -105,6 +113,8 @@ function Buffs:OnEnable()
     --Buff size
     local width  = frameOpt.width
     local height = frameOpt.height
+    local big_width  = width * frameOpt.increase
+    local big_height = height * frameOpt.increase
     local resizeBuffFrame
     if frameOpt.cleanIcons then
         local left, right, top, bottom = 0.1, 0.9, 0.1, 0.9
@@ -133,7 +143,7 @@ function Buffs:OnEnable()
     --Buffframe position
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
-    local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
+    local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
 
     local onSetBuff = function(buffFrame, aura)
         if buffFrame:IsForbidden() or not buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -145,6 +155,17 @@ function Buffs:OnEnable()
         end
         CDT:StartCooldownText(cooldown)
         cooldown:SetDrawEdge(frameOpt.edge)
+
+        if aura then
+            if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
+                local placed = userPlaced[aura.spellId]
+                buffFrame:SetSize(placed.width, placed.height)
+            elseif increase[aura.spellId] then
+                buffFrame:SetSize(big_width, big_height)
+            else
+                buffFrame:SetSize(width, height)
+            end
+        end
     end
     self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
@@ -283,7 +304,7 @@ function Buffs:OnEnable()
                 anchorSet = true
             else
                 buffFrame:ClearAllPoints()
-                buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, 0, 0)
+                buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
             end
             prevFrame = buffFrame
             resizeBuffFrame(buffFrame)

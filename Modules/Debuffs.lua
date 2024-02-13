@@ -117,6 +117,9 @@ function Debuffs:OnEnable()
             relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint),
             xOffset = auraInfo.xOffset,
             yOffset = auraInfo.yOffset,
+            setSize = auraInfo.setSize,
+            width = auraInfo.width,
+            height = auraInfo.height,
         }
         userPlacedIdx = userPlacedIdx + 1
     end
@@ -158,7 +161,7 @@ function Debuffs:OnEnable()
     --Debuffframe position
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
-    local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation)
+    local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
 
     local onSetDeuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -186,10 +189,14 @@ function Debuffs:OnEnable()
         local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
         cooldownText:SetVertexColor(color.r, color.g, color.b)
 
-        if aura and (aura.isBossAura or increase[aura.spellId]) then
-            debuffFrame:SetSize(boss_width, boss_height)
-        else
-            debuffFrame:SetSize(width, height)
+        if aura then 
+            if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
+                debuffFrame:SetSize(userPlaced[aura.spellId].width, userPlaced[aura.spellId].height)
+            elseif aura.isBossAura or increase[aura.spellId] then
+                debuffFrame:SetSize(boss_width, boss_height)
+            else
+                debuffFrame:SetSize(width, height)
+            end
         end
     end
     self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDeuff)
@@ -299,7 +306,7 @@ function Debuffs:OnEnable()
                 local idx = placedAuraStart + place.idx - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 if not debuffFrame then
-                    debuffFrame = CreateFrame("Button", nil, nil, "CompactBuffTemplate")
+                    debuffFrame = CreateFrame("Button", nil, nil, "CompactDebuffTemplate")
                     debuffFrame:SetParent(frame)
                     debuffFrame:Hide()
                     debuffFrame.baseSize = width
@@ -363,7 +370,7 @@ function Debuffs:OnEnable()
                 anchorSet = true
             else
                 debuffFrame:ClearAllPoints()
-                debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, 0, 0)
+                debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
             end
             prevFrame = debuffFrame
             resizeDebuffFrame(debuffFrame)
@@ -408,7 +415,6 @@ function Debuffs:OnDisable()
         if not frame_registry[frame] then
             return
         end
-        frame_registry[frame] = true
         for _, debuffFrame in pairs(frame.debuffFrames) do
             debuffFrame:Hide()
         end

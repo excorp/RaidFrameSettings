@@ -69,6 +69,7 @@ local defaults = {
                 xOffset = 4,
                 yOffset = -4,
                 orientation = 2,
+                gap = 0,
                 swipe = true,
                 edge = true,
                 inverse = false,
@@ -106,10 +107,10 @@ local defaults = {
             AuraPosition = {
 
             },
-            Blacklist = {
+			Increase = {
                 --[[spellID = name                ]]--
             },
-			Increase = {
+            Blacklist = {
                 --[[spellID = name                ]]--
             },
             Whitelist = {
@@ -121,11 +122,13 @@ local defaults = {
                 width = 28,
                 height = 24,
                 cleanIcons = true,
+                increase = 1.2,
                 point = 9,
                 relativePoint = 9,
                 xOffset = -4,
                 yOffset = 4,
                 orientation = 1,
+                gap = 0,
                 swipe = true,
                 edge = true,
                 inverse = true,
@@ -163,6 +166,9 @@ local defaults = {
             AuraPosition = {
 
             },
+            Increase = {
+                --[[spellID = name                ]]--
+            },
             Blacklist = {
                 --spellID = true
             },
@@ -173,6 +179,8 @@ local defaults = {
         AuraHighlight = {
             Config = {
                 operation_mode = 1,
+                useHealthBarColor = true,
+                useHealthBarGlow = false,
                 Curse = false,
                 Disease = false,
                 Magic = false,

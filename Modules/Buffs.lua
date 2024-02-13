@@ -144,18 +144,11 @@ function Buffs:OnEnable()
             return
         end
         local cooldown = buffFrame.cooldown
-        if not cooldown.count then
+        if not cooldown._rfs_cd_text then
             return
         end
         CDT:StartCooldownText(cooldown)
         cooldown:SetDrawEdge(frameOpt.edge)
-        if buffFrame.count:IsShown() then
-            cooldown.count:SetText(buffFrame.count:GetText())
-            cooldown.count:Show()
-            buffFrame.count:Hide()
-        else
-            cooldown.count:Hide()
-        end
     end
     self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
@@ -275,16 +268,14 @@ function Buffs:OnEnable()
                     end
                 end
                 --Stack Settings
-                if not cooldown.count then
-                    cooldown.count = cooldown:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
-                end
-                local stackText = cooldown.count
+                local stackText = buffFrame.count
                 stackText:ClearAllPoints()
                 stackText:SetPoint(stackOpt.point, buffFrame, stackOpt.relativePoint, stackOpt.xOffsetFont, stackOpt.yOffsetFont)
                 stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
                 stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
                 stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
                 stackText:SetShadowOffset(stackOpt.xOffsetShadow, stackOpt.yOffsetShadow)
+                stackText:SetParent(cooldown)
                 --Swipe Settings
                 cooldown:SetDrawSwipe(frameOpt.swipe)
                 cooldown:SetReverse(frameOpt.inverse)
@@ -374,9 +365,18 @@ function Buffs:OnDisable()
             cooldown:SetReverse(true)
             cooldown:SetDrawEdge(false)
             CDT:DisableCooldownText(cooldown)
-            if cooldown.count then
-                cooldown.count:Hide()
-            end
+            --TODO
+            --[[
+                find global font for stacks and restore properly
+            ]]
+            local stackText = buffFrame.count
+            stackText:ClearAllPoints()
+            stackText:SetPoint("BOTTOMRIGHT", buffFrame, "BOTTOMRIGHT", 0, 0)
+            stackText:SetFont("Fonts\\ARIALN.TTF", 12.000000953674, "OUTLINE")
+            stackText:SetTextColor(1,1,1,1)
+            stackText:SetShadowColor(0,0,0)
+            stackText:SetShadowOffset(0,0)
+            stackText:SetParent(buffFrame)
             if cooldown.OmniCC then
                 OmniCC.Cooldown.SetNoCooldownCount(cooldown, cooldown.OmniCC.noCooldownCount)
                 cooldown.OmniCC = nil

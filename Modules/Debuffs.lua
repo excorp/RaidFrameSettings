@@ -55,8 +55,6 @@ function Debuffs:SetSpellGetVisibilityInfo(enabled)
 end
 
 function Debuffs:OnEnable()
-    self:SetSpellGetVisibilityInfo(true)
-
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
         Disease = { r = 0.6, g = 0.4, b = 0.0 },
@@ -390,6 +388,8 @@ function Debuffs:OnEnable()
         CompactUnitFrame_UpdateAuras(frame)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+
+    self:SetSpellGetVisibilityInfo(true)
 
     for _, v in pairs(frame_registry) do
         v.dirty = true

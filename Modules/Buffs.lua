@@ -59,8 +59,6 @@ function Buffs:SetSpellGetVisibilityInfo(enabled)
 end
 
 function Buffs:OnEnable()
-    self:SetSpellGetVisibilityInfo(true)
-
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
 
     local frameOpt = CopyTable(addon.db.profile.Buffs.BuffFramesDisplay)
@@ -309,6 +307,8 @@ function Buffs:OnEnable()
         CompactUnitFrame_UpdateAuras(frame)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+
+    self:SetSpellGetVisibilityInfo(true)
 
     for _, v in pairs(frame_registry) do
         v.dirty = true

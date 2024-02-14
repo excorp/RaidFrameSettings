@@ -197,6 +197,14 @@ function Debuffs:OnEnable()
             else
                 debuffFrame:SetSize(width, height)
             end
+
+            if aura.applications > 0 then
+                if  aura.duration == 0 then
+                    debuffFrame.count:SetParent(debuffFrame)
+                else
+                    debuffFrame.count:SetParent(cooldown)
+                end
+            end
         end
     end
     self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDebuff)

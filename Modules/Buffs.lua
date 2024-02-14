@@ -165,6 +165,14 @@ function Buffs:OnEnable()
             else
                 buffFrame:SetSize(width, height)
             end
+
+            if aura.applications > 0 then
+                if  aura.duration == 0 then
+                    buffFrame.count:SetParent(buffFrame)
+                else
+                    buffFrame.count:SetParent(cooldown)
+                end
+            end
         end
     end
     self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)

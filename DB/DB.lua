@@ -110,11 +110,8 @@ local defaults = {
 			Increase = {
                 --[[spellID = name                ]]--
             },
-            Blacklist = {
-                --[[spellID = name                ]]--
-            },
-            Whitelist = {
-                
+            AuraFilter = {
+
             },
         },
         Buffs = {
@@ -169,10 +166,7 @@ local defaults = {
             Increase = {
                 --[[spellID = name                ]]--
             },
-            Blacklist = {
-                --spellID = true
-            },
-            Whitelist = {
+            AuraFilter = {
 
             },
         },

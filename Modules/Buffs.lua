@@ -31,22 +31,26 @@ local next = next
 
 local frame_registry = {}
 local module_enabled
-local blacklist = {}
-local whitelist = {}
+local filteredAuras = {}
 
 local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
 SpellGetVisibilityInfo = function(spellId, visType)
     if module_enabled then
-        if blacklist[spellId] then
-            return true, false, false
-        elseif whitelist[spellId] then
-            if whitelist[spellId].hideInCombat and visType == "RAID_INCOMBAT" then
+        if filteredAuras[spellId] then
+            if filteredAuras[spellId].show then
+                -- show
+                if filteredAuras[spellId].hideInCombat and visType == "RAID_INCOMBAT" then
+                    return true, false, false
+                end
+                if filteredAuras[spellId].other then
+                    return true, false, true
+                end
+                return true, true, false
+    
+            else
+                -- hide
                 return true, false, false
             end
-            if whitelist[spellId].other then
-                return true, false, true
-            end
-            return true, true, false
         end
     end
     return org_SpellGetVisibilityInfo(spellId, visType)
@@ -76,19 +80,12 @@ function Buffs:OnEnable()
     stackOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(stackOpt.outlinemode)
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
-    --blacklist
-    for k in pairs(blacklist) do
-        blacklist[k] = nil
+    --aura filter
+    for k in pairs(filteredAuras) do
+        filteredAuras[k] = nil
     end
-    for spellId, value in pairs(addon.db.profile.Buffs.Blacklist) do
-        blacklist[tonumber(spellId)] = true
-    end
-    --whitelist
-    for k in pairs(whitelist) do
-        whitelist[k] = nil
-    end
-    for spellId, value in pairs(addon.db.profile.Buffs.Whitelist) do
-        whitelist[tonumber(spellId)] = value
+    for spellId, value in pairs(addon.db.profile.Buffs.AuraFilter) do
+        filteredAuras[tonumber(spellId)] = value
     end
     --increase
     local increase = {}

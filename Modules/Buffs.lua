@@ -40,6 +40,9 @@ SpellGetVisibilityInfo = function(spellId, visType)
         if blacklist[spellId] then
             return true, false, false
         elseif whitelist[spellId] then
+            if whitelist[spellId].hideInCombat and visType == "RAID_INCOMBAT" then
+                return true, false, false
+            end
             if whitelist[spellId].other then
                 return true, false, true
             end

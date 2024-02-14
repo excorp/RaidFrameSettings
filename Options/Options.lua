@@ -172,7 +172,7 @@ local options = {
     args = {
         Version = {
             order = 0,
-            name = "v2.22.0-mod2",
+            name = "@project-version@",
             type = "group",
             disabled = true,
             args = {},
@@ -2268,6 +2268,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 }
                 self.db.profile[category].Blacklist[spellId] = nil
             end
+            self.db.profile[category].Blacklist = nil
         end
 
         --aura filter

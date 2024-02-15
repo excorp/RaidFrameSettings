@@ -952,6 +952,7 @@ local options = {
                                                     ["spellId"] = tonumber(value),
                                                     point = 1,
                                                     relativePoint = 1,
+                                                    toSpellId = 0,
                                                     xOffset = 0,
                                                     yOffset = 0,
                                                     setSize = false,
@@ -1270,6 +1271,7 @@ local options = {
                                                     ["spellId"] = tonumber(value),
                                                     point = 1,
                                                     relativePoint = 1,
+                                                    toSpellId = 0,
                                                     xOffset = 0,
                                                     yOffset = 0,
                                                     setSize = false,
@@ -1993,7 +1995,7 @@ end
 
 function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
     local dbObj = self.db.profile[category].AuraFilter[spellId]
-    local options = options.args.Auras.args[category].args.AuraFilter.args.FilteredAuras.args
+    local auraFilterOptions = options.args.Auras.args[category].args.AuraFilter.args.FilteredAuras.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -2053,19 +2055,19 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 type = "execute",
                 func = function()
                     self.db.profile[category].AuraFilter[spellId] = nil
-                    options[spellId] = nil
+                    auraFilterOptions[spellId] = nil
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
             },
         },
     }
-    options[spellId] = aurafilter_entry
+    auraFilterOptions[spellId] = aurafilter_entry
 end
 
 function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
     local dbObj = self.db.profile[category].Increase
-    local optionsPos = options.args.Auras.args[category].args.Increase.args.IncreasedAuras.args
+    local increaseOptions = options.args.Auras.args[category].args.Increase.args.IncreasedAuras.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -2090,19 +2092,19 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
                 type = "execute",
                 func = function()
                     self.db.profile[category].Increase[spellId] = nil
-                    optionsPos[spellId] = nil
+                    increaseOptions[spellId] = nil
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
             },  
         },
     }
-    optionsPos[spellId] = increase_entry
+    increaseOptions[spellId] = increase_entry
 end
 
 function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
     local dbObj = self.db.profile[category].AuraPosition[spellId]
-    local optionsPos = options.args.Auras.args[category].args[category].args.AuraPosition.args.auraList.args
+    local auraPositionOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args.auraList.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -2190,8 +2192,15 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 name = "remove",
                 type = "execute",
                 func = function()
+                    -- This will be deleted, so link the parent and child.
+                    local toSpellId = dbObj.toSpellId
+                    for _, v in pairs(self.db.profile[category].AuraPosition) do
+                        if v.toSpellId == dbObj.spellId then
+                            v.toSpellId = toSpellId
+                        end
+                    end
                     self.db.profile[category].AuraPosition[spellId] = nil
-                    optionsPos[spellId] = nil
+                    auraPositionOptions[spellId] = nil
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
@@ -2200,6 +2209,44 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 order = 8,
                 type = "description",
                 name = "",
+            },
+            toSpellId = {
+                order = 8.1,
+                name = "to Aura",
+                type = "input",
+                pattern = "^%d+$",
+                usage = "please enter a number (spellId of the aura frame you want to attach.)",
+                get = function()
+                    return dbObj.toSpellId ~= nil and dbObj.toSpellId ~= 0 and tostring(dbObj.toSpellId) or ""
+                end,
+                set = function(_, value)
+                    -- toSpellId can be 0. Not possible for self. The top level toSpellId should be 0 when following the parent.
+                    local toSpellId = tonumber(value)
+                    if toSpellId == dbObj.spellId then
+                        return
+                    end
+                    if toSpellId ~= 0 then
+                        local parent = toSpellId
+                        while true do
+                            local parentObj = self.db.profile[category].AuraPosition[tostring(parent)]
+                            if not parentObj or parent == parentObj.toSpellId then
+                                -- Cyclic errors
+                                return
+                            end
+                            parent = parentObj.toSpellId
+                            if parent == dbObj.spellId then
+                                -- Cyclic errors
+                                return
+                            end
+                            if parent == 0 then
+                                break
+                            end
+                        end
+                    end
+                    dbObj.toSpellId = toSpellId
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
             },
             setSize = {
                 order = 9,
@@ -2251,7 +2298,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
         },
     }
-    optionsPos[spellId] = aura_entry
+    auraPositionOptions[spellId] = aura_entry
 end
 
 function RaidFrameSettings:LoadUserInputEntrys()

@@ -101,6 +101,7 @@ function Buffs:OnEnable()
             idx = userPlacedIdx,
             point = addon:ConvertDbNumberToPosition(auraInfo.point),
             relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint),
+            toSpellId = auraInfo.toSpellId,
             xOffset = auraInfo.xOffset,
             yOffset = auraInfo.yOffset,
             setSize = auraInfo.setSize,
@@ -320,8 +321,10 @@ function Buffs:OnEnable()
         for _, place in pairs(userPlaced) do
             local idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+            local parentIdx = place.toSpellId and userPlaced[place.toSpellId] and (frame_registry[frame].placedAuraStart + userPlaced[place.toSpellId].idx - 1)
+            local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
             buffFrame:ClearAllPoints()
-            buffFrame:SetPoint(place.point, frame, place.relativePoint, place.xOffset, place.yOffset)
+            buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
             resizeBuffFrame(buffFrame)
         end
 

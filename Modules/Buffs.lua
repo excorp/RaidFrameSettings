@@ -328,7 +328,9 @@ function Buffs:OnEnable()
             resizeBuffFrame(buffFrame)
         end
 
-        CompactUnitFrame_UpdateAuras(frame)
+        if frame.unit then
+            CompactUnitFrame_UpdateAuras(frame)
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -403,7 +405,9 @@ function Buffs:OnDisable()
             end
         end
 
-        CompactUnitFrame_UpdateAuras(frame)
+        if frame.unit then
+            CompactUnitFrame_UpdateAuras(frame)
+        end
     end
     addon:IterateRoster(restoreBuffFrames)
 end

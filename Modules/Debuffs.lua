@@ -394,7 +394,9 @@ function Debuffs:OnEnable()
             resizeDebuffFrame(debuffFrame)
         end
 
-        CompactUnitFrame_UpdateAuras(frame)
+        if frame.unit then
+            CompactUnitFrame_UpdateAuras(frame)
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -474,7 +476,9 @@ function Debuffs:OnDisable()
             end
         end
 
-        CompactUnitFrame_UpdateAuras(frame)
+        if frame.unit then
+            CompactUnitFrame_UpdateAuras(frame)
+        end
     end
     addon:IterateRoster(restoreDebuffFrames)
 end

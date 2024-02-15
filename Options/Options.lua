@@ -273,6 +273,15 @@ local options = {
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
+                        Solo = {
+                            hidden = isVanilla,
+                            order = 10,
+                            type = "toggle",
+                            name = "Solo",
+                            desc = "Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r",
+                            get = "GetModuleStatus",
+                            set = "SetModuleStatus",
+                        },
                     },
                 },
                 DescriptionBox = {

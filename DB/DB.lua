@@ -15,6 +15,7 @@ local defaults = {
             RaidMark = false,
             CustomScale = false,
             AuraHighlight = false,
+            Solo = true,
         },
         HealthBars = { 
             Textures = { 

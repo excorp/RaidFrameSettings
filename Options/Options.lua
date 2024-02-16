@@ -274,7 +274,6 @@ local options = {
                             set = "SetModuleStatus",
                         },
                         Solo = {
-                            hidden = isVanilla,
                             order = 10,
                             type = "toggle",
                             name = "Solo",

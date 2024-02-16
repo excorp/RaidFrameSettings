@@ -214,7 +214,6 @@ local options = {
                             set = "SetModuleStatus",
                         },
                         RaidMark = {
-                            hidden = isVanilla,
                             order = 3.1,
                             type = "toggle",
                             name = "Raid Mark",
@@ -1644,7 +1643,7 @@ local options = {
                     },
                 },
                 RaidMark = {
-                    hidden = isVanilla or RaidMark_disabled,
+                    hidden = RaidMark_disabled,
                     order = 1.1,
                     name = "Raid Mark",
                     type = "group",
@@ -1825,7 +1824,7 @@ local options = {
                     },
                 },
                 TimerTextLimit = {
-                    hidden = isClassic or Overabsorb_disabled,
+                    hidden = Overabsorb_disabled,
                     order = 7,
                     name = "TimerText Format Limit (by seconds)",
                     type = "group",

@@ -58,6 +58,9 @@ local function toDebuffColor(frame, dispelName)
 end
 
 local function updateColor(frame)
+    if not frame or frame.unit:match("na") then --this will exclude nameplates and arena
+        return
+    end
     for auraInstanceID, dispelName in next, auraMap[frame].debuffs do
         if auraInstanceID then
             toDebuffColor(frame, dispelName)
@@ -232,7 +235,7 @@ function module:SetUpdateHealthColor()
     end
 
     updateHealthColor = function(frame)
-        if not frame then
+        if not frame or frame.unit:match("na") then --this will exclude nameplates and arena
             return
         end
         blockColorUpdate[frame] = false

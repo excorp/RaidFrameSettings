@@ -3,6 +3,7 @@
     The aura indicator position and the aura timers are greatly inspired by a pull request from: https://github.com/excorp
 --]]
 local _, addonTable = ...
+local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
 local addon = addonTable.RaidFrameSettings
 local Debuffs = addon:NewModule("Debuffs")
 Mixin(Debuffs, addonTable.hooks)
@@ -151,8 +152,10 @@ function Debuffs:OnEnable()
             debuffFrame.icon:SetTexCoord(left,right,top,bottom)
             debuffFrame.border:SetTexture("Interface/AddOns/RaidFrameSettings/Textures/DebuffOverlay_clean_icons.tga")
             debuffFrame.border:SetTexCoord(0,1,0,1)
-            debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09) 
-            debuffFrame.border:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
+            if not isWrath then
+                debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09) 
+                debuffFrame.border:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
+            end
         end
     else
         resizeDebuffFrame = function(debuffFrame)
@@ -294,7 +297,9 @@ function Debuffs:OnEnable()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
                 debuffFrame.border:SetTexCoord(0.296875,0.5703125,0,0.515625)
-                debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+                if not isWrath then
+                    debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+                end
                 placedAuraStart = i + 1
             end
             frame_registry[frame].placedAuraStart = placedAuraStart
@@ -313,7 +318,9 @@ function Debuffs:OnEnable()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
                 debuffFrame.border:SetTexCoord(0.296875,0.5703125,0,0.515625)
-                debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+                if not isWrath then
+                    debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+                end
             end
 
             for i = 1, frame_registry[frame].maxDebuffs + maxUserPlaced do
@@ -438,7 +445,9 @@ function Debuffs:OnDisable()
             debuffFrame:SetFrameStrata(frame:GetFrameStrata())
             debuffFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
             debuffFrame.border:SetTexCoord(0.296875, 0, 0.296875, 0.515625, 0.5703125, 0, 0.5703125, 0.515625)
-            debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+            if not isWrath then
+                debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+            end
             debuffFrame.icon:SetTexCoord(0,1,0,1)
             if ( i > 1 ) then
                 debuffFrame:ClearAllPoints();

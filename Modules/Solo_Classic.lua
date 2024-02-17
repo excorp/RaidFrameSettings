@@ -7,24 +7,33 @@ Mixin(Solo, addonTable.hooks)
 local enabled
 local org_GetDisplayedAllyFrames = GetDisplayedAllyFrames
 function GetDisplayedAllyFrames()
-    if enabled then
-        return "raid"
-    end
-    return org_GetDisplayedAllyFrames()
+    local useCompact = GetCVarBool("useCompactPartyFrames")
+	if ( IsActiveBattlefieldArena() and not useCompact ) then
+		return "party"
+	elseif ( IsInGroup() and (IsInRaid() or useCompact) ) then
+		return "raid"
+	elseif ( IsInGroup() ) then
+		return "party"
+	else
+		return "raid"
+	end
+    -- return org_GetDisplayedAllyFrames()
 end
 
 function Solo:Refresh()
-    local c = GetCVar("cameraDistanceMaxZoomFactor")
-    if c ~= "1" then
-        SetCVar("cameraDistanceMaxZoomFactor", 1)
-    else
-        SetCVar("cameraDistanceMaxZoomFactor", 1.1)
+    if not InCombatLockdown() then
+        local c = GetCVar("cameraDistanceMaxZoomFactor")
+        if c ~= "1" then
+            SetCVar("cameraDistanceMaxZoomFactor", 1)
+        else
+            SetCVar("cameraDistanceMaxZoomFactor", 1.1)
+        end
+        SetCVar("cameraDistanceMaxZoomFactor", c)
     end
-    SetCVar("cameraDistanceMaxZoomFactor", c)
 end
 
 function Solo:OnEnable()
-    enabled = true
+    enabled = false
     self:Refresh()
 end
 

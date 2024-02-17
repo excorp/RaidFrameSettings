@@ -80,7 +80,7 @@ local function updateAurasFull(frame)
         end
     end
     local function HandleHelpAura(aura)
-        if aura_missing_list[aura.spellId] and aura.sourceUnit == "player" then
+        if aura_missing_list[aura.spellId] then
             auraMap[frame].missing_list[aura.auraInstanceID] = aura.spellId
         end
     end
@@ -98,7 +98,7 @@ local function updateAurasIncremental(frame, updateInfo)
             if Bleeds[aura.spellId] and LCD:CanDispel("Bleed") then 
                 auraMap[frame].debuffs[aura.auraInstanceID] = "Bleed"
             end
-            if aura_missing_list[aura.spellId] and aura.sourceUnit == "player" then
+            if aura_missing_list[aura.spellId] then
                 auraMap[frame].missing_list[aura.auraInstanceID] = aura.spellId
             end
         end

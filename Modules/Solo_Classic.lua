@@ -14,8 +14,10 @@ function GetDisplayedAllyFrames()
 		return "raid"
 	elseif ( IsInGroup() ) then
 		return "party"
-	else
+	elseif enabled then
 		return "raid"
+    else
+        return nil
 	end
     -- return org_GetDisplayedAllyFrames()
 end
@@ -33,7 +35,7 @@ function Solo:Refresh()
 end
 
 function Solo:OnEnable()
-    enabled = false
+    enabled = true
     self:Refresh()
 end
 

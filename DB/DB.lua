@@ -108,6 +108,9 @@ local defaults = {
             AuraPosition = {
 
             },
+            AuraGroup = {
+
+            },
 			Increase = {
                 --[[spellID = name                ]]--
             },
@@ -162,6 +165,9 @@ local defaults = {
                 yOffsetFont = -3,
             },
             AuraPosition = {
+
+            },
+            AuraGroup = {
 
             },
             Increase = {

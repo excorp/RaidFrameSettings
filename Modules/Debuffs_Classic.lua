@@ -126,6 +126,19 @@ function Debuffs:OnEnable()
         userPlacedIdx = userPlacedIdx + 1
     end
     maxUserPlaced = userPlacedIdx - 1
+    --aura group
+    local maxAuraGroup = 0
+    local auraGroup = {}
+    local auraGroupList = {}
+    for k, auraInfo in pairs(addon.db.profile.Buffs.AuraGroup) do
+        auraGroup[k] = CopyTable(auraInfo)
+        auraGroup[k].point = addon:ConvertDbNumberToPosition(auraInfo.point)
+        auraGroup[k].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
+        for aura in pairs(auraInfo.auraList) do
+            auraGroupList[tonumber(aura)] = auraGroupList[tonumber(aura)] or k
+            maxAuraGroup = maxAuraGroup + 1
+        end
+    end
     --Debuffframe size
     local width  = frameOpt.width
     local height = frameOpt.height
@@ -200,8 +213,12 @@ function Debuffs:OnEnable()
         local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
         cooldownText:SetVertexColor(color.r, color.g, color.b)
 
+        local auraGroupNo = auraGroupList[spellId]
         if userPlaced[spellId] and userPlaced[spellId].setSize then
             debuffFrame:SetSize(userPlaced[spellId].width, userPlaced[spellId].height)
+        elseif auraGroupNo and auraGroup[auraGroupNo].setSize then
+            local group = auraGroup[auraGroupNo]
+            debuffFrame:SetSize(group.width, group.height)
         elseif isBossAura or increase[spellId] then
             debuffFrame:SetSize(boss_width, boss_height)
         else
@@ -226,6 +243,7 @@ function Debuffs:OnEnable()
         -- set placed aura / other aura
         local index = 1
         local frameNum = 1
+        local groupFrameNum = {}
         local filter = nil
         while true do
             local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(frame.displayedUnit, index, filter)
@@ -239,6 +257,13 @@ function Debuffs:OnEnable()
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
+                elseif auraGroupList[spellId] then
+                    local groupNo = auraGroupList[spellId]
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] or 1
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + groupFrameNum[groupNo] - 1
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] + 1
                 elseif frameNum <= frame_registry[frame].maxDebuffs then
                     local debuffFrame = frame.debuffFrames[frameNum] or frame_registry[frame].extraDebuffFrames[frameNum]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
@@ -264,6 +289,35 @@ function Debuffs:OnEnable()
             debuffFrame:Hide()
             CooldownFrame_Clear(debuffFrame.cooldown)
         end
+        -- Modify the anchor of an auraGroup and hide left aura group
+        for groupNo, v in pairs(auraGroup) do
+            if groupFrameNum[groupNo] and groupFrameNum[groupNo] > 0 then
+                if v.orientation == 5 or v.orientation == 6 then
+                    local idx = frame_registry[frame].auraGroupStart[groupNo]
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    local x,y = 0,0
+                    for i = 2, groupFrameNum[groupNo] -1 do
+                        local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                        local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                        local w, h = debuffFrame:GetSize()
+                        if v.orientation == 5 then
+                            x = x + w
+                        elseif v.orientation == 6 then
+                            y = y + h
+                        end
+                    end
+                    debuffFrame:ClearAllPoints()
+                    debuffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x/2, v.yOffset + y/2)
+                end
+            end
+            local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
+            for i = groupFrameNum[groupNo] or 1, groupSize do
+                local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                debuffFrame:Hide()
+                CooldownFrame_Clear(debuffFrame.cooldown)
+            end
+        end
     end
     self:HookFunc("CompactUnitFrame_UpdateDebuffs", onUpdateDebuffs)
 
@@ -276,8 +330,10 @@ function Debuffs:OnEnable()
             frame_registry[frame] = {
                 maxDebuffs        = frameOpt.maxdebuffs,
                 placedAuraStart   = 0,
-                dirty             = true,
+                auraGroupStart    = {},
+                auraGroupEnd      = {},
                 extraDebuffFrames = {},
+                dirty             = true,
             }
         end
 
@@ -304,8 +360,8 @@ function Debuffs:OnEnable()
             end
             frame_registry[frame].placedAuraStart = placedAuraStart
 
-            for _, place in pairs(userPlaced) do
-                local idx = placedAuraStart + place.idx - 1
+            for i = 1, maxUserPlaced + maxAuraGroup do
+                local idx = placedAuraStart + i - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 if not debuffFrame then
                     debuffFrame = CreateFrame("Button", nil, frame, "CompactDebuffTemplate")
@@ -323,7 +379,7 @@ function Debuffs:OnEnable()
                 end
             end
 
-            for i = 1, frame_registry[frame].maxDebuffs + maxUserPlaced do
+            for i = 1, frame_registry[frame].maxDebuffs + maxUserPlaced + maxAuraGroup do
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[i] or frame.debuffFrames[i]
                 if frameOpt.framestrata ~= "Inherited" then
                     debuffFrame:SetFrameStrata(frameOpt.framestrata)
@@ -378,14 +434,35 @@ function Debuffs:OnEnable()
             prevFrame = debuffFrame
             resizeDebuffFrame(debuffFrame)
         end
+        local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
-            local idx = frame_registry[frame].placedAuraStart + place.idx - 1
+            idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
             local parentIdx = place.toSpellId and userPlaced[place.toSpellId] and (frame_registry[frame].placedAuraStart + userPlaced[place.toSpellId].idx - 1)
             local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or frame
             debuffFrame:ClearAllPoints()
             debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
             resizeDebuffFrame(debuffFrame)
+        end
+        for k, v in pairs(auraGroup) do
+            frame_registry[frame].auraGroupStart[k] = idx + 1
+            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
+            anchorSet, prevFrame = false, nil
+            for _ in pairs(v.auraList) do
+                idx = idx + 1
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                if not anchorSet then
+                    debuffFrame:ClearAllPoints()
+                    debuffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset, v.yOffset)
+                    anchorSet = true
+                else
+                    debuffFrame:ClearAllPoints()
+                    debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
+                end
+                prevFrame = debuffFrame
+                resizeDebuffFrame(debuffFrame)
+            end
+            frame_registry[frame].auraGroupEnd[k] = idx
         end
 
         if frame.unit then

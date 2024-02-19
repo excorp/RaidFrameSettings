@@ -111,6 +111,19 @@ function Buffs:OnEnable()
         userPlacedIdx = userPlacedIdx + 1
     end
     maxUserPlaced = userPlacedIdx - 1
+    --aura group
+    local maxAuraGroup = 0
+    local auraGroup = {}
+    local auraGroupList = {}
+    for k, auraInfo in pairs(addon.db.profile.Buffs.AuraGroup) do
+        auraGroup[k] = CopyTable(auraInfo)
+        auraGroup[k].point = addon:ConvertDbNumberToPosition(auraInfo.point)
+        auraGroup[k].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
+        for aura in pairs(auraInfo.auraList) do
+            auraGroupList[tonumber(aura)] = auraGroupList[tonumber(aura)] or k
+            maxAuraGroup = maxAuraGroup + 1
+        end
+    end
     --Buff size
     local width  = frameOpt.width
     local height = frameOpt.height
@@ -161,9 +174,13 @@ function Buffs:OnEnable()
         CDT:StartCooldownText(cooldown)
         cooldown:SetDrawEdge(frameOpt.edge)
 
+        local auraGroupNo = auraGroupList[spellId]
         if userPlaced[spellId] and userPlaced[spellId].setSize then
             local placed = userPlaced[spellId]
             buffFrame:SetSize(placed.width, placed.height)
+        elseif auraGroupNo and auraGroup[auraGroupNo].setSize then
+            local group = auraGroup[auraGroupNo]
+            buffFrame:SetSize(group.width, group.height)
         elseif increase[spellId] then
             buffFrame:SetSize(big_width, big_height)
         else
@@ -188,6 +205,7 @@ function Buffs:OnEnable()
         -- set placed aura / other aura
         local index = 1
         local frameNum = 1
+        local groupFrameNum = {}
         local filter = nil
         while true do
             local buffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId, canApplyAura = UnitBuff(frame.displayedUnit, index, filter)
@@ -199,6 +217,13 @@ function Buffs:OnEnable()
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, index, filter)
+                elseif auraGroupList[spellId] then
+                    local groupNo = auraGroupList[spellId]
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] or 1
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + groupFrameNum[groupNo] - 1
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, index, filter)
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] + 1
                 elseif frameNum <= frame_registry[frame].maxBuffs then
                     local buffFrame = frame.buffFrames[frameNum] or frame_registry[frame].extraBuffFrames[frameNum]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, index, filter)
@@ -224,6 +249,35 @@ function Buffs:OnEnable()
             buffFrame:Hide()
             CooldownFrame_Clear(buffFrame.cooldown)
         end
+        -- Modify the anchor of an auraGroup and hide left aura group
+        for groupNo, v in pairs(auraGroup) do
+            if groupFrameNum[groupNo] and groupFrameNum[groupNo] > 0 then
+                if v.orientation == 5 or v.orientation == 6 then
+                    local idx = frame_registry[frame].auraGroupStart[groupNo]
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    local x,y = 0,0
+                    for i = 2, groupFrameNum[groupNo] -1 do
+                        local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                        local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                        local w, h = buffFrame:GetSize()
+                        if v.orientation == 5 then
+                            x = x + w
+                        elseif v.orientation == 6 then
+                            y = y + h
+                        end
+                    end
+                    buffFrame:ClearAllPoints()
+                    buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x/2, v.yOffset + y/2)
+                end
+            end
+            local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
+            for i = groupFrameNum[groupNo] or 1, groupSize do
+                local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                buffFrame:Hide()
+                CooldownFrame_Clear(buffFrame.cooldown)
+            end
+        end
     end
     self:HookFunc("CompactUnitFrame_UpdateBuffs", onUpdateBuffs)
 
@@ -236,8 +290,10 @@ function Buffs:OnEnable()
             frame_registry[frame] = {
                 maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
                 placedAuraStart = 0,
-                dirty           = true,
+                auraGroupStart  = {},
+                auraGroupEnd    = {},
                 extraBuffFrames = {},
+                dirty           = true,
             }
         end
 
@@ -259,8 +315,8 @@ function Buffs:OnEnable()
             end
             frame_registry[frame].placedAuraStart = placedAuraStart
 
-            for _, place in pairs(userPlaced) do
-                local idx = placedAuraStart + place.idx - 1
+            for i = 1, maxUserPlaced + maxAuraGroup do
+                local idx = placedAuraStart + i - 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 if not buffFrame then
                     buffFrame = CreateFrame("Button", nil, frame, "CompactBuffTemplate")
@@ -271,7 +327,7 @@ function Buffs:OnEnable()
                 buffFrame.icon:SetTexCoord(0, 1, 0, 1)
             end
 
-            for i = 1, frame_registry[frame].maxBuffs + maxUserPlaced do
+            for i = 1, frame_registry[frame].maxBuffs + maxUserPlaced + maxAuraGroup do
                 local buffFrame = frame_registry[frame].extraBuffFrames[i] or frame.buffFrames[i]
                 if frameOpt.framestrata ~= "Inherited" then
                     buffFrame:SetFrameStrata(frameOpt.framestrata)
@@ -326,14 +382,35 @@ function Buffs:OnEnable()
             prevFrame = buffFrame
             resizeBuffFrame(buffFrame)
         end
+        local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
-            local idx = frame_registry[frame].placedAuraStart + place.idx - 1
+            idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
             local parentIdx = place.toSpellId and userPlaced[place.toSpellId] and (frame_registry[frame].placedAuraStart + userPlaced[place.toSpellId].idx - 1)
             local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
             buffFrame:ClearAllPoints()
             buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
             resizeBuffFrame(buffFrame)
+        end
+        for k, v in pairs(auraGroup) do
+            frame_registry[frame].auraGroupStart[k] = idx + 1
+            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
+            anchorSet, prevFrame = false, nil
+            for _ in pairs(v.auraList) do
+                idx = idx + 1
+                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                if not anchorSet then
+                    buffFrame:ClearAllPoints()
+                    buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset, v.yOffset)
+                    anchorSet = true
+                else
+                    buffFrame:ClearAllPoints()
+                    buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
+                end
+                prevFrame = buffFrame
+                resizeBuffFrame(buffFrame)
+            end
+            frame_registry[frame].auraGroupEnd[k] = idx
         end
 
         if frame.unit then

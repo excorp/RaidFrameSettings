@@ -2284,7 +2284,6 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                         end
                     end
                     self.db.profile[category].AuraPosition[spellId] = nil
-                    auraPositionOptions[spellId] = nil
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
@@ -2605,8 +2604,8 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 name = "remove",
                 type = "execute",
                 func = function()
-                    self.db.profile[category].AuraGroup[groupNo] = nil
-                    groupOptions["group" .. groupNo] = nil
+                    table.remove(self.db.profile[category].AuraGroup, groupNo)
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,

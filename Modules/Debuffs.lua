@@ -455,7 +455,7 @@ function Debuffs:OnEnable()
         end
         for k, v in pairs(auraGroup) do
             frame_registry[frame].auraGroupStart[k] = idx + 1
-            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap)
+            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
             anchorSet = false
             for _ in pairs(v.auraList) do
                 idx = idx + 1

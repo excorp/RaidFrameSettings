@@ -956,7 +956,7 @@ local options = {
                                                 local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
                                                 tinsert(dbObjGroup, {
                                                     name = "",
-                                                    porint = 1,
+                                                    point = 1,
                                                     relativePoint = 1,
                                                     xOffset = 0,
                                                     yOffset = 0,
@@ -1308,7 +1308,7 @@ local options = {
                                                 local dbObjGroup = RaidFrameSettings.db.profile["Debuffs"].AuraGroup
                                                 tinsert(dbObjGroup, {
                                                     name = "",
-                                                    porint = 1,
+                                                    point = 1,
                                                     relativePoint = 1,
                                                     xOffset = 0,
                                                     yOffset = 0,
@@ -2460,7 +2460,6 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 set = function(_, value)
                     local newGroupNo = tonumber(value) or groupNo
                     if newGroupNo == groupNo or newGroupNo < 0 or newGroupNo > #self.db.profile[category].AuraGroup then
-                        DevTool:AddData({groupNo, newGroupNo, #self.db.profile[category].AuraGroup})
                         return
                     end
                     local info = self.db.profile[category].AuraGroup[groupNo]

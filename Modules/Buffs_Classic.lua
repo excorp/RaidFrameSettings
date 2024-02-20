@@ -260,6 +260,10 @@ function Buffs:OnEnable()
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, v.index, filter)
+                    -- grow direction == NONE
+                    if auraGroup[groupNo].orientation == 7 then
+                        break
+                    end
                 end
             end
         end
@@ -450,6 +454,10 @@ function Buffs:OnEnable()
                 end
                 prevFrame = buffFrame
                 resizeBuffFrame(buffFrame)
+                -- grow direction == NONE
+                if v.orientation == 7 then
+                    break
+                end
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end
@@ -475,14 +483,6 @@ function Buffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     self:SetSpellGetVisibilityInfo(false)
-
-    local locale = GetLocale()
-    local stackFont = "Fonts/ARIALN.TTF"
-    if locale == "zhCN" then
-        stackFont = "Fonts/ARKai_T.TTF"
-    elseif locale == "zhTW" then
-        stackFont = "Fonts/BLEI00D.TTF"
-    end
 
     local restoreBuffFrames = function(frame)
         if not frame_registry[frame] then

@@ -254,6 +254,10 @@ function Buffs:OnEnable()
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
+                    -- grow direction == NONE
+                    if auraGroup[groupNo].orientation == 7 then
+                        break
+                    end
                 end
             end
         end
@@ -444,6 +448,10 @@ function Buffs:OnEnable()
                 end
                 prevFrame = buffFrame
                 resizeBuffFrame(buffFrame)
+                -- grow direction == NONE
+                if v.orientation == 7 then
+                    break
+                end
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end

@@ -312,6 +312,10 @@ function Debuffs:OnEnable()
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
+                    -- grow direction == NONE
+                    if auraGroup[groupNo].orientation == 7 then
+                        break
+                    end
                 end
             end
         end
@@ -325,7 +329,7 @@ function Debuffs:OnEnable()
                 CooldownFrame_Clear(debuffFrame.cooldown)
             end
         end
-        for i = frameNum, frame_registry[frame].maxDebuffs do
+        for i = frameNum, math.max(frame_registry[frame].maxDebuffs, frame.maxDebuffs) do
             local debuffFrame = frame.debuffFrames[i] or frame_registry[frame].extraDebuffFrames[i]
             debuffFrame:Hide()
             CooldownFrame_Clear(debuffFrame.cooldown)
@@ -381,6 +385,7 @@ function Debuffs:OnEnable()
         end
 
         if frame_registry[frame].dirty then
+            frame_registry[frame].maxDebuffs = frameOpt.maxdebuffs
             frame_registry[frame].dirty = false
             local placedAuraStart = frame.maxDebuffs + 1
             for i = frame.maxDebuffs + 1, frame_registry[frame].maxDebuffs do
@@ -512,6 +517,10 @@ function Debuffs:OnEnable()
                 end
                 prevFrame = debuffFrame
                 resizeDebuffFrame(debuffFrame)
+                -- grow direction == NONE
+                if v.orientation == 7 then
+                    break
+                end
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end
@@ -537,14 +546,6 @@ function Debuffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     self:SetSpellGetVisibilityInfo(false)
-    
-    local locale = GetLocale()
-    local stackFont = "Fonts/ARIALN.TTF"
-    if locale == "zhCN" then
-        stackFont = "Fonts/ARKai_T.TTF"
-    elseif locale == "zhTW" then
-        stackFont = "Fonts/BLEI00D.TTF"
-    end
 
     local restoreDebuffFrames = function(frame)
         if not frame_registry[frame] then

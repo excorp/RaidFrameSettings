@@ -21,50 +21,7 @@ local UnitClass = UnitClass
 local GetClassColor = GetClassColor
 
 local locale = GetLocale()
-local defaultNameFont = {
-    koKR = {
-        font = "Fonts\\FRIZQT__.TTF",
-        height = 10,
-    },
-    zhCN = {
-        font = "Fonts\\ARKai_T.TTF",
-        height = 11,
-    },
-    zhTW = {
-        font = "Fonts\\blei00d.TTF",
-        height = 15,
-    },
-    ruRU = {
-        font = "Fonts\\FRIZQT___CYR.TTF",
-        height = 15,
-    },
-    default = {
-        font = "Fonts\\FRIZQT__.TTF",
-        height = 10,
-    },
-}
-local defaultStatusFont = {
-    koKR = {
-        font = "Fonts\\FRIZQT__.TTF",
-        height = 12,
-    },
-    zhCN = {
-        font = "Fonts\\ARKai_T.TTF",
-        height = 12,
-    },
-    zhTW = {
-        font = "Fonts\\blei00d.TTF",
-        height = 15,
-    },
-    ruRU = {
-        font = "Fonts\\FRIZQT___CYR.TTF",
-        height = 15,
-    },
-    default = {
-        font = "Fonts\\FRIZQT__.TTF",
-        height = 12,
-    },
-}
+local defaultFont = addonTable.defaultFont
 
 function Fonts:OnEnable()
     local dbObj = RaidFrameSettings.db.profile.Fonts
@@ -109,7 +66,7 @@ function Fonts:OnEnable()
         frame.name:ClearAllPoints()
         local res = frame.name:SetFont(Name.Font, Name.FontSize, Name.Outlinemode)
         if not res then
-            local font = defaultNameFont[locale] or defaultNameFont.default
+            local font = defaultFont.Name[locale] or defaultFont.Name.default
             frame.name:SetFont(font.font, font.height, "NONE")
         end
         frame.name:SetWidth((frame:GetWidth()))
@@ -121,7 +78,7 @@ function Fonts:OnEnable()
         frame.statusText:ClearAllPoints()
         res = frame.statusText:SetFont(Status.Font, Status.FontSize, Status.Outlinemode)
         if not res then
-            local font = defaultStatusFont[locale] or defaultStatusFont.default
+            local font = defaultFont.Status[locale] or defaultFont.Status.default
             frame.name:SetFont(font.font, font.height, "NONE")
         end
         frame.statusText:SetWidth((frame:GetWidth()))
@@ -162,7 +119,7 @@ end
 function Fonts:OnDisable()
     local restoreFonts = function(frame)
         --Name
-        local font = defaultNameFont[locale] or defaultNameFont.default
+        local font = defaultFont.Name[locale] or defaultFont.Name.default
         frame.name:SetFont(font.font, font.height, "NONE")
         frame.name:SetPoint("TOPLEFT", frame.roleIcon, "TOPRIGHT", 0, -1);
         frame.name:SetPoint("TOPRIGHT", -3, -3)
@@ -171,7 +128,7 @@ function Fonts:OnDisable()
         frame.name:SetShadowColor(0,0,0)
         frame.name:SetShadowOffset(1,-1)
      --Status
-        font = defaultStatusFont[locale] or defaultStatusFont.default
+        font = defaultFont.Status[locale] or defaultFont.Status.default
         frame.name:SetFont(font.font, font.height, "NONE")
         local frameWidth = frame:GetWidth()
         local frameHeight = frame:GetHeight()

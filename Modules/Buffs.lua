@@ -9,6 +9,9 @@ Mixin(Buffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Media = LibStub("LibSharedMedia-3.0")
 
+local locale = GetLocale()
+local defaultFont = addonTable.defaultFont
+
 --[[
     --TODO local references here
 ]]
@@ -359,7 +362,12 @@ function Buffs:OnEnable()
                     local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
                     cooldownText:ClearAllPoints()
                     cooldownText:SetPoint(durationOpt.point, buffFrame, durationOpt.relativePoint, durationOpt.xOffsetFont, durationOpt.yOffsetFont)
-                    cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
+                    local res = cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
+                    if not res then
+                        local font = defaultFont.Stack[locale]
+                        cooldownText:SetFont(font.font, font.height, "OUTLINE, THICK")
+                        frame_registry[frame].dirty = true
+                    end
                     cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b)
                     cooldownText:SetShadowColor(durationOpt.shadowColor.r, durationOpt.shadowColor.g, durationOpt.shadowColor.b, durationOpt.shadowColor.a)
                     cooldownText:SetShadowOffset(durationOpt.xOffsetShadow, durationOpt.yOffsetShadow)
@@ -376,7 +384,12 @@ function Buffs:OnEnable()
                 local stackText = buffFrame.count
                 stackText:ClearAllPoints()
                 stackText:SetPoint(stackOpt.point, buffFrame, stackOpt.relativePoint, stackOpt.xOffsetFont, stackOpt.yOffsetFont)
-                stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
+                local res = stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
+                if not res then
+                    local font = defaultFont.Stack[locale]
+                    stackText:SetFont(font.font, font.height, "OUTLINE, THICK")
+                    frame_registry[frame].dirty = true
+                end
                 stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
                 stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
                 stackText:SetShadowOffset(stackOpt.xOffsetShadow, stackOpt.yOffsetShadow)
@@ -456,14 +469,6 @@ function Buffs:OnDisable()
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     self:SetSpellGetVisibilityInfo(false)
 
-    local locale = GetLocale()
-    local stackFont = "Fonts/ARIALN.TTF"
-    if locale == "zhCN" then
-        stackFont = "Fonts/ARKai_T.TTF"
-    elseif locale == "zhTW" then
-        stackFont = "Fonts/BLEI00D.TTF"
-    end
-
     local restoreBuffFrames = function(frame)
         if not frame_registry[frame] then
             return
@@ -500,7 +505,8 @@ function Buffs:OnDisable()
             local stackText = buffFrame.count
             stackText:ClearAllPoints()
             stackText:SetPoint("BOTTOMRIGHT", buffFrame, "BOTTOMRIGHT", 0, 0)
-            stackText:SetFont(stackFont, 12, "OUTLINE, THICK")
+            local font = defaultFont.Stack[locale] or defaultFont.Stack.default
+            stackText:SetFont(font.font, font.height, "OUTLINE, THICK")
             stackText:SetTextColor(1,1,1,1)
             stackText:SetShadowColor(0,0,0)
             stackText:SetShadowOffset(0,0)

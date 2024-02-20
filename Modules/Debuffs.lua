@@ -9,6 +9,9 @@ Mixin(Debuffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Media = LibStub("LibSharedMedia-3.0")
 
+local locale = GetLocale()
+local defaultFont = addonTable.defaultFont
+
 --Debuffframe size
 --WoW Api
 local GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
@@ -427,7 +430,12 @@ function Debuffs:OnEnable()
                     local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
                     cooldownText:ClearAllPoints()
                     cooldownText:SetPoint(durationOpt.point, debuffFrame, durationOpt.relativePoint, durationOpt.xOffsetFont, durationOpt.yOffsetFont)
-                    cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
+                    local res = cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
+                    if not res then
+                        local font = defaultFont.Stack[locale]
+                        cooldownText:SetFont(font.font, font.height, "OUTLINE, THICK")
+                        frame_registry[frame].dirty = true
+                    end
                     cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b)
                     cooldownText:SetShadowColor(durationOpt.shadowColor.r, durationOpt.shadowColor.g, durationOpt.shadowColor.b, durationOpt.shadowColor.a)
                     cooldownText:SetShadowOffset(durationOpt.xOffsetShadow, durationOpt.yOffsetShadow)
@@ -444,7 +452,12 @@ function Debuffs:OnEnable()
                 local stackText = debuffFrame.count
                 stackText:ClearAllPoints()
                 stackText:SetPoint(stackOpt.point, debuffFrame, stackOpt.relativePoint, stackOpt.xOffsetFont, stackOpt.yOffsetFont)
-                stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
+                local res = stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
+                if not res then
+                    local font = defaultFont.Stack[locale]
+                    stackText:SetFont(font.font, font.height, "OUTLINE, THICK")
+                    frame_registry[frame].dirty = true
+                end
                 stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
                 stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
                 stackText:SetShadowOffset(stackOpt.xOffsetShadow, stackOpt.yOffsetShadow)
@@ -572,8 +585,9 @@ function Debuffs:OnDisable()
             CDT:DisableCooldownText(cooldown)
             local stackText = debuffFrame.count
             stackText:ClearAllPoints()
-            stackText:SetPoint("BOTTOMRIGHT", buffFrame, "BOTTOMRIGHT", 0, 0)
-            stackText:SetFont(stackFont, 12, "OUTLINE, THICK")
+            stackText:SetPoint("BOTTOMRIGHT", debuffFrame, "BOTTOMRIGHT", 0, 0)
+            local font = defaultFont.Stack[locale] or defaultFont.Stack.default
+            stackText:SetFont(font.font, font.height, "OUTLINE, THICK")
             stackText:SetTextColor(1,1,1,1)
             stackText:SetShadowColor(0,0,0)
             stackText:SetShadowOffset(0,0)

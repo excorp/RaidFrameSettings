@@ -960,7 +960,8 @@ local options = {
                                                     relativePoint = 1,
                                                     xOffset = 0,
                                                     yOffset = 0,
-                                                    orientation = 1,
+                                                    orientation = 2,
+                                                    gap = 0,
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
@@ -1313,7 +1314,8 @@ local options = {
                                                     relativePoint = 1,
                                                     xOffset = 0,
                                                     yOffset = 0,
-                                                    orientation = 1,
+                                                    orientation = 2,
+                                                    gap = 0,
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
@@ -2587,6 +2589,22 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 1,
+            },
+            gap = {
+                order = 7.1,
+                name = "Gap",
+                type = "range",
+                get = function()
+                    return dbObj.gap
+                end,
+                set = function(_, value)
+                    dbObj.gap = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                softMin = -10,
+                softMax = 10,
+                step = 1,
+                width = 0.8,
             },
             setSize = {
                 order = 8,

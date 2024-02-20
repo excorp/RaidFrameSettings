@@ -49,6 +49,19 @@ function addon:ConvertDbNumberToFrameStrata(number)
     return position or ""
 end
 
+function addon:ConvertDbNumberToBaseline(number)
+    local positions = {
+        [1] = "TOP",
+        [2] = "",
+        [3] = "BOTTOM",
+        [4] = "LEFT",
+        [5] = "",
+        [6] = "RIGHT",
+    }
+    local position = positions[number]
+    return position or ""
+end
+
 --[[
 
 ]]

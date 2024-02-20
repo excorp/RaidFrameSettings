@@ -71,6 +71,7 @@ function Buffs:OnEnable()
 
     local frameOpt = CopyTable(addon.db.profile.Buffs.BuffFramesDisplay)
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
+    frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Buffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
     durationOpt.font = Media:Fetch("font", durationOpt.font)
@@ -162,7 +163,7 @@ function Buffs:OnEnable()
     --Buffframe position
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
-    local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
+    local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap, frameOpt.baseline)
 
     local comparePriority = function(a, b)
         return a.priority > b.priority

@@ -164,7 +164,8 @@ local function getDebuffDurationOptions()
 end
 
 local profiles = {}
-local options = {
+local options
+options = {
     name = "Raid Frame Settings",
     handler = RaidFrameSettings,
     type = "group",
@@ -811,8 +812,46 @@ local options = {
                                             type = "select",
                                             values = {"Left", "Right", "Up", "Down"},
                                             sorting = {1,2,3,4},
-                                            get = "GetStatus",
-                                            set = "SetStatus",
+                                            get = function()
+                                                local orientation = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation
+                                                local baselineObj = options.args.Auras.args.Buffs.args.Buffs.args.BuffFramesDisplay.args.baseline
+                                                if orientation == 1 or orientation == 2 then
+                                                    baselineObj.values = { "TOP", "MIDDLE", "BOTTOM" }
+                                                elseif orientation == 3 or orientation == 4 then
+                                                    baselineObj.values = { "LEFT", "CENTER", "RIGHT" }
+                                                end
+                                                return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation
+                                            end,
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation = value
+                                                local baseline = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline
+                                                if value == 1 or value == 2 then
+                                                    if baseline >= 4 then
+                                                        RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline = 3
+                                                    end
+                                                elseif value == 3 or value == 4 then
+                                                    if baseline <= 3 then
+                                                        RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline = 4
+                                                    end
+                                                end
+                                                RaidFrameSettings:UpdateModule("Buffs")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                        baseline = {
+                                            order = 6.1,
+                                            name = "baseline",
+                                            type = "select",
+                                            values = { "TOP/LEFT", "MIDDLE/CENTER", "BOTTOM/RIGHT"},
+                                            sorting = { 1, 2, 3},
+                                            get = function()
+                                                local baseline = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline
+                                                return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation >= 3 and (baseline - 3) or baseline
+                                            end,
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation >= 3 and (value + 3) or value
+                                                RaidFrameSettings:UpdateModule("Buffs")
+                                            end,
                                             width = 0.8,
                                         },
                                         newline2 = {
@@ -1174,8 +1213,46 @@ local options = {
                                             type = "select",
                                             values = {"Left", "Right", "Up", "Down"},
                                             sorting = {1,2,3,4},
-                                            get = "GetStatus",
-                                            set = "SetStatus",
+                                            get = function()
+                                                local orientation = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation
+                                                local baselineObj = options.args.Auras.args.Debuffs.args.Debuffs.args.DebuffFramesDisplay.args.baseline
+                                                if orientation == 1 or orientation == 2 then
+                                                    baselineObj.values = { "TOP", "MIDDLE", "BOTTOM" }
+                                                elseif orientation == 3 or orientation == 4 then
+                                                    baselineObj.values = { "LEFT", "CENTER", "RIGHT" }
+                                                end
+                                                return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation
+                                            end,
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation = value
+                                                local baseline = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline
+                                                if value == 1 or value == 2 then
+                                                    if baseline >= 4 then
+                                                        RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline = 3
+                                                    end
+                                                elseif value == 3 or value == 4 then
+                                                    if baseline <= 3 then
+                                                        RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline = 4
+                                                    end
+                                                end
+                                                RaidFrameSettings:UpdateModule("Debuffs")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                        baseline = {
+                                            order = 6.1,
+                                            name = "baseline",
+                                            type = "select",
+                                            values = { "TOP/LEFT", "MIDDLE/CENTER", "BOTTOM/RIGHT"},
+                                            sorting = { 1, 2, 3},
+                                            get = function()
+                                                local baseline = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline
+                                                return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation >= 3 and (baseline - 3) or baseline
+                                            end,
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation >= 3 and (value + 3) or value
+                                                RaidFrameSettings:UpdateModule("Debuffs")
+                                            end,
                                             width = 0.8,
                                         },
                                         newline2 = {
@@ -2058,7 +2135,6 @@ local options = {
         },
     },
 }
-
 
 function RaidFrameSettings:GetProfiles()
     RaidFrameSettings.db:GetProfiles(profiles)

@@ -263,7 +263,7 @@ function module:SetUpdateHealthColor()
     end
 
     updateHealthColor = function(frame)
-        if not frame or not frame.debuffs or frame.unit:match("na") then --this will exclude nameplates and arena
+        if not frame or frame.maxDebuffs == 0 or frame.unit:match("na") then --this will exclude nameplates and arena
             return
         end
         blockColorUpdate[frame] = false

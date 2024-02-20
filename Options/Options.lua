@@ -2215,7 +2215,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 pattern = "^%d+$",
                 usage = "please enter a number",
                 get = function()
-                    if dbObj.priority > 0 then
+                    if dbObj.priority and dbObj.priority > 0 then
                         return tostring(dbObj.priority)
                     end
                 end,
@@ -2496,6 +2496,12 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
     local maxEntry = 0
     for _ in pairs(groupOptions) do
         maxEntry = maxEntry + 1
+    end
+    -- for backward compatibility 
+    if type(dbObj[spellId]) ~= table then
+        dbObj[spellId] = {
+            priority = 0,
+        }
     end
     local aura_entry = {
         order = maxEntry + 1,

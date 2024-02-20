@@ -1064,6 +1064,7 @@ local options = {
                                             show = false,
                                             other = false,
                                             hideInCombat = false,
+                                            priority = 1,
                                         }
                                         RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
                                         RaidFrameSettings:UpdateModule("Buffs")
@@ -1416,6 +1417,7 @@ local options = {
                                             show = false,
                                             other = false,
                                             hideInCombat = false,
+                                            priority = 1,
                                         }
                                         RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
                                         RaidFrameSettings:UpdateModule("Debuffs")
@@ -2095,8 +2097,8 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 name = "Show",
                 type = "toggle",
                 get = function() return dbObj.show end,
-                set = function(_, other)
-                    dbObj.show = other
+                set = function(_, value)
+                    dbObj.show = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
@@ -2107,8 +2109,8 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 name = "Other's buff",
                 type = "toggle",
                 get = function() return dbObj.other end,
-                set = function(_, other)
-                    dbObj.other = other
+                set = function(_, value)
+                    dbObj.other = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.8,
@@ -2119,14 +2121,27 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 name = "Hide In Combat",
                 type = "toggle",
                 get = function() return dbObj.hideInCombat end,
-                set = function(_, other)
-                    dbObj.hideInCombat = other
+                set = function(_, value)
+                    dbObj.hideInCombat = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.8,
             },
-            remove = {
+            priority = {
+                hidden = function() return not dbObj.show end,
                 order = 5,
+                name = "Priority",
+                type = "input",
+                pattern = "^%d+$",
+                get = function() return tostring(dbObj.priority) end,
+                set = function(_, value)
+                    dbObj.priority = tonumber(value)
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.4,
+            },
+            remove = {
+                order = 6,
                 name = "remove",
                 type = "execute",
                 func = function()
@@ -2387,7 +2402,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
 end
 
 function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
-    local dbObj = self.db.profile[category].AuraGroup[groupNo].AuraList
+    local dbObj = self.db.profile[category].AuraGroup[groupNo].auraList
     local groupOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args["group" .. groupNo].args.auraList.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
@@ -2411,8 +2426,22 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 type = "description",
                 width = 1.5,
             },
-            remove = {
+            priority = {
                 order = 2,
+                name = "Priority",
+                type = "input",
+                pattern = "^%d+$",
+                get = function() 
+                    return tostring(dbObj[spellId].priority) 
+                end,
+                set = function(_, value)
+                    dbObj[spellId].priority = tonumber(value)
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.4,
+            },
+            remove = {
+                order = 3,
                 name = "remove",
                 type = "execute",
                 func = function()
@@ -2622,7 +2651,9 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 pattern = "^%d+$",
                 usage = "please enter a number",
                 set = function(_, value)
-                    dbObj.auraList[value] = true
+                    dbObj.auraList[value] = {
+                        priority = 1,
+                    }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     RaidFrameSettings:UpdateModule(category)
                 end

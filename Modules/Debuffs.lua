@@ -133,7 +133,9 @@ function Debuffs:OnEnable()
         auraGroup[k] = CopyTable(auraInfo)
         auraGroup[k].point = addon:ConvertDbNumberToPosition(auraInfo.point)
         auraGroup[k].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
-        for aura in pairs(auraInfo.auraList) do
+        auraGroup[k].auraList = {}
+        for aura, v in pairs(auraInfo.auraList) do
+            auraGroup[k].auraList[tonumber(aura)] = v
             auraGroupList[tonumber(aura)] = auraGroupList[tonumber(aura)] or k
             maxAuraGroup = maxAuraGroup + 1
         end
@@ -176,6 +178,13 @@ function Debuffs:OnEnable()
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
+
+    local comparePriority = function(a, b)
+        if a.priority < 0 then
+            return false
+        end
+        return a.priority < b.priority
+    end
 
     local onSetDebuff = function(debuffFrame, aura)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -260,6 +269,9 @@ function Debuffs:OnEnable()
         -- set placed aura / other aura
         local frameNum = 1
         local groupFrameNum = {}
+        local sorted = {
+            [0] = {},
+        }
         frame.debuffs:Iterate(function(auraInstanceID, aura)
             if userPlaced[aura.spellId] then
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
@@ -267,22 +279,40 @@ function Debuffs:OnEnable()
                 CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
                 return false
             end
+
             if auraGroupList[aura.spellId] then
                 local groupNo = auraGroupList[aura.spellId]
-                groupFrameNum[groupNo] = groupFrameNum[groupNo] or 1
-                local idx = frame_registry[frame].auraGroupStart[groupNo] + groupFrameNum[groupNo] - 1
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
-                groupFrameNum[groupNo] = groupFrameNum[groupNo] + 1
+                local priority = auraGroup[groupNo].auraList[aura.spellId].priority or -1
+                if not sorted[groupNo] then sorted[groupNo] = {} end
+                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura })
+                groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 return false
-             end
+            end
             if frameNum <= frame_registry[frame].maxDebuffs then
-                local debuffFrame = frame.debuffFrames[frameNum] or frame_registry[frame].extraDebuffFrames[frameNum]
-                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
+                local priority = filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or -1
+                tinsert(sorted[0], {spellId = aura.spellId, priority = priority, aura = aura})
                 frameNum = frameNum + 1
             end
             return false
         end)
+        -- set debuffs after sorting to priority.
+        for _, v in pairs(sorted) do
+            table.sort(v, comparePriority)
+        end
+        for groupNo, auralist in pairs(sorted) do
+            for k, v in pairs(auralist) do
+                if groupNo == 0 then
+                    -- default aura frame
+                    local debuffFrame = frame.debuffFrames[k] or frame_registry[frame].extraDebuffFrames[k]
+                    CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
+                else
+                    -- aura group frame
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
+                end
+            end
+        end
 
         -- hide left aura frames
         for i = 1, maxUserPlaced do

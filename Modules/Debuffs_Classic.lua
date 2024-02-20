@@ -134,7 +134,9 @@ function Debuffs:OnEnable()
         auraGroup[k] = CopyTable(auraInfo)
         auraGroup[k].point = addon:ConvertDbNumberToPosition(auraInfo.point)
         auraGroup[k].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
-        for aura in pairs(auraInfo.auraList) do
+        auraGroup[k].auraList = {}
+        for aura, v in pairs(auraInfo.auraList) do
+            auraGroup[k].auraList[tonumber(aura)] = v
             auraGroupList[tonumber(aura)] = auraGroupList[tonumber(aura)] or k
             maxAuraGroup = maxAuraGroup + 1
         end
@@ -179,6 +181,13 @@ function Debuffs:OnEnable()
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
+
+    local comparePriority = function(a, b)
+        if a.priority < 0 then
+            return false
+        end
+        return a.priority < b.priority
+    end
 
     local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -245,6 +254,9 @@ function Debuffs:OnEnable()
         local frameNum = 1
         local groupFrameNum = {}
         local filter = nil
+        local sorted = {
+            [0] = {},
+        }
         while true do
             local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(frame.displayedUnit, index, filter)
             if not debuffName then
@@ -259,18 +271,51 @@ function Debuffs:OnEnable()
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
-                    groupFrameNum[groupNo] = groupFrameNum[groupNo] or 1
-                    local idx = frame_registry[frame].auraGroupStart[groupNo] + groupFrameNum[groupNo] - 1
-                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
-                    groupFrameNum[groupNo] = groupFrameNum[groupNo] + 1
+                    local priority = auraGroup[groupNo].auraList[spellId].priority or -1
+                    if not sorted[groupNo] then sorted[groupNo] = {} end
+                    tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index })
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 elseif frameNum <= frame_registry[frame].maxDebuffs then
-                    local debuffFrame = frame.debuffFrames[frameNum] or frame_registry[frame].extraDebuffFrames[frameNum]
-                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
+                    local priority = filteredAuras[spellId] and filteredAuras[spellId].priority or -1
+                    tinsert(sorted[0], {spellId = spellId, priority = priority, index = index})
                     frameNum = frameNum + 1
                 end
             end
             index = index + 1
+        end
+        -- set buffs after sorting to priority.
+        for _, v in pairs(sorted) do
+            table.sort(v, comparePriority)
+            -- The classic version has problems with sorting. Therefore, negative numbers are handled separately
+            local t1, t2 = {}, {}
+            for k, v2 in pairs(v) do 
+                if v2.priority < 0 then
+                    tinsert(t2, v2)
+                else
+                    tinsert(t1, v2)
+                end
+                v[k] = nil
+            end
+            for _, v2 in pairs(t1) do
+                tinsert(v, v2)
+            end
+            for _, v2 in pairs(t2) do
+                tinsert(v, v2)
+            end
+        end
+        for groupNo, auralist in pairs(sorted) do
+            for k, v in pairs(auralist) do
+                if groupNo == 0 then
+                    -- default aura frame
+                    local debuffFrame = frame.debuffFrames[k] or frame_registry[frame].extraDebuffFrames[k]
+                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter)
+                else
+                    -- aura group frame
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter)
+                end
+            end
         end
 
         -- hide left aura frames

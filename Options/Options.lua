@@ -1064,7 +1064,7 @@ local options = {
                                             show = false,
                                             other = false,
                                             hideInCombat = false,
-                                            priority = 1,
+                                            priority = 0,
                                         }
                                         RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
                                         RaidFrameSettings:UpdateModule("Buffs")
@@ -1417,7 +1417,7 @@ local options = {
                                             show = false,
                                             other = false,
                                             hideInCombat = false,
-                                            priority = 1,
+                                            priority = 0,
                                         }
                                         RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
                                         RaidFrameSettings:UpdateModule("Debuffs")
@@ -2133,7 +2133,12 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 name = "Priority",
                 type = "input",
                 pattern = "^%d+$",
-                get = function() return tostring(dbObj.priority) end,
+                usage = "please enter a number",
+                get = function()
+                    if dbObj.priority > 0 then
+                        return tostring(dbObj.priority)
+                    end
+                end,
                 set = function(_, value)
                     dbObj.priority = tonumber(value)
                     RaidFrameSettings:UpdateModule(category)
@@ -2431,8 +2436,11 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 name = "Priority",
                 type = "input",
                 pattern = "^%d+$",
-                get = function() 
-                    return tostring(dbObj[spellId].priority) 
+                usage = "please enter a number",
+                get = function()
+                    if dbObj[spellId].priority > 0 then
+                        return tostring(dbObj[spellId].priority)
+                    end
                 end,
                 set = function(_, value)
                     dbObj[spellId].priority = tonumber(value)
@@ -2652,7 +2660,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 usage = "please enter a number",
                 set = function(_, value)
                     dbObj.auraList[value] = {
-                        priority = 1,
+                        priority = 0,
                     }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     RaidFrameSettings:UpdateModule(category)

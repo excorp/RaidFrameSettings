@@ -180,10 +180,7 @@ function Debuffs:OnEnable()
     local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap)
 
     local comparePriority = function(a, b)
-        if a.priority < 0 then
-            return false
-        end
-        return a.priority < b.priority
+        return a.priority > b.priority
     end
 
     local onSetDebuff = function(debuffFrame, aura)
@@ -282,14 +279,15 @@ function Debuffs:OnEnable()
 
             if auraGroupList[aura.spellId] then
                 local groupNo = auraGroupList[aura.spellId]
-                local priority = auraGroup[groupNo].auraList[aura.spellId].priority or -1
+                local auraList = auraGroup[groupNo].auraList
+                local priority = auraList[aura.spellId].priority > 0 and auraList[aura.spellId].priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
                 if not sorted[groupNo] then sorted[groupNo] = {} end
                 tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura })
                 groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 return false
             end
             if frameNum <= frame_registry[frame].maxDebuffs then
-                local priority = filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or -1
+                local priority = filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
                 tinsert(sorted[0], {spellId = aura.spellId, priority = priority, aura = aura})
                 frameNum = frameNum + 1
             end

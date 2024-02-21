@@ -53,6 +53,7 @@ local defaults = {
                 fontsize      = 12,
                 useclasscolor = false,
                 position      = 3,
+                frame         = 1,
                 x_offset      = 0,
                 y_offset      = -5,
             },
@@ -225,6 +226,7 @@ local defaults = {
             },
             RaidMark = {
                 point       = 5,
+                frame       = 1,
                 x_offset    = 0,
                 y_offset    = 0,
                 width       = 20,

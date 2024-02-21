@@ -548,6 +548,15 @@ options = {
                             get = "GetStatus",
                             set = "SetStatus",
                         },
+                        frame = {
+                            order = 7,
+                            name = "Frame",
+                            type = "select",
+                            values = function() return RaidFrameSettings.db.profile.Module.RaidMark and {"Unit Frame", "Role Icon", "Raid Mark"} or {"Unit Frame", "Role Icon"} end,
+                            sorting = function() return RaidFrameSettings.db.profile.Module.RaidMark and {1,2,3} or {1,2} end,
+                            get = "GetStatus",
+                            set = "SetStatus",
+                        },
                         x_offset = {
                             order = 8,
                             name = "x - offset",
@@ -998,6 +1007,8 @@ options = {
                                                     name = "",
                                                     point = 1,
                                                     relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
                                                     xOffset = 0,
                                                     yOffset = 0,
                                                     orientation = 2,
@@ -1030,7 +1041,8 @@ options = {
                                                             ["spellId"] = tonumber(value),
                                                             point = 1,
                                                             relativePoint = 1,
-                                                            toSpellId = 0,
+                                                            frame = 1,
+                                                            frameNo = 0,
                                                             xOffset = 0,
                                                             yOffset = 0,
                                                             setSize = false,
@@ -1382,7 +1394,7 @@ options = {
                                     childGroups = "tab",
                                     args = {
                                         addGroup = {
-                                            order = 2,
+                                            order = 1,
                                             name = "New Group",
                                             type = "execute",
                                             func = function()
@@ -1391,6 +1403,8 @@ options = {
                                                     name = "",
                                                     point = 1,
                                                     relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
                                                     xOffset = 0,
                                                     yOffset = 0,
                                                     orientation = 2,
@@ -1408,7 +1422,7 @@ options = {
                                             width = 1,
                                         },
                                         auraGroup = {
-                                            order = 3,
+                                            order = 2,
                                             name = "Auras",
                                             type = "group",
                                             args = {
@@ -1423,7 +1437,8 @@ options = {
                                                             ["spellId"] = tonumber(value),
                                                             point = 1,
                                                             relativePoint = 1,
-                                                            toSpellId = 0,
+                                                            frame = 1,
+                                                            frameNo = 0,
                                                             xOffset = 0,
                                                             yOffset = 0,
                                                             setSize = false,
@@ -1803,6 +1818,15 @@ options = {
                             type = "select",
                             values = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                        },
+                        frame = {
+                            order = 1.1,
+                            name = "Frame",
+                            type = "select",
+                            values = {"Unit Frame", "Role Icon"},
+                            sorting = {1,2},
                             get = "GetStatus",
                             set = "SetStatus",
                         },
@@ -2282,6 +2306,79 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
     increaseOptions[spellId] = increase_entry
 end
 
+local function getParent(category, frame, frameNo)
+    if frame == 1 then
+        return 1, 0
+    elseif frame == 2 then
+        local placed = RaidFrameSettings.db.profile[category].AuraPosition[tostring(frameNo)]
+        if not placed then
+            return nil
+        end
+        return placed.frame, placed.frameNo
+    elseif frame == 3 then
+        local group = RaidFrameSettings.db.profile[category].AuraGroup[frameNo]
+        if not group then
+            return nil
+        end
+        return group.frame, group.frameNo
+    else
+        return nil
+    end
+end
+
+local function getChildren(category, frame, frameNo)
+    local children = {}
+    local placed = RaidFrameSettings.db.profile[category].AuraPosition
+    DevTool:AddData({category, frame, frameNo})
+    DevTool:AddData(placed, "placed")
+    for _, v in pairs(placed) do
+        DevTool:AddData(v, "placed2")
+        if v.frame == frame and v.frameNo == frameNo then
+            tinsert(children, v)
+        end
+    end
+    local group = RaidFrameSettings.db.profile[category].AuraGroup
+    for _, v in pairs(group) do
+        if v.frame == frame and v.frameNo == frameNo then
+            tinsert(children, v)
+        end
+    end
+    return children
+end
+
+local function linkParentAndChildrend(category, frame, frameNo)
+    local parentFrame, parentFrameNo = getParent(category, frame, frameNo)
+    if not parentFrame then
+        parentFrame = 1
+        parentFrameNo = 0
+    end
+    local children = getChildren(category, frame, frameNo)
+    DevTool:AddData(children, frame .. " " .. frameNo)
+    for _, v in pairs(children) do
+        v.frame = parentFrame
+        v.frameNo = parentFrameNo
+    end
+end
+
+local function validateParent(category, frame, frameNo, targetFrame, targetNo)
+    if frame == targetFrame and frameNo == targetNo then
+        return false
+    end
+    if targetNo ~= 0 then
+        while true do
+            local parentFrame, parentNo = getParent(category, targetFrame, targetNo)
+            if not parentFrame or (parentFrame == frame and parentNo == frameNo) then
+                return false
+            end
+            if parentFrame == 1 or parentNo == 0 then
+                break
+            end
+            targetFrame, targetNo = parentFrame, parentNo or 0
+        end
+    end
+    return true
+end
+
 function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
     local dbObj = self.db.profile[category].AuraPosition[spellId]
     local auraPositionOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args.auraGroup.args.auraList.args
@@ -2339,6 +2436,61 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 end,
                 width = 0.6,
             },
+            frame = {
+                order = 4.1,
+                name = "Frame",
+                type = "select",
+                values = {"Unit", "Placed", "Group"},
+                sorting = {1,2,3},
+                get = function()
+                    local optObj = auraPositionOptions[spellId].args
+                    if dbObj.frame == 2 then
+                        optObj.frameNo.name = "SpellId"
+                        optObj.frameNo.usage = "please enter a number (spellId of the aura frame you want to attach.)"
+                    elseif dbObj.frame == 3 then
+                        optObj.frameNo.name = "GroupNo"
+                        optObj.frameNo.usage = "please enter a number (no of aura group you want to attach.)"
+                    end
+                    return dbObj.frame
+                end,
+                set = function(_, value)
+                    if dbObj.frame == value then
+                        return
+                    end
+                    if dbObj.frameNo > 0 then
+                        linkParentAndChildrend(category, 2, tonumber(spellId))
+                    end
+                    dbObj.frame = value
+                    dbObj.frameNo = 0
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
+            },
+            frameNo = {
+                hidden = function() return dbObj.frame == 1 end,
+                order = 4.2,
+                name = "FrameNo",
+                type = "input",
+                pattern = "^%d+$",
+                usage = "please enter a number (spellId of the aura frame you want to attach.)",
+                get = function()
+                    return dbObj.frameNo ~= nil and dbObj.frameNo ~= 0 and tostring(dbObj.frameNo) or ""
+                end,
+                set = function(_, value)
+                    -- frameNo can be 0. Not possible for self. The top level frameNo should be 0 when following the parent.
+                    local frameNo = tonumber(value)
+                    if frameNo == dbObj.frameNo then
+                        return
+                    end
+                    if not validateParent(category, 2, tonumber(spellId), dbObj.frame, frameNo) then
+                        return
+                    end
+                    dbObj.frameNo = frameNo
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.6,
+            },
             xOffset = {
                 order = 5,
                 name = "x - offset",
@@ -2377,12 +2529,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 type = "execute",
                 func = function()
                     -- This will be deleted, so link the parent and child.
-                    local toSpellId = dbObj.toSpellId
-                    for _, v in pairs(self.db.profile[category].AuraPosition) do
-                        if v.toSpellId == dbObj.spellId then
-                            v.toSpellId = toSpellId
-                        end
-                    end
+                    linkParentAndChildrend(category, 2, tonumber(spellId))
                     self.db.profile[category].AuraPosition[spellId] = nil
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
@@ -2393,45 +2540,6 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 order = 8,
                 type = "description",
                 name = "",
-            },
-            toSpellId = {
-                order = 8.1,
-                name = "to Aura",
-                type = "input",
-                pattern = "^%d+$",
-                usage = "please enter a number (spellId of the aura frame you want to attach.)",
-                get = function()
-                    return dbObj.toSpellId ~= nil and dbObj.toSpellId ~= 0 and tostring(dbObj.toSpellId) or ""
-                end,
-                set = function(_, value)
-                    -- toSpellId can be 0. Not possible for self. The top level toSpellId should be 0 when following the parent.
-                    local toSpellId = tonumber(value)
-                    if toSpellId == dbObj.spellId then
-                        return
-                    end
-                    if toSpellId ~= 0 then
-                        local parent = toSpellId
-                        while true do
-                            local parentObj = self.db.profile[category].AuraPosition[tostring(parent)]
-                            if not parentObj or parent == parentObj.toSpellId then
-                                -- Cyclic errors
-                                return
-                            end
-                            parent = parentObj.toSpellId
-                            if parent == dbObj.spellId then
-                                -- Cyclic errors
-                                return
-                            end
-                            if parent == 0 then
-                                break
-                            end
-                        end
-                    end
-                    dbObj.toSpellId = toSpellId
-                    RaidFrameSettings:LoadUserInputEntrys()
-                    RaidFrameSettings:UpdateModule(category)
-                end,
-                width = 0.5,
             },
             setSize = {
                 order = 9,
@@ -2555,7 +2663,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
     local groupOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args
     local auragroup_entry = {
         order = 2 + groupNo,
-        name = dbObj.name,
+        name = "<" .. groupNo .. "> " .. dbObj.name,
         type = "group",
         args = {
             groupname = {
@@ -2587,6 +2695,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     local info = self.db.profile[category].AuraGroup[groupNo]
                     table.remove(self.db.profile[category].AuraGroup, groupNo)
                     table.insert(self.db.profile[category].AuraGroup, newGroupNo, info)
+                    local children = getChildren(category, 3, groupNo)
+                    for _, v in pairs(children) do
+                        v.frameNo = newGroupNo
+                    end
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
@@ -2618,6 +2730,61 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 end,
                 set = function(_, value)
                     dbObj.relativePoint = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.6,
+            },
+            frame = {
+                order = 3.1,
+                name = "Frame",
+                type = "select",
+                values = {"Unit", "Placed", "Group"},
+                sorting = {1,2,3},
+                get = function()
+                    local optObj = groupOptions["group" .. groupNo].args
+                    if dbObj.frame == 2 then
+                        optObj.frameNo.name = "SpellId"
+                        optObj.frameNo.usage = "please enter a number (spellId of the aura frame you want to attach.)"
+                    elseif dbObj.frame == 3 then
+                        optObj.frameNo.name = "GroupNo"
+                        optObj.frameNo.usage = "please enter a number (no of aura group you want to attach.)"
+                    end
+                    return dbObj.frame
+                end,
+                set = function(_, value)
+                    if dbObj.frame == value then
+                        return
+                    end
+                    if dbObj.frameNo > 0 then
+                        linkParentAndChildrend(category, 3, groupNo)
+                    end
+                    dbObj.frame = value
+                    dbObj.frameNo = 0
+                RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
+            },
+            frameNo = {
+                hidden = function() return dbObj.frame == 1 end,
+                order = 3.2,
+                name = "FrameNo",
+                type = "input",
+                pattern = "^%d+$",
+                usage = "please enter a number (spellId of the aura frame you want to attach.)",
+                get = function()
+                    return dbObj.frameNo ~= nil and dbObj.frameNo ~= 0 and tostring(dbObj.frameNo) or ""
+                end,
+                set = function(_, value)
+                    -- frameNo can be 0. Not possible for self. The top level frameNo should be 0 when following the parent.
+                    local frameNo = tonumber(value)
+                    if frameNo == dbObj.frameNo then
+                        return
+                    end
+                    if not validateParent(category, 3, tonumber(groupNo), dbObj.frame, frameNo) then
+                        return
+                    end
+                    dbObj.frameNo = frameNo
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.6,
@@ -2743,6 +2910,8 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 name = "remove",
                 type = "execute",
                 func = function()
+                    -- This will be deleted, so link the parent and child.
+                    linkParentAndChildrend(category, 3, groupNo)
                     table.remove(self.db.profile[category].AuraGroup, groupNo)
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
@@ -2819,10 +2988,12 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end)
         local sorted = CopyTable(self.db.profile[category].AuraPosition)
         for spellId, v in pairs(sorted) do
-            if v.toSpellId > 0 then
-                local toSpellId = tostring(v.toSpellId)
-                sorted[toSpellId].children = sorted[toSpellId].children or {}
-                tinsert(sorted[toSpellId].children, spellId)
+            if v.frame == 2 and v.frameNo > 0 then
+                local frameNo = tostring(v.frameNo)
+                if sorted[frameNo] then
+                    sorted[frameNo].children = sorted[frameNo].children or {}
+                    tinsert(sorted[frameNo].children, spellId)
+                end
             end
         end
         local created = {}
@@ -2837,7 +3008,14 @@ function RaidFrameSettings:LoadUserInputEntrys()
             end
         end
         for aura, v in pairs(sorted) do
-            if not created[aura] and v.toSpellId == 0 then
+            if not created[aura] and (v.frameNo == 0 or v.frame ~= 2) then
+                created[aura] = true
+                self:CreateAuraPositionEntry(aura, category)
+                showChildren(v)
+            end
+        end
+        for aura, v in pairs(sorted) do
+            if not created[aura] then
                 created[aura] = true
                 self:CreateAuraPositionEntry(aura, category)
                 showChildren(v)

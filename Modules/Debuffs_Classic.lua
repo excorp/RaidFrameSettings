@@ -10,8 +10,7 @@ Mixin(Debuffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Media = LibStub("LibSharedMedia-3.0")
 
-local locale = GetLocale()
-local defaultFont = addonTable.defaultFont
+local fontObj = CreateFont("RaidFrameSettingsFont")
 
 --Debuffframe size
 --They don't exist in classic
@@ -428,8 +427,8 @@ function Debuffs:OnEnable()
                     cooldownText:SetPoint(durationOpt.point, debuffFrame, durationOpt.relativePoint, durationOpt.xOffsetFont, durationOpt.yOffsetFont)
                     local res = cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
                     if not res then
-                        local font = defaultFont.Stack[locale]
-                        cooldownText:SetFont(font.font, font.height, "OUTLINE, THICK")
+                        fontObj:SetFontObject("NumberFontNormalSmall")
+                        cooldownText:SetFont(fontObj:GetFont())
                         frame_registry[frame].dirty = true
                     end
                     cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b)
@@ -450,8 +449,8 @@ function Debuffs:OnEnable()
                 stackText:SetPoint(stackOpt.point, debuffFrame, stackOpt.relativePoint, stackOpt.xOffsetFont, stackOpt.yOffsetFont)
                 local res = stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
                 if not res then
-                    local font = defaultFont.Stack[locale]
-                    stackText:SetFont(font.font, font.height, "OUTLINE, THICK")
+                    fontObj:SetFontObject("NumberFontNormalSmall")
+                    stackText:SetFont(fontObj:GetFont())
                     frame_registry[frame].dirty = true
                 end
                 stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
@@ -580,11 +579,11 @@ function Debuffs:OnDisable()
             local stackText = debuffFrame.count
             stackText:ClearAllPoints()
             stackText:SetPoint("BOTTOMRIGHT", debuffFrame, "BOTTOMRIGHT", 0, 0)
-            local font = defaultFont.Stack[locale] or defaultFont.Stack.default
-            stackText:SetFont(font.font, font.height, "OUTLINE, THICK")
-            stackText:SetTextColor(1,1,1,1)
-            stackText:SetShadowColor(0,0,0)
-            stackText:SetShadowOffset(0,0)
+            fontObj:SetFontObject("NumberFontNormalSmall")
+            stackText:SetFont(fontObj:GetFont())
+            stackText:SetTextColor(fontObj:GetTextColor())
+            stackText:SetShadowColor(fontObj:GetShadowColor())
+            stackText:SetShadowOffset(fontObj:GetShadowOffset())
             stackText:SetParent(debuffFrame)
             if cooldown.OmniCC then
                 OmniCC.Cooldown.SetNoCooldownCount(cooldown, cooldown.OmniCC.noCooldownCount)

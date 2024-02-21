@@ -6,68 +6,19 @@
 local _, addonTable = ...
 local RaidFrameSettings = addonTable.RaidFrameSettings
 
-local locale = GetLocale()
-local defaultFont = {
-    Name = {
-        koKR = {
-            font = "Fonts\\FRIZQT__.TTF",
-            height = 10,
-        },
-        zhCN = {
-            font = "Fonts\\ARKai_T.TTF",
-            height = 11,
-        },
-        zhTW = {
-            font = "Fonts\\blei00d.TTF",
-            height = 15,
-        },
-        ruRU = {
-            font = "Fonts\\FRIZQT___CYR.TTF",
-            height = 15,
-        },
-        default = {
-            font = "Fonts\\FRIZQT__.TTF",
-            height = 10,
-        },
-    },
-    Status = {
-        koKR = {
-            font = "Fonts\\FRIZQT__.TTF",
-            height = 12,
-        },
-        zhCN = {
-            font = "Fonts\\ARKai_T.TTF",
-            height = 12,
-        },
-        zhTW = {
-            font = "Fonts\\blei00d.TTF",
-            height = 15,
-        },
-        ruRU = {
-            font = "Fonts\\FRIZQT___CYR.TTF",
-            height = 15,
-        },
-        default = {
-            font = "Fonts\\FRIZQT__.TTF",
-            height = 12,
-        },
-    },
-    Stack = {
-        zhCN = {
-            font = "Fonts\\ARKai_T.TTF",
-            height = 12,
-        },
-        zhTW = {
-            font = "Fonts\\blei00d.TTF",
-            height = 15,
-        },
-        default = {
-            font = "Fonts\\ARIALN.TTF",
-            height = 12,
-        },
-    },
-}
-addonTable.defaultFont = defaultFont
+local Media = LibStub("LibSharedMedia-3.0")
+local fontObj = CreateFont("RaidFrameSettingsFont")
+
+local function findFont(font)
+    fontObj:SetFontObject(font)
+    local filename = fontObj:GetFont()
+    for fontstring, fontfile in pairs(Media.MediaTable.font) do
+        if fontfile == filename then
+            return fontstring, fontObj:GetFont()
+        end
+    end
+    return nil
+end
 
 local defaults = {
     profile = {
@@ -321,18 +272,25 @@ local defaults = {
     },
 }
 
-defaults.profile.Fonts.Name.font                  = defaultFont.Name[locale] and defaultFont.Name[locale].font or defaultFont.Name.default.font
-defaults.profile.Fonts.Name.fontsize              = defaultFont.Name[locale] and defaultFont.Name[locale].height or defaultFont.Name.default.height
-defaults.profile.Fonts.Status.font                = defaultFont.Status[locale] and defaultFont.Status[locale].font or defaultFont.Status.default.font
-defaults.profile.Fonts.Status.fontsize            = defaultFont.Status[locale] and defaultFont.Status[locale].height or defaultFont.Status.default.height
-defaults.profile.Buffs.DurationDisplay.font       = defaultFont.Stack[locale] and defaultFont.Stack[locale].font or defaultFont.Stack.default.font
-defaults.profile.Buffs.DurationDisplay.fontsize   = defaultFont.Stack[locale] and defaultFont.Stack[locale].height or defaultFont.Stack.default.height
-defaults.profile.Buffs.StacksDisplay.font         = defaultFont.Stack[locale] and defaultFont.Stack[locale].font or defaultFont.Stack.default.font
-defaults.profile.Buffs.StacksDisplay.fontsize     = defaultFont.Stack[locale] and defaultFont.Stack[locale].height or defaultFont.Stack.default.height
-defaults.profile.Debuffs.DurationDisplay.font     = defaultFont.Stack[locale] and defaultFont.Stack[locale].font or defaultFont.Stack.default.font
-defaults.profile.Debuffs.DurationDisplay.fontsize = defaultFont.Stack[locale] and defaultFont.Stack[locale].height or defaultFont.Stack.default.height
-defaults.profile.Debuffs.StacksDisplay.font       = defaultFont.Stack[locale] and defaultFont.Stack[locale].font or defaultFont.Stack.default.font
-defaults.profile.Debuffs.StacksDisplay.fontsize   = defaultFont.Stack[locale] and defaultFont.Stack[locale].height or defaultFont.Stack.default.height
+local fontstring, font, fontheight
+fontstring, font = findFont("GameFontHighlightSmall")
+fontheight = font and font[2]
+defaults.profile.Fonts.Name.font                  = fontstring
+defaults.profile.Fonts.Name.fontsize              = fontheight
+fontstring, font = findFont("GameFontDisable")
+fontheight = font and font[2]
+defaults.profile.Fonts.Status.font                = fontstring
+defaults.profile.Fonts.Status.fontsize            = fontheight
+fontstring, font = findFont("NumberFontNormalSmall")
+fontheight = font and font[2]
+defaults.profile.Buffs.DurationDisplay.font       = fontstring
+defaults.profile.Buffs.DurationDisplay.fontsize   = fontheight
+defaults.profile.Buffs.StacksDisplay.font         = fontstring
+defaults.profile.Buffs.StacksDisplay.fontsize     = fontheight
+defaults.profile.Debuffs.DurationDisplay.font     = fontstring
+defaults.profile.Debuffs.DurationDisplay.fontsize = fontheight
+defaults.profile.Debuffs.StacksDisplay.font       = fontstring
+defaults.profile.Debuffs.StacksDisplay.fontsize   = fontheight
 
 function RaidFrameSettings:LoadDataBase()
     self.db = LibStub("AceDB-3.0"):New("RaidFrameSettingsDB", defaults, true) 

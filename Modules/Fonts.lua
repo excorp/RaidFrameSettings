@@ -20,8 +20,7 @@ local GetUnitName = GetUnitName
 local UnitClass = UnitClass
 local GetClassColor = GetClassColor
 
-local locale = GetLocale()
-local defaultFont = addonTable.defaultFont
+local fontObj = CreateFont("RaidFrameSettingsFont")
 
 function Fonts:OnEnable()
     local dbObj = RaidFrameSettings.db.profile.Fonts
@@ -66,8 +65,8 @@ function Fonts:OnEnable()
         frame.name:ClearAllPoints()
         local res = frame.name:SetFont(Name.Font, Name.FontSize, Name.Outlinemode)
         if not res then
-            local font = defaultFont.Name[locale] or defaultFont.Name.default
-            frame.name:SetFont(font.font, font.height, "NONE")
+            fontObj:SetFontObject("GameFontHighlightSmall")
+            frame.name:SetFont(fontObj:GetFont())
         end
         frame.name:SetWidth((frame:GetWidth()))
         frame.name:SetJustifyH(Name.JustifyH)
@@ -78,8 +77,8 @@ function Fonts:OnEnable()
         frame.statusText:ClearAllPoints()
         res = frame.statusText:SetFont(Status.Font, Status.FontSize, Status.Outlinemode)
         if not res then
-            local font = defaultFont.Status[locale] or defaultFont.Status.default
-            frame.name:SetFont(font.font, font.height, "NONE")
+            fontObj:SetFontObject("GameFontDisable")
+            frame.statusText:SetFont(fontObj:GetFont())
         end
         frame.statusText:SetWidth((frame:GetWidth()))
         frame.statusText:SetJustifyH(Status.JustifyH)
@@ -119,25 +118,33 @@ end
 function Fonts:OnDisable()
     local restoreFonts = function(frame)
         --Name
-        local font = defaultFont.Name[locale] or defaultFont.Name.default
-        frame.name:SetFont(font.font, font.height, "NONE")
+        fontObj:SetFontObject("GameFontHighlightSmall")
+        frame.name:SetFont(fontObj:GetFont())
+        frame.name:SetVertexColor(fontObj:GetTextColor())
+        frame.name:SetShadowColor(fontObj:GetShadowColor())
+        frame.name:SetShadowOffset(fontObj:GetShadowOffset())
+
+        frame.name:ClearAllPoints()
         frame.name:SetPoint("TOPLEFT", frame.roleIcon, "TOPRIGHT", 0, -1);
-        frame.name:SetPoint("TOPRIGHT", -3, -3)
+        frame.name:SetPoint("TOPRIGHT", -3, -3);
         frame.name:SetJustifyH("LEFT");
-        frame.name:SetVertexColor(1,1,1)
-        frame.name:SetShadowColor(0,0,0)
-        frame.name:SetShadowOffset(1,-1)
-     --Status
-        font = defaultFont.Status[locale] or defaultFont.Status.default
-        frame.name:SetFont(font.font, font.height, "NONE")
+        --Status
+        fontObj:SetFontObject("GameFontDisable")
+        frame.statusText:SetFont(fontObj:GetFont())
+        frame.statusText:SetVertexColor(fontObj:GetTextColor())
+        frame.statusText:SetShadowColor(fontObj:GetShadowColor())
+        frame.statusText:SetShadowOffset(fontObj:GetShadowOffset())
+
         local frameWidth = frame:GetWidth()
         local frameHeight = frame:GetHeight()
-        frame.statusText:SetFont(font.font, font.height, "NONE")
+        local componentScale = min(frameHeight / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH);
+        local NATIVE_FONT_SIZE = 12
+        local fontName, fontSize, fontFlags = frame.statusText:GetFont();
+        frame.statusText:SetFont(fontName, NATIVE_FONT_SIZE * componentScale, fontFlags);
+        frame.statusText:ClearAllPoints()
         frame.statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 3, frameHeight / 3 - 2)
         frame.statusText:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -3, frameHeight / 3 - 2)
-        frame.statusText:SetVertexColor(0.5,0.5,0.5)
-        frame.statusText:SetShadowColor(0,0,0)
-        frame.statusText:SetShadowOffset(1,-1)
+        frame.statusText:SetHeight(12 * componentScale)
     end
     RaidFrameSettings:IterateRoster(restoreFonts)
 end

@@ -14,7 +14,7 @@ local function findFont(font)
     local filename = fontObj:GetFont()
     for fontstring, fontfile in pairs(Media.MediaTable.font) do
         if fontfile == filename then
-            return fontstring, fontObj:GetFont()
+            return fontstring, {fontObj:GetFont()}
         end
     end
     return nil
@@ -274,15 +274,15 @@ local defaults = {
 
 local fontstring, font, fontheight
 fontstring, font = findFont("GameFontHighlightSmall")
-fontheight = font and font[2]
+fontheight = font and font[2] or 10
 defaults.profile.Fonts.Name.font                  = fontstring
 defaults.profile.Fonts.Name.fontsize              = fontheight
 fontstring, font = findFont("GameFontDisable")
-fontheight = font and font[2]
+fontheight = font and font[2] or 14
 defaults.profile.Fonts.Status.font                = fontstring
-defaults.profile.Fonts.Status.fontsize            = fontheight
+-- defaults.profile.Fonts.Status.fontsize            = fontheight
 fontstring, font = findFont("NumberFontNormalSmall")
-fontheight = font and font[2]
+fontheight = font and font[2] or 12
 defaults.profile.Buffs.DurationDisplay.font       = fontstring
 defaults.profile.Buffs.DurationDisplay.fontsize   = fontheight
 defaults.profile.Buffs.StacksDisplay.font         = fontstring

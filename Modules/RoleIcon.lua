@@ -50,7 +50,9 @@ function RoleIcon:OnDisable()
     local restoreRoleIcon = function(frame)
         frame.roleIcon:ClearAllPoints()
         frame.roleIcon:SetPoint("TOPLEFT", 3, -2)
-        frame.roleIcon:SetSize(12, 12)
+        if frame.roleIcon:IsShown() then
+            frame.roleIcon:SetSize(12, 12)
+        end
         frame.roleIcon:SetScale(1)
     end
     RaidFrameSettings:IterateRoster(restoreRoleIcon)

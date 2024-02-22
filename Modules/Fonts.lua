@@ -71,7 +71,7 @@ function Fonts:OnEnable()
             fontObj:SetFontObject("GameFontHighlightSmall")
             frame.name:SetFont(fontObj:GetFont())
         end
-        local parent = (Name.frame == 2 and frame.roleIcon) or (Name.frame == 3 and frame.raidmark) or frame
+        local parent = (Name.frame == 2 and frame.roleIcon) or (Name.frame == 3 and frame.raidmark or frame.roleIcon) or frame
         frame.name:SetWidth((frame:GetWidth()))
         frame.name:SetJustifyH(Name.JustifyH)
         frame.name:SetPoint(Name.point, parent, Name.relativePoint, Name.X_Offset, Name.Y_Offset )

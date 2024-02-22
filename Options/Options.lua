@@ -3049,6 +3049,9 @@ function RaidFrameSettings:LoadUserInputEntrys()
             if not v.spellId then
                 v.spellId = tonumber(spellId)
             end
+            if not v.priority then
+                v.priority = 0
+            end
             tinsert(sorted, v)
         end
         table.sort(sorted, function (a, b)
@@ -3111,6 +3114,9 @@ function RaidFrameSettings:LoadUserInputEntrys()
             for spellId, v in pairs(group.auraList) do
                 if not v.spellId then
                     v.spellId = tonumber(spellId)
+                end
+                if not v.priority then
+                    v.priority = 0
                 end
                 tinsert(sorted, v)
             end

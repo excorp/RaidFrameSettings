@@ -18,14 +18,17 @@ function Solo:OnEnable()
         last = solo
     end
     self:HookFunc(CompactPartyFrame, "UpdateVisibility", onUpdateVisibility);
-    CompactPartyFrame:SetShown(true)
-    PartyFrame:UpdatePaddingAndLayout()
+    if not IsInGroup() or not IsInRaid() then
+        CompactPartyFrame:SetShown(true)
+        PartyFrame:UpdatePaddingAndLayout()
+    end
 end
 
 function Solo:OnDisable()
     self:DisableHooks()
-    if not IsInGroup() then
+    if not IsInGroup() or IsInRaid() then
         CompactPartyFrame:SetShown(false)
+        PartyFrame:UpdatePaddingAndLayout()
         last = false
     end
 end

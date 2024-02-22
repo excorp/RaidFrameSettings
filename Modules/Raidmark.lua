@@ -34,6 +34,7 @@ end
 function RaidMark:OnEnable()
     local raidmarkOpt = CopyTable(addon.db.profile.MinorModules.RaidMark)
     raidmarkOpt.point = addon:ConvertDbNumberToPosition(raidmarkOpt.point)
+    raidmarkOpt.relativePoint = addon:ConvertDbNumberToPosition(raidmarkOpt.relativePoint)
 
     local function initRaidMark(frame, force)
         if not frame.raidmark then
@@ -44,7 +45,7 @@ function RaidMark:OnEnable()
             frame.raidmark:Hide()
             frame.raidmark:ClearAllPoints()
             local parent = raidmarkOpt.frame == 2 and frame.roleIcon or frame
-            frame.raidmark:SetPoint(raidmarkOpt.point, parent, raidmarkOpt.point, raidmarkOpt.x_offset, raidmarkOpt.y_offset)
+            frame.raidmark:SetPoint(raidmarkOpt.point, parent, raidmarkOpt.relativePoint, raidmarkOpt.x_offset, raidmarkOpt.y_offset)
             frame.raidmark:SetSize(raidmarkOpt.width, raidmarkOpt.height)
             frame.raidmark:SetAlpha(raidmarkOpt.alpha)
         end

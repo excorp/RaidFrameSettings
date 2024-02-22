@@ -35,9 +35,10 @@ function Fonts:OnEnable()
     local flag2           = dbObj.Name.outline and "OUTLINE" or ""
     local flag3           = dbObj.Name.monochrome and "MONOCHROME" or ""
     Name.Outlinemode      = ( flag1 .. flag2 .. ", " .. flag3 )
-    Name.Position         = ( dbObj.Name.position == 1 and "TOPLEFT" ) or ( dbObj.Name.position == 2 and "CENTER" ) or ( dbObj.Name.position == 3 and "TOP" ) or ( dbObj.Name.position == 4 and "BOTTOM" )
+    Name.point            = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.point)
+    Name.relativePoint    = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.relativePoint)
     Name.frame            = dbObj.Name.frame
-    Name.JustifyH         = ( dbObj.Name.position == 1 and "LEFT" ) or "CENTER"
+    Name.JustifyH         = ( dbObj.Name.justifyH == 1 and "LEFT" ) or ( dbObj.Name.justifyH == 2 and "CENTER" )  or ( dbObj.Name.justifyH == 3 and "RIGHT" )
     Name.X_Offset         = dbObj.Name.x_offset
     Name.Y_Offset         = dbObj.Name.y_offset
     --Status
@@ -50,9 +51,10 @@ function Fonts:OnEnable()
     local flag1           = dbObj.Status.thick and "THICK" or ""
     local flag2           = dbObj.Status.outline and "OUTLINE" or ""
     local flag3           = dbObj.Status.monochrome and "MONOCHROME" or ""
-    Status.Outlinemode      = ( flag1 .. flag2 .. ", " .. flag3 )
-    Status.Position       = ( dbObj.Status.position == 1 and "TOPLEFT" ) or ( dbObj.Status.position == 2 and "CENTER" ) or ( dbObj.Status.position == 3 and "TOP" ) or ( dbObj.Status.position == 4 and "BOTTOM" )
-    Status.JustifyH       = ( dbObj.Status.position == 1 and "LEFT" ) or "CENTER"
+    Status.Outlinemode    = ( flag1 .. flag2 .. ", " .. flag3 )
+    Status.point          = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.point)
+    Status.relativePoint  = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.relativePoint)
+    Status.JustifyH       = ( dbObj.Status.justifyH == 1 and "LEFT" ) or ( dbObj.Status.justifyH == 2 and "CENTER" )  or ( dbObj.Status.justifyH == 3 and "RIGHT" )
     Status.X_Offset       = dbObj.Status.x_offset
     Status.Y_Offset       = dbObj.Status.y_offset
     --Advanced Font Settings
@@ -72,7 +74,7 @@ function Fonts:OnEnable()
         local parent = (Name.frame == 2 and frame.roleIcon) or (Name.frame == 3 and frame.raidmark) or frame
         frame.name:SetWidth((frame:GetWidth()))
         frame.name:SetJustifyH(Name.JustifyH)
-        frame.name:SetPoint(Name.Position, parent, Name.Position, Name.X_Offset, Name.Y_Offset )
+        frame.name:SetPoint(Name.point, parent, Name.relativePoint, Name.X_Offset, Name.Y_Offset )
         frame.name:SetShadowColor(Advanced.shadowColor.r,Advanced.shadowColor.g,Advanced.shadowColor.b,Advanced.shadowColor.a)
         frame.name:SetShadowOffset(Advanced.x_offset,Advanced.y_offset)
         --Status
@@ -84,7 +86,7 @@ function Fonts:OnEnable()
         end
         frame.statusText:SetWidth((frame:GetWidth()))
         frame.statusText:SetJustifyH(Status.JustifyH)
-        frame.statusText:SetPoint(Status.Position, frame, Status.Position, Status.X_Offset, Status.Y_Offset )
+        frame.statusText:SetPoint(Status.point, frame, Status.relativePoint, Status.X_Offset, Status.Y_Offset )
         frame.statusText:SetVertexColor(Status.FontColor.r,Status.FontColor.g,Status.FontColor.b)
         frame.statusText:SetShadowColor(Advanced.shadowColor.r,Advanced.shadowColor.g,Advanced.shadowColor.b,Advanced.shadowColor.a)
         frame.statusText:SetShadowOffset(Advanced.x_offset,Advanced.y_offset)

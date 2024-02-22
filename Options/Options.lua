@@ -539,23 +539,50 @@ options = {
                             type = "description",
                             name = "",
                         },
-                        position = {
+                        point = {
                             order = 7,
-                            name = "Position",
+                            name = "Point",
                             type = "select",
-                            values = {"TOPLEFT", "CENTER", "TOP", "BOTTOM"},
-                            sorting = {1,2,3,4},
+                            values = { "Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right" },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
+                            width = 0.8,
+                        },
+                        relativePoint = {
+                            order = 7.1,
+                            name = "to Frames",
+                            type = "select",
+                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
+                            sorting = {1,2,3,4,5,6,7,8,9},
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
                         },
                         frame = {
-                            order = 7,
+                            order = 7.2,
                             name = "Frame",
                             type = "select",
                             values = function() return RaidFrameSettings.db.profile.Module.RaidMark and {"Unit Frame", "Role Icon", "Raid Mark"} or {"Unit Frame", "Role Icon"} end,
                             sorting = function() return RaidFrameSettings.db.profile.Module.RaidMark and {1,2,3} or {1,2} end,
                             get = "GetStatus",
                             set = "SetStatus",
+                            width = 0.8,
+                        },
+                        justifyH = {
+                            order = 7.2,
+                            name = "Align",
+                            type = "select",
+                            values = { "Left", "Center", "Right" },
+                            sorting = { 1, 2, 3 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        newline3 = {
+                            order = 7.3,
+                            type = "description",
+                            name = "",
                         },
                         x_offset = {
                             order = 8,
@@ -648,14 +675,40 @@ options = {
                             type = "description",
                             name = "",
                         },
-                        position = {
+                        point = {
                             order = 7,
-                            name = "Position",
+                            name = "Point",
                             type = "select",
-                            values = {"TOPLEFT", "CENTER", "TOP", "BOTTOM"},
-                            sorting = {1,2,3,4},
+                            values = { "Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right" },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
+                            width = 0.8,
+                        },
+                        relativePoint = {
+                            order = 7.1,
+                            name = "to Frames",
+                            type = "select",
+                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
+                            sorting = {1,2,3,4,5,6,7,8,9},
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        justifyH = {
+                            order = 7.2,
+                            name = "Align",
+                            type = "select",
+                            values = { "Left", "Center", "Right" },
+                            sorting = { 1, 2, 3 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        newline3 = {
+                            order = 7.3,
+                            type = "description",
+                            name = "",
                         },
                         x_offset = {
                             order = 8,
@@ -825,9 +878,9 @@ options = {
                                                 local orientation = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation
                                                 local baselineObj = options.args.Auras.args.Buffs.args.Buffs.args.BuffFramesDisplay.args.baseline
                                                 if orientation == 1 or orientation == 2 then
-                                                    baselineObj.values = { "TOP", "MIDDLE", "BOTTOM" }
+                                                    baselineObj.values = { "Top", "Middle", "Bottom" }
                                                 elseif orientation == 3 or orientation == 4 then
-                                                    baselineObj.values = { "LEFT", "CENTER", "RIGHT" }
+                                                    baselineObj.values = { "Left", "Center", "Right" }
                                                 end
                                                 return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation
                                             end,
@@ -851,7 +904,7 @@ options = {
                                             order = 6.1,
                                             name = "baseline",
                                             type = "select",
-                                            values = { "TOP/LEFT", "MIDDLE/CENTER", "BOTTOM/RIGHT"},
+                                            values = { "Top/Left", "Middle/Center", "Bottom/Right"},
                                             sorting = { 1, 2, 3},
                                             get = function()
                                                 local baseline = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline
@@ -1230,9 +1283,9 @@ options = {
                                                 local orientation = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation
                                                 local baselineObj = options.args.Auras.args.Debuffs.args.Debuffs.args.DebuffFramesDisplay.args.baseline
                                                 if orientation == 1 or orientation == 2 then
-                                                    baselineObj.values = { "TOP", "MIDDLE", "BOTTOM" }
+                                                    baselineObj.values = { "Top", "Middle", "Bottom" }
                                                 elseif orientation == 3 or orientation == 4 then
-                                                    baselineObj.values = { "LEFT", "CENTER", "RIGHT" }
+                                                    baselineObj.values = { "Left", "Center", "Right" }
                                                 end
                                                 return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation
                                             end,
@@ -1256,7 +1309,7 @@ options = {
                                             order = 6.1,
                                             name = "baseline",
                                             type = "select",
-                                            values = { "TOP/LEFT", "MIDDLE/CENTER", "BOTTOM/RIGHT"},
+                                            values = { "Top/Left", "Middle/Center", "Bottom/Right"},
                                             sorting = { 1, 2, 3},
                                             get = function()
                                                 local baseline = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline
@@ -1765,7 +1818,7 @@ options = {
                             order = 1,
                             name = "Position",
                             type = "select",
-                            values = {"TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT"},
+                            values = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"},
                             sorting = {1,2,3,4},
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1814,21 +1867,33 @@ options = {
                     args = {
                         point = {
                             order = 1,
-                            name = "Position",
+                            name = "Point",
                             type = "select",
-                            values = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" },
+                            values = { "Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right" },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
+                            width = 0.8,
+                        },
+                        relativePoint = {
+                            order = 1.1,
+                            name = "to Frames",
+                            type = "select",
+                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
+                            sorting = {1,2,3,4,5,6,7,8,9},
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
                         },
                         frame = {
-                            order = 1.1,
+                            order = 1.2,
                             name = "Frame",
                             type = "select",
                             values = {"Unit Frame", "Role Icon"},
                             sorting = {1,2},
                             get = "GetStatus",
                             set = "SetStatus",
+                            width = 0.8,
                         },
                         x_offset = {
                             order = 2,

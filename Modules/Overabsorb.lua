@@ -18,17 +18,19 @@ local SetTexCoord = SetTexCoord
 local Show = Show
 
 function Overabsorb:OnEnable()
-    local glow_alpha = RaidFrameSettings.db.profile.MinorModules.Overabsorb.glowAlpha
+    local opt = RaidFrameSettings.db.profile.MinorModules.Overabsorb
     local function OnFrameSetup(frame)
         local absorbOverlay = frame.totalAbsorbOverlay
         local healthBar = frame.healthBar
         absorbOverlay:SetParent(healthBar)
         absorbOverlay:ClearAllPoints()
         local absorbGlow = frame.overAbsorbGlow
-        absorbGlow:ClearAllPoints()
-        absorbGlow:SetPoint("TOPLEFT", absorbOverlay, "TOPLEFT", -5, 0)
-        absorbGlow:SetPoint("BOTTOMLEFT", absorbOverlay, "BOTTOMLEFT", -5, 0)
-        absorbGlow:SetAlpha(glow_alpha)
+        if opt.position == 3 then
+            absorbGlow:ClearAllPoints()
+            absorbGlow:SetPoint("TOPLEFT", absorbOverlay, "TOPLEFT", -5, 0)
+            absorbGlow:SetPoint("BOTTOMLEFT", absorbOverlay, "BOTTOMLEFT", -5, 0)
+            absorbGlow:SetAlpha(opt.glowAlpha)
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", OnFrameSetup)
     local function UpdateHealPredictionCallback(frame)
@@ -36,6 +38,7 @@ function Overabsorb:OnEnable()
         local absorbOverlay = frame.totalAbsorbOverlay
         local healthBar = frame.healthBar
         local _, maxHealth = healthBar:GetMinMaxValues()
+        local health = frame.healthBar:GetValue()
         if ( maxHealth <= 0 ) then return end
         local totalAbsorb = UnitGetTotalAbsorbs(frame.displayedUnit or "") or 0
         if( totalAbsorb > maxHealth ) then
@@ -54,6 +57,15 @@ function Overabsorb:OnEnable()
             absorbOverlay:SetWidth( barSize )
             absorbOverlay:SetTexCoord(0, barSize / absorbOverlay.tileSize, 0, height / absorbOverlay.tileSize)
             absorbOverlay:Show()
+
+            local overflow = health + totalAbsorb - maxHealth
+            if opt.position == 2 and overflow > 0 then
+                local absorbGlow = frame.overAbsorbGlow
+                barSize = overflow / maxHealth * width
+                absorbGlow:ClearAllPoints()
+                absorbGlow:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMRIGHT", -7 -barSize, 0)
+                absorbGlow:SetPoint("TOPLEFT", frame.healthBar, "TOPRIGHT", -7 -barSize, 0)
+            end
         end	
     end
     self:HookFuncFiltered("CompactUnitFrame_UpdateHealPrediction", UpdateHealPredictionCallback)

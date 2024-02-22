@@ -1167,6 +1167,7 @@ options = {
                                     usage = "please enter a number",
                                     set = function(_, value)
                                         RaidFrameSettings.db.profile.Buffs.AuraFilter[value] = {
+                                            spellId = tonumber(value),
                                             show = false,
                                             other = false,
                                             hideInCombat = false,
@@ -1563,6 +1564,7 @@ options = {
                                     usage = "please enter a number",
                                     set = function(_, value)
                                         RaidFrameSettings.db.profile.Debuffs.AuraFilter[value] = {
+                                            spellId = tonumber(value),
                                             show = false,
                                             other = false,
                                             hideInCombat = false,
@@ -2058,6 +2060,16 @@ options = {
                             step = 0.1,
                             isPercent = true,
                         },
+                        position = {
+                            order = 7.1,
+                            name = "Glow position",
+                            type = "select",
+                            values = {"Default", "Move overflow", "Move left"},
+                            sorting = {1,2,3},
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
                     },
                 },
                 TimerTextLimit = {
@@ -2310,6 +2322,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 end,
                 set = function(_, value)
                     dbObj.priority = tonumber(value)
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.4,
@@ -2321,6 +2334,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 func = function()
                     self.db.profile[category].AuraFilter[spellId] = nil
                     auraFilterOptions[spellId] = nil
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
@@ -2664,8 +2678,9 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
         maxEntry = maxEntry + 1
     end
     -- for backward compatibility 
-    if type(dbObj[spellId]) ~= table then
+    if type(dbObj[spellId]) ~= "table" then
         dbObj[spellId] = {
+            spellId = tonumber(spellId),
             priority = 0,
         }
     end
@@ -2696,6 +2711,7 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 end,
                 set = function(_, value)
                     dbObj[spellId].priority = tonumber(value)
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.4,
@@ -2707,6 +2723,7 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 func = function()
                     dbObj[spellId] = nil
                     groupOptions[spellId] = nil
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
@@ -2986,6 +3003,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 usage = "please enter a number",
                 set = function(_, value)
                     dbObj.auraList[value] = {
+                        spellId = tonumber(value),
                         priority = 0,
                     }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
@@ -3025,10 +3043,21 @@ function RaidFrameSettings:LoadUserInputEntrys()
 
         --aura filter
         options.args.Auras.args[category].args.AuraFilter.args.FilteredAuras.args = {}
-        for spellId in pairs(self.db.profile[category].AuraFilter) do
-            self:CreateAuraFilterEntry(spellId, category)
+        -- sort
+        local sorted = {}
+        for spellId, v in pairs(self.db.profile[category].AuraFilter) do
+            if not v.spellId then
+                v.spellId = tonumber(spellId)
+            end
+            tinsert(sorted, v)
         end
-    
+        table.sort(sorted, function (a, b)
+            return a.priority == b.priority and GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId) or a.priority > b.priority
+        end)
+        for _, v in pairs(sorted) do
+            self:CreateAuraFilterEntry(tostring(v.spellId), category)
+        end
+
         --aura increase
         options.args.Auras.args[category].args.Increase.args.IncreasedAuras.args = {}
         for spellId in pairs(self.db.profile[category].Increase) do
@@ -3038,55 +3067,58 @@ function RaidFrameSettings:LoadUserInputEntrys()
         --aura positions
         options.args.Auras.args[category].args[category].args.AuraPosition.args.auraGroup.args.auraList.args = {}
         -- sort
-        table.sort(self.db.profile[category].AuraPosition, function (a, b)
-            return GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId)
-        end)
-        local sorted = CopyTable(self.db.profile[category].AuraPosition)
-        for spellId, v in pairs(sorted) do
+        sorted = {}
+        local placed = CopyTable(self.db.profile[category].AuraPosition)
+        for spellId, v in pairs(placed) do
             if v.frame == 2 and v.frameNo > 0 then
                 local frameNo = tostring(v.frameNo)
-                if sorted[frameNo] then
-                    sorted[frameNo].children = sorted[frameNo].children or {}
-                    tinsert(sorted[frameNo].children, spellId)
+                if placed[frameNo] then
+                    placed[frameNo].children = placed[frameNo].children or {}
+                    tinsert(placed[frameNo].children, spellId)
                 end
             end
         end
-        local created = {}
         local showChildren
         showChildren = function(v)
             if v.children then
                 for _, childAura in pairs(v.children) do
-                    created[childAura] = true
                     self:CreateAuraPositionEntry(childAura, category)
-                    showChildren(sorted[childAura])
+                    showChildren(placed[childAura])
                 end
             end
         end
-        for aura, v in pairs(sorted) do
-            if not created[aura] and (v.frameNo == 0 or v.frame ~= 2) then
-                created[aura] = true
-                self:CreateAuraPositionEntry(aura, category)
-                showChildren(v)
+        for _, v in pairs(placed) do
+            if (v.frameNo == 0 or v.frame ~= 2) then
+                tinsert(sorted, v)
             end
         end
-        for aura, v in pairs(sorted) do
-            if not created[aura] then
-                created[aura] = true
-                self:CreateAuraPositionEntry(aura, category)
-                showChildren(v)
-            end
+        table.sort(sorted, function(a, b) return GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId) end)
+        for _, v in pairs(sorted) do
+            self:CreateAuraPositionEntry(tostring(v.spellId), category)
+            showChildren(v)
         end
 
         --aura groups
-        for k,v in pairs(options.args.Auras.args[category].args[category].args.AuraPosition.args) do
+        for k in pairs(options.args.Auras.args[category].args[category].args.AuraPosition.args) do
             if k:match("^group") then
                 options.args.Auras.args[category].args[category].args.AuraPosition.args[k] = nil
             end
         end
-        for groupNo, v in pairs(self.db.profile[category].AuraGroup) do
+        for groupNo, group in pairs(self.db.profile[category].AuraGroup) do
             self:CreateAuraGroup(groupNo, category)
-            for aura in pairs(v.auraList) do
-                self:CreateAuraGroupEntry(aura, groupNo, category)
+            -- sort
+            sorted = {}
+            for spellId, v in pairs(group.auraList) do
+                if not v.spellId then
+                    v.spellId = tonumber(spellId)
+                end
+                tinsert(sorted, v)
+            end
+            table.sort(sorted, function (a, b)
+                return a.priority == b.priority and GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId) or a.priority > b.priority
+            end)
+            for _, v in pairs(sorted) do
+                self:CreateAuraGroupEntry(tostring(v.spellId), groupNo, category)
             end
         end
     end

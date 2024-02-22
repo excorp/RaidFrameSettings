@@ -255,6 +255,7 @@ local defaults = {
             },
             Overabsorb = {
                 glowAlpha = 1,
+                position  = 1,
             },
             TimerTextLimit = {
                 sec = 100,

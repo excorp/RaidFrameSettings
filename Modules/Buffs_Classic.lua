@@ -104,7 +104,8 @@ function Buffs:OnEnable()
             idx = userPlacedIdx,
             point = addon:ConvertDbNumberToPosition(auraInfo.point),
             relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint),
-            toSpellId = auraInfo.toSpellId,
+            frame = auraInfo.frame,
+            frameNo = auraInfo.frameNo,
             xOffset = auraInfo.xOffset,
             yOffset = auraInfo.yOffset,
             setSize = auraInfo.setSize,
@@ -219,6 +220,7 @@ function Buffs:OnEnable()
         local sorted = {
             [0] = {},
         }
+        local needReAnchor = {}
         while true do
             local buffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId, canApplyAura = UnitBuff(frame.displayedUnit, index, filter)
             if not buffName then
@@ -229,6 +231,12 @@ function Buffs:OnEnable()
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, index, filter)
+                    local placed = userPlaced[spellId]
+                    if placed.frame == 3 and placed.frameNo > 0 then
+                        if auraGroup[placed.frameNo].orientation ~= 7 then
+                            tinsert(needReAnchor, {frame = buffFrame, to = placed.frameNo, conf = placed})
+                        end
+                    end    
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
                     local auraList = auraGroup[groupNo].auraList
@@ -236,6 +244,14 @@ function Buffs:OnEnable()
                     if not sorted[groupNo] then sorted[groupNo] = {} end
                     tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index })
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
+                    local group = auraGroup[groupNo]
+                    if group.frame == 3 and group.frameNo > 0 then
+                        if auraGroup[group.frameNo].orientation ~= 7 then
+                            local idx = frame_registry[frame].auraGroupStart[groupNo]
+                            local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                            tinsert(needReAnchor, {frame = buffFrame, to = group.frameNo, conf = auraGroup[groupNo]})
+                        end
+                    end
                 elseif frameNum <= frame_registry[frame].maxBuffs then
                     local priority = filteredAuras[spellId] and filteredAuras[spellId].priority or 0
                     tinsert(sorted[0], {spellId = spellId, priority = priority, index = index})
@@ -265,6 +281,14 @@ function Buffs:OnEnable()
                     end
                 end
             end
+        end
+
+        -- placed, groups' frame==3(Group), and parent group's orientation ~= 7(NONE), we need to modify the anchor
+        for _, v in pairs(needReAnchor) do
+            local idx = frame_registry[frame].auraGroupStart[v.to] + (groupFrameNum[v.to] or 2) - 2
+            local parent = frame_registry[frame].extraBuffFrames[idx]
+            v.frame:ClearAllPoints()
+            v.frame:SetPoint(v.conf.point, parent, v.conf.relativePoint, v.conf.xOffset, v.conf.yOffset)
         end
 
         -- hide left aura frames
@@ -430,7 +454,8 @@ function Buffs:OnEnable()
         for _, place in pairs(userPlaced) do
             idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-            local parentIdx = place.toSpellId and userPlaced[place.toSpellId] and (frame_registry[frame].placedAuraStart + userPlaced[place.toSpellId].idx - 1)
+            local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
+                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and frame_registry[frame].auraGroupStart[place.frameNo])
             local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
             buffFrame:ClearAllPoints()
             buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
@@ -444,8 +469,11 @@ function Buffs:OnEnable()
                 idx = idx + 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 if not anchorSet then
+                    local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
+                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo]))
+                    local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
                     buffFrame:ClearAllPoints()
-                    buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset, v.yOffset)
+                    buffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
                     anchorSet = true
                 else
                     buffFrame:ClearAllPoints()

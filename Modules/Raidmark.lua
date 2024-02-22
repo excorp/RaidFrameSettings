@@ -43,7 +43,8 @@ function RaidMark:OnEnable()
         if force then
             frame.raidmark:Hide()
             frame.raidmark:ClearAllPoints()
-            frame.raidmark:SetPoint(raidmarkOpt.point, raidmarkOpt.x_offset, raidmarkOpt.y_offset)
+            local parent = raidmarkOpt.frame == 2 and frame.roleIcon or frame
+            frame.raidmark:SetPoint(raidmarkOpt.point, parent, raidmarkOpt.point, raidmarkOpt.x_offset, raidmarkOpt.y_offset)
             frame.raidmark:SetSize(raidmarkOpt.width, raidmarkOpt.height)
             frame.raidmark:SetAlpha(raidmarkOpt.alpha)
         end

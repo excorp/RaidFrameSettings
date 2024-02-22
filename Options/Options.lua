@@ -2329,10 +2329,7 @@ end
 local function getChildren(category, frame, frameNo)
     local children = {}
     local placed = RaidFrameSettings.db.profile[category].AuraPosition
-    DevTool:AddData({category, frame, frameNo})
-    DevTool:AddData(placed, "placed")
     for _, v in pairs(placed) do
-        DevTool:AddData(v, "placed2")
         if v.frame == frame and v.frameNo == frameNo then
             tinsert(children, v)
         end
@@ -2353,7 +2350,6 @@ local function linkParentAndChildrend(category, frame, frameNo)
         parentFrameNo = 0
     end
     local children = getChildren(category, frame, frameNo)
-    DevTool:AddData(children, frame .. " " .. frameNo)
     for _, v in pairs(children) do
         v.frame = parentFrame
         v.frameNo = parentFrameNo
@@ -2456,9 +2452,6 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 set = function(_, value)
                     if dbObj.frame == value then
                         return
-                    end
-                    if dbObj.frameNo > 0 then
-                        linkParentAndChildrend(category, 2, tonumber(spellId))
                     end
                     dbObj.frame = value
                     dbObj.frameNo = 0
@@ -2754,9 +2747,6 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 set = function(_, value)
                     if dbObj.frame == value then
                         return
-                    end
-                    if dbObj.frameNo > 0 then
-                        linkParentAndChildrend(category, 3, groupNo)
                     end
                     dbObj.frame = value
                     dbObj.frameNo = 0

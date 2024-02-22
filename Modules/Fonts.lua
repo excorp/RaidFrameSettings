@@ -36,6 +36,7 @@ function Fonts:OnEnable()
     local flag3           = dbObj.Name.monochrome and "MONOCHROME" or ""
     Name.Outlinemode      = ( flag1 .. flag2 .. ", " .. flag3 )
     Name.Position         = ( dbObj.Name.position == 1 and "TOPLEFT" ) or ( dbObj.Name.position == 2 and "CENTER" ) or ( dbObj.Name.position == 3 and "TOP" ) or ( dbObj.Name.position == 4 and "BOTTOM" )
+    Name.frame            = dbObj.Name.frame
     Name.JustifyH         = ( dbObj.Name.position == 1 and "LEFT" ) or "CENTER"
     Name.X_Offset         = dbObj.Name.x_offset
     Name.Y_Offset         = dbObj.Name.y_offset
@@ -68,9 +69,10 @@ function Fonts:OnEnable()
             fontObj:SetFontObject("GameFontHighlightSmall")
             frame.name:SetFont(fontObj:GetFont())
         end
+        local parent = (Name.frame == 2 and frame.roleIcon) or (Name.frame == 3 and frame.raidmark) or frame
         frame.name:SetWidth((frame:GetWidth()))
         frame.name:SetJustifyH(Name.JustifyH)
-        frame.name:SetPoint(Name.Position, frame, Name.Position, Name.X_Offset, Name.Y_Offset )
+        frame.name:SetPoint(Name.Position, parent, Name.Position, Name.X_Offset, Name.Y_Offset )
         frame.name:SetShadowColor(Advanced.shadowColor.r,Advanced.shadowColor.g,Advanced.shadowColor.b,Advanced.shadowColor.a)
         frame.name:SetShadowOffset(Advanced.x_offset,Advanced.y_offset)
         --Status

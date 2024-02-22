@@ -279,12 +279,12 @@ function Debuffs:OnEnable()
                 local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 local placed = userPlaced[aura.spellId]
+                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
                 if placed.frame == 3 and placed.frameNo > 0 then
                     if auraGroup[placed.frameNo].orientation ~= 7 then
                         tinsert(needReAnchor, {frame = debuffFrame, to = placed.frameNo, conf = placed})
                     end
                 end
-                CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
                 return false
             end
             if auraGroupList[aura.spellId] then
@@ -334,20 +334,12 @@ function Debuffs:OnEnable()
             end
         end
 
-        -- placed, group 들의 frame==3 이고, parent group의 orientation ~= 7 일때는 anchor를 수정해야 한다
+        -- placed, groups' frame==3(Group), and parent group's orientation ~= 7(NONE), we need to modify the anchor
         for _, v in pairs(needReAnchor) do
-            -- group aura가 빈칸일때 빈칸을 기준으로 할지 덮어쓸지 ..
-            if true or groupFrameNum[v.to] then
-                local idx = frame_registry[frame].auraGroupStart[v.to] + (groupFrameNum[v.to] or 2) - 2
-                local parent = frame_registry[frame].extraDebuffFrames[idx]
-                v.frame:ClearAllPoints()
-                v.frame:SetPoint(v.conf.point, parent, v.conf.relativePoint, v.conf.xOffset, v.conf.yOffset)
-            else
-                local idx = frame_registry[frame].auraGroupStart[v.to]
-                local parent = frame_registry[frame].extraDebuffFrames[idx]
-                v.frame:ClearAllPoints()
-                v.frame:SetPoint(parent:GetPoint(1))
-            end
+            local idx = frame_registry[frame].auraGroupStart[v.to] + (groupFrameNum[v.to] or 2) - 2
+            local parent = frame_registry[frame].extraDebuffFrames[idx]
+            v.frame:ClearAllPoints()
+            v.frame:SetPoint(v.conf.point, parent, v.conf.relativePoint, v.conf.xOffset, v.conf.yOffset)
         end
 
         -- hide left aura frames

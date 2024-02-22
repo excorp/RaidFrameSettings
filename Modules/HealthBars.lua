@@ -110,8 +110,10 @@ function HealthBars:OnEnable()
                 return 
             end
             local _, englishClass = UnitClass(frame.unit)
-            local r,g,b = GetClassColor(englishClass)
-            frame.healthBar:SetStatusBarColor(r,g,b)
+            if englishClass then
+                local r,g,b = GetClassColor(englishClass)
+                frame.healthBar:SetStatusBarColor(r,g,b)
+            end
         end
     elseif useOverrideColor then
         if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" then

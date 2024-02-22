@@ -360,7 +360,9 @@ function module:OnDisable()
         else
             if frame.unit then
                 local _, englishClass = UnitClass(frame.unit)
-                r, g, b = GetClassColor(englishClass)
+                if englishClass then
+                    r, g, b = GetClassColor(englishClass)
+                end
             end
         end
         frame.healthBar:SetStatusBarColor(r, g, b)

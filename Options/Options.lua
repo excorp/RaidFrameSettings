@@ -3147,6 +3147,12 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 func = function()
                     -- This will be deleted, so link the parent and child.
                     linkParentAndChildrend(category, 3, groupNo)
+                    for i = groupNo + 1, #self.db.profile[category].AuraGroup do
+                        local children = getChildren(category, 3, i)
+                        for _, v in pairs(children) do
+                            v.frameNo = i - 1
+                        end
+                    end
                     table.remove(self.db.profile[category].AuraGroup, groupNo)
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)

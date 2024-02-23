@@ -3,7 +3,7 @@ local _, addonTable = ...
 addonTable.isRetail = true
 
 addonTable.texturePaths = {
-    PortraitIcon = "Interface\\AddOns\\RaidFrameSettings\\Textures\\Icon\\Icon.tga",
+    PortraitIcon = "Interface\\AddOns\\RaidFrameSettings_Fork\\Textures\\Icon\\Icon.tga",
 }
 
 addonTable.playerClass = select(2, UnitClass("player"))

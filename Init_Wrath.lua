@@ -4,7 +4,7 @@ addonTable.isClassic = true
 addonTable.isWrath = true
 
 addonTable.texturePaths = {
-    PortraitIcon = "Interface\\AddOns\\RaidFrameSettings\\Textures\\Icon\\Icon_Circle.tga",
+    PortraitIcon = "Interface\\AddOns\\RaidFrameSettings_Fork\\Textures\\Icon\\Icon_Circle.tga",
 }
 
 addonTable.playerClass = select(2, UnitClass("player"))

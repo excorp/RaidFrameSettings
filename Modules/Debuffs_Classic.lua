@@ -150,7 +150,7 @@ function Debuffs:OnEnable()
         resizeDebuffFrame = function(debuffFrame)
             debuffFrame:SetSize(width, height)
             debuffFrame.icon:SetTexCoord(left, right, top, bottom)
-            debuffFrame.border:SetTexture("Interface/AddOns/RaidFrameSettings/Textures/DebuffOverlay_clean_icons.tga")
+            debuffFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
             debuffFrame.border:SetTexCoord(0, 1, 0, 1)
             if not isWrath then
                 debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09)
@@ -383,7 +383,7 @@ function Debuffs:OnEnable()
                 end
                 debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
-                debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
+                debuffFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
                 debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
                 if not isWrath then
                     debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
@@ -405,7 +405,7 @@ function Debuffs:OnEnable()
                 end
                 debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
-                debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
+                debuffFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
                 debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
                 if not isWrath then
                     debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)

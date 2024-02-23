@@ -1,0 +1,36 @@
+## Interface: 100205
+## Version: @project-version@
+## Title: RaidFrameSettings_Fork
+## Author: Slothpala,변하지롱-아즈샤라
+## SavedVariables: RaidFrameSettingsDB
+## AddonCompartmentFunc: RaidFrameSettings_AddOnCompartmentClick
+## IconTexture: Interface\AddOns\RaidFrameSettings_Fork\Textures\Icon\Icon.tga
+## OptionalDeps: Ace3, LibDeflate, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibDDI-1.0, AceGUI-3.0_SFX-Widgets, LibCanDispel-1.0
+## X-Curse-Project-ID: 688930
+
+Init.lua
+
+#Libs
+embeds.xml
+
+#Config
+Core.lua
+
+Roster.lua
+ProfileSharing.lua
+DB\DB.lua
+Options\Options.lua
+Options\OptionsFrame.lua
+
+#Utils 
+Utils\GroupType.lua
+Utils\ProfileSwitcher.lua
+Utils\CooldownText.lua
+Utils\Helper.lua
+Utils\HookRegistry.lua
+
+#Modules
+modules.xml
+
+
+

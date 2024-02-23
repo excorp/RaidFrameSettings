@@ -2,6 +2,7 @@
     Created by Slothpala
 --]]
 local _, addonTable = ...
+local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
 local RaidFrameSettings = addonTable.RaidFrameSettings
 local Fonts = RaidFrameSettings:NewModule("Fonts")
 Mixin(Fonts, addonTable.hooks)
@@ -141,10 +142,17 @@ function Fonts:OnDisable()
 
         local frameWidth = frame:GetWidth()
         local frameHeight = frame:GetHeight()
-        local componentScale = min(frameHeight / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH);
+        local componentScale
+        if isClassic then
+            local NATIVE_UNIT_FRAME_HEIGHT = 36
+            local NATIVE_UNIT_FRAME_WIDTH = 72
+            componentScale = min(frameHeight / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH)
+        else
+            componentScale = min(frameHeight / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH)
+        end
         local NATIVE_FONT_SIZE = 12
         local fontName, fontSize, fontFlags = frame.statusText:GetFont();
-        frame.statusText:SetFont(fontName, NATIVE_FONT_SIZE * componentScale, fontFlags);
+        frame.statusText:SetFont(fontName, NATIVE_FONT_SIZE * componentScale, fontFlags)
         frame.statusText:ClearAllPoints()
         frame.statusText:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 3, frameHeight / 3 - 2)
         frame.statusText:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -3, frameHeight / 3 - 2)

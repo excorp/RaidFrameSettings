@@ -2277,6 +2277,12 @@ function RaidFrameSettings:count(table)
     return count
 end
 
+function RaidFrameSettings:compareSpell(a, b)
+    local aname = GetSpellInfo(a) or "aura not found"
+    local bname =GetSpellInfo(b) or "aura not found"
+    return aname < bname
+end
+
 function RaidFrameSettings:GetProfiles()
     RaidFrameSettings.db:GetProfiles(profiles)
 end
@@ -3220,7 +3226,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
             tinsert(sorted, v)
         end
         table.sort(sorted, function (a, b)
-            return a.priority == b.priority and GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId) or a.priority > b.priority
+            return a.priority == b.priority and self:compareSpell(a.spellId, b.spellId) or a.priority > b.priority
         end)
         for _, v in pairs(sorted) do
             self:CreateAuraFilterEntry(tostring(v.spellId), category)
@@ -3260,7 +3266,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 tinsert(sorted, v)
             end
         end
-        table.sort(sorted, function(a, b) return GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId) end)
+        table.sort(sorted, function(a, b) return self:compareSpell(a.spellId, b.spellId) end)
         for _, v in pairs(sorted) do
             self:CreateAuraPositionEntry(tostring(v.spellId), category)
             showChildren(v)
@@ -3296,7 +3302,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 tinsert(sorted, v)
             end
             table.sort(sorted, function (a, b)
-                return a.priority == b.priority and GetSpellInfo(a.spellId) < GetSpellInfo(b.spellId) or a.priority > b.priority
+                return a.priority == b.priority and self:compareSpell(a.spellId, b.spellId) or a.priority > b.priority
             end)
             for _, v in pairs(sorted) do
                 self:CreateAuraGroupEntry(tostring(v.spellId), groupNo, category)

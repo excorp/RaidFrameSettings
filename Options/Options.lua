@@ -13,6 +13,7 @@ local Fonts_disabled       = function() return not RaidFrameSettings.db.profile.
 local RoleIcon_disabled    = function() return not RaidFrameSettings.db.profile.Module.RoleIcon end
 local RaidMark_disabled    = function() return not RaidFrameSettings.db.profile.Module.RaidMark end
 local Range_disabled       = function() return not RaidFrameSettings.db.profile.Module.Range end
+local AuraFilter_disabled  = function() return not RaidFrameSettings.db.profile.Module.AuraFilter end
 local Buffs_disabled       = function() return not RaidFrameSettings.db.profile.Module.Buffs end
 local Debuffs_disabled     = function() return not RaidFrameSettings.db.profile.Module.Debuffs end
 local AuraHighlight_disabled = function() return not RaidFrameSettings.db.profile.Module.AuraHighlight end
@@ -227,6 +228,14 @@ options = {
                             type = "toggle",
                             name = "Range",
                             desc = "Use custom alpha values for out of range units.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r",
+                            get = "GetModuleStatus",
+                            set = "SetModuleStatus",
+                        },
+                        AuraFilter = {
+                            order = 5,
+                            type = "toggle",
+                            name = "Aura Filter",
+                            desc = "Sets the visibility, hiding, and priority of the aura.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r",
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -774,6 +783,87 @@ options = {
                 },
             },
         },
+        AuraFilter = {
+            order = 3.1,
+            name = "Aura Filter",
+            type = "group",
+            hidden = AuraFilter_disabled,
+            childGroups = "tab",
+            args = {
+                Buffs = {
+                    order = 3,
+                    name = "Buffs",
+                    type = "group",
+                    args = {
+                        addAura = {
+                            order = 1,
+                            name = "Enter spellId:",
+                            desc = "",
+                            type = "input",
+                            width = 1.5,
+                            pattern = "^%d+$",
+                            usage = "please enter a number",
+                            set = function(_, value)
+                                RaidFrameSettings.db.profile.AuraFilter.Buffs[value] = {
+                                    spellId = tonumber(value),
+                                    show = false,
+                                    other = false,
+                                    hideInCombat = false,
+                                    priority = 0,
+                                }
+                                RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
+                                RaidFrameSettings:UpdateModule("Buffs")
+                            end,
+                        },
+                        FilteredAuras = {
+                            order = 4,
+                            name = "Filtered Auras:",
+                            type = "group",
+                            inline = true,
+                            args = {
+
+                            },
+                        },
+                    },
+                },
+                Debuffs = {
+                    order = 3,
+                    name = "Debuffs",
+                    type = "group",
+                    args = {
+                        addAura = {
+                            order = 1,
+                            name = "Enter spellId:",
+                            desc = "",
+                            type = "input",
+                            width = 1.5,
+                            pattern = "^%d+$",
+                            usage = "please enter a number",
+                            set = function(_, value)
+                                RaidFrameSettings.db.profile.AuraFilter.Debuffs[value] = {
+                                    spellId = tonumber(value),
+                                    show = false,
+                                    other = false,
+                                    hideInCombat = false,
+                                    priority = 0,
+                                }
+                                RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
+                                RaidFrameSettings:UpdateModule("Debuffs")
+                            end,
+                        },
+                        FilteredAuras = {
+                            order = 4,
+                            name = "Filtered Auras:",
+                            type = "group",
+                            inline = true,
+                            args = {
+
+                            },
+                        },
+                    },
+                },
+            }
+        },
         Auras = {
             order = 4,
             name = "Auras",
@@ -1158,42 +1248,6 @@ options = {
                                 },                           
                             },
                         },
-                        AuraFilter = {
-                            order = 3,
-                            name = "Aura Filter",
-                            type = "group",
-                            args = {
-                                addAura = {
-                                    order = 1,
-                                    name = "Enter spellId:",
-                                    desc = "",
-                                    type = "input",
-                                    width = 1.5,
-                                    pattern = "^%d+$",
-                                    usage = "please enter a number",
-                                    set = function(_, value)
-                                        RaidFrameSettings.db.profile.Buffs.AuraFilter[value] = {
-                                            spellId = tonumber(value),
-                                            show = false,
-                                            other = false,
-                                            hideInCombat = false,
-                                            priority = 0,
-                                        }
-                                        RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
-                                        RaidFrameSettings:UpdateModule("Buffs")
-                                    end,
-                                },
-                                FilteredAuras = {
-                                    order = 4,
-                                    name = "Filtered Auras:",
-                                    type = "group",
-                                    inline = true,
-                                    args = {
-
-                                    },
-                                },                           
-                            },
-                        },
                     },  
                 },
                 Debuffs = {
@@ -1553,42 +1607,6 @@ options = {
                                 IncreasedAuras = {
                                     order = 4,
                                     name = "Increase:",
-                                    type = "group",
-                                    inline = true,
-                                    args = {
-
-                                    },
-                                },                           
-                            },
-                        },
-                        AuraFilter = {
-                            order = 3,
-                            name = "Aura Filter",
-                            type = "group",
-                            args = {
-                                addAura = {
-                                    order = 1,
-                                    name = "Enter spellId:",
-                                    desc = "",
-                                    type = "input",
-                                    width = 1.5,
-                                    pattern = "^%d+$",
-                                    usage = "please enter a number",
-                                    set = function(_, value)
-                                        RaidFrameSettings.db.profile.Debuffs.AuraFilter[value] = {
-                                            spellId = tonumber(value),
-                                            show = false,
-                                            other = false,
-                                            hideInCombat = false,
-                                            priority = 0,
-                                        }
-                                        RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
-                                        RaidFrameSettings:UpdateModule("Debuffs")
-                                    end,
-                                },
-                                FilteredAuras = {
-                                    order = 4,
-                                    name = "Filtered Auras:",
                                     type = "group",
                                     inline = true,
                                     args = {
@@ -2268,8 +2286,8 @@ function RaidFrameSettings:GetOptionsTable()
 end
 
 function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
-    local dbObj = self.db.profile[category].AuraFilter[spellId]
-    local auraFilterOptions = options.args.Auras.args[category].args.AuraFilter.args.FilteredAuras.args
+    local dbObj = self.db.profile.AuraFilter[category][spellId]
+    local auraFilterOptions = options.args.AuraFilter.args[category].args.FilteredAuras.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -2296,7 +2314,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 get = function() return dbObj.show end,
                 set = function(_, value)
                     dbObj.show = value
-                    RaidFrameSettings:UpdateModule(category)
+                    RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.5,
             },
@@ -2308,7 +2326,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 get = function() return dbObj.other end,
                 set = function(_, value)
                     dbObj.other = value
-                    RaidFrameSettings:UpdateModule(category)
+                    RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.8,
             },
@@ -2320,12 +2338,14 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 get = function() return dbObj.hideInCombat end,
                 set = function(_, value)
                     dbObj.hideInCombat = value
-                    RaidFrameSettings:UpdateModule(category)
+                    RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.8,
             },
             priority = {
-                hidden = function() return not dbObj.show end,
+                hidden = function() 
+                    return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
+                end,
                 order = 5,
                 name = "Priority",
                 type = "input",
@@ -2339,7 +2359,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 set = function(_, value)
                     dbObj.priority = tonumber(value)
                     RaidFrameSettings:LoadUserInputEntrys()
-                    RaidFrameSettings:UpdateModule(category)
+                    RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.4,
             },
@@ -2348,10 +2368,10 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 name = "remove",
                 type = "execute",
                 func = function()
-                    self.db.profile[category].AuraFilter[spellId] = nil
+                    self.db.profile.AuraFilter[category][spellId] = nil
                     auraFilterOptions[spellId] = nil
                     RaidFrameSettings:LoadUserInputEntrys()
-                    RaidFrameSettings:UpdateModule(category)
+                    RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.5,
             },
@@ -3136,7 +3156,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
         -- Importing previous blacklist settings 
         if self.db.profile[category].Blacklist then
             for spellId in pairs(self.db.profile[category].Blacklist) do
-                self.db.profile[category].AuraFilter[spellId] = {
+                self.db.AuraFilter[category][spellId].profile[category] = {
                     show = false,
                     hideInCombat = false,
                 }
@@ -3144,12 +3164,20 @@ function RaidFrameSettings:LoadUserInputEntrys()
             end
             self.db.profile[category].Blacklist = nil
         end
+        -- Importing previous aurafilter settings 
+        if self.db.profile[category].AuraFilter then
+            for spellId, v in pairs(self.db.profile[category].AuraFilter) do
+                self.db.profile.AuraFilter[category][spellId] = v
+                self.db.profile[category].AuraFilter[spellId] = nil
+            end
+            self.db.profile[category].AuraFilter = nil
+        end
 
         --aura filter
-        options.args.Auras.args[category].args.AuraFilter.args.FilteredAuras.args = {}
+        options.args.AuraFilter.args[category].args.FilteredAuras.args = {}
         -- sort
         local sorted = {}
-        for spellId, v in pairs(self.db.profile[category].AuraFilter) do
+        for spellId, v in pairs(self.db.profile.AuraFilter[category]) do
             if not v.spellId then
                 v.spellId = tonumber(spellId)
             end
@@ -3213,6 +3241,10 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end
         for groupNo, group in pairs(self.db.profile[category].AuraGroup) do
             self:CreateAuraGroup(groupNo, category)
+            if group.unlimitAura == nil then
+                group.unlimitAura = true
+                group.maxAuras = 1
+            end
             -- sort
             sorted = {}
             for spellId, v in pairs(group.auraList) do

@@ -32,37 +32,6 @@ local SetDrawEdge = SetDrawEdge
 local next = next
 
 local frame_registry = {}
-local module_enabled
-local filteredAuras = {}
-
-local org_SpellGetVisibilityInfo = SpellGetVisibilityInfo
-SpellGetVisibilityInfo = function(spellId, visType)
-    if module_enabled then
-        if filteredAuras[spellId] then
-            if filteredAuras[spellId].show then
-                -- show
-                if filteredAuras[spellId].hideInCombat and visType == "RAID_INCOMBAT" then
-                    return true, false, false
-                end
-                if filteredAuras[spellId].other then
-                    return true, false, true
-                end
-                return true, true, false
-            else
-                -- hide
-                return true, false, false
-            end
-        end
-    end
-    return org_SpellGetVisibilityInfo(spellId, visType)
-end
-
-function Buffs:SetSpellGetVisibilityInfo(enabled)
-    module_enabled = enabled
-    -- Trigger an event to initialize the local value of cachedVisualizationInfo in AuraUtil
-    -- Only use the PLAYER_REGEN_ENABLED event because the module is only enabled/disabled when not in combat
-    EventRegistry:TriggerEvent("PLAYER_REGEN_ENABLED")
-end
 
 function Buffs:OnEnable()
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
@@ -83,11 +52,11 @@ function Buffs:OnEnable()
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
     --aura filter
-    for k in pairs(filteredAuras) do
-        filteredAuras[k] = nil
-    end
-    for spellId, value in pairs(addon.db.profile.Buffs.AuraFilter) do
-        filteredAuras[tonumber(spellId)] = value
+    local filteredAuras = {}
+    if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Buffs then
+        for spellId, value in pairs(addon.db.profile.AuraFilter.Buffs) do
+            filteredAuras[tonumber(spellId)] = value
+        end
     end
     --increase
     local increase = {}
@@ -427,7 +396,7 @@ function Buffs:OnEnable()
             local idx = frame_registry[frame].placedAuraStart - 1 + maxUserPlaced
             for k, v in pairs(auraGroup) do
                 frame_registry[frame].auraGroupStart[k] = idx + 1
-                frame_registry[frame].auraGroupEnd[k] = idx - 1 + v.maxAuras
+                frame_registry[frame].auraGroupEnd[k] = idx + v.maxAuras
                 idx = idx + v.maxAuras
             end
 
@@ -519,8 +488,6 @@ function Buffs:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
-    self:SetSpellGetVisibilityInfo(true)
-
     for _, v in pairs(frame_registry) do
         v.dirty = true
     end
@@ -532,9 +499,6 @@ end
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Buffs:OnDisable()
     self:DisableHooks()
-    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-    self:SetSpellGetVisibilityInfo(false)
-
     local restoreBuffFrames = function(frame)
         if not frame_registry[frame] then
             return

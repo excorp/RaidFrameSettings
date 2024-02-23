@@ -64,7 +64,7 @@ local defaults = {
                 useclasscolor = false,
                 point         = 6,
                 relativePoint = 6,
-                justifyH      = 1,
+                justifyH      = 2,
                 x_offset      = 0,
                 y_offset      = -5,
             },
@@ -73,6 +73,10 @@ local defaults = {
                 x_offset = 1,
                 y_offset = -1,
             },
+        },
+        AuraFilter = {
+            Buffs = {},
+            Debuffs = {},
         },
         Debuffs = {
             DebuffFramesDisplay = {

@@ -1,5 +1,5 @@
 --[[
-    Created by Slothpala 
+    Created by Slothpala
     The aura indicator position and the aura timers are greatly inspired by a pull request from: https://github.com/excorp
 --]]
 local _, addonTable = ...
@@ -44,7 +44,6 @@ SpellGetVisibilityInfo = function(spellId, visType)
                     return true, false, false
                 end
                 return false
-    
             else
                 -- hide
                 return true, false, false
@@ -104,12 +103,12 @@ function Debuffs:OnEnable()
     for spellId, value in pairs(addon.db.profile.Debuffs.AuraFilter) do
         filteredAuras[tonumber(spellId)] = value
     end
-	--increase
+    --increase
     local increase = {}
     for spellId, value in pairs(addon.db.profile.Debuffs.Increase) do
         increase[tonumber(spellId)] = true
     end
-    --user placed 
+    --user placed
     local userPlaced = {} --i will bring this at a later date for Debuffs including position and size
     local userPlacedIdx = 1
     local maxUserPlaced = 0
@@ -150,8 +149,8 @@ function Debuffs:OnEnable()
         end
     end
     --Debuffframe size
-    local width  = frameOpt.width
-    local height = frameOpt.height
+    local width       = frameOpt.width
+    local height      = frameOpt.height
     local boss_width  = width * frameOpt.increase
     local boss_height = height * frameOpt.increase
     local resizeDebuffFrame
@@ -160,22 +159,22 @@ function Debuffs:OnEnable()
         if height ~= width then
             if height < width then
                 local delta = width - height
-                local scale_factor = ((( 100 / width )  * delta) / 100) / 2
+                local scale_factor = (((100 / width) * delta) / 100) / 2
                 top = top + scale_factor
                 bottom = bottom - scale_factor
             else
-                local delta = height - width 
-                local scale_factor = ((( 100 / height )  * delta) / 100) / 2
+                local delta = height - width
+                local scale_factor = (((100 / height) * delta) / 100) / 2
                 left = left + scale_factor
                 right = right - scale_factor
             end
         end
         resizeDebuffFrame = function(debuffFrame)
             debuffFrame:SetSize(width, height)
-            debuffFrame.icon:SetTexCoord(left,right,top,bottom)
+            debuffFrame.icon:SetTexCoord(left, right, top, bottom)
             debuffFrame.border:SetTexture("Interface/AddOns/RaidFrameSettings/Textures/DebuffOverlay_clean_icons.tga")
-            debuffFrame.border:SetTexCoord(0,1,0,1)
-            debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09) 
+            debuffFrame.border:SetTexCoord(0, 1, 0, 1)
+            debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09)
             debuffFrame.border:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
         end
     else
@@ -218,7 +217,7 @@ function Debuffs:OnEnable()
         local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
         cooldownText:SetVertexColor(color.r, color.g, color.b)
 
-        if aura then 
+        if aura then
             local auraGroupNo = auraGroupList[aura.spellId]
             if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
                 local placed = userPlaced[aura.spellId]
@@ -233,7 +232,7 @@ function Debuffs:OnEnable()
             end
 
             if aura.applications > 0 then
-                if  aura.duration == 0 then
+                if aura.duration == 0 then
                     debuffFrame.count:SetParent(debuffFrame)
                 else
                     debuffFrame.count:SetParent(cooldown)
@@ -244,7 +243,7 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDebuff)
 
     local function onUpdatePrivateAuras(frame)
-        if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible()then
+        if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
 
@@ -297,7 +296,7 @@ function Debuffs:OnEnable()
             end
             if frameNum <= frame_registry[frame].maxDebuffs then
                 local priority = filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
-                tinsert(sorted[0], {spellId = aura.spellId, priority = priority, aura = aura})
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura })
                 frameNum = frameNum + 1
             end
             return false
@@ -358,8 +357,8 @@ function Debuffs:OnEnable()
                 if v.orientation == 5 or v.orientation == 6 then
                     local idx = frame_registry[frame].auraGroupStart[groupNo]
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                    local x,y = 0,0
-                    for i = 2, groupFrameNum[groupNo] -1 do
+                    local x, y = 0, 0
+                    for i = 2, groupFrameNum[groupNo] - 1 do
                         local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                         local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                         local w, h = debuffFrame:GetSize()
@@ -370,7 +369,7 @@ function Debuffs:OnEnable()
                         end
                     end
                     debuffFrame:ClearAllPoints()
-                    debuffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x/2, v.yOffset + y/2)
+                    debuffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
                 end
             end
             local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
@@ -420,8 +419,8 @@ function Debuffs:OnEnable()
                 end
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
-                debuffFrame.border:SetTexCoord(0.296875,0.5703125,0,0.515625)
-                debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+                debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+                debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
                 placedAuraStart = i + 1
             end
             frame_registry[frame].placedAuraStart = placedAuraStart
@@ -440,8 +439,8 @@ function Debuffs:OnEnable()
                 end
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
-                debuffFrame.border:SetTexCoord(0.296875,0.5703125,0,0.515625)
-                debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
+                debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+                debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
             end
 
             for i = 1, frame_registry[frame].maxDebuffs + maxUserPlaced + maxAuraGroup do
@@ -492,7 +491,7 @@ function Debuffs:OnEnable()
                 cooldown:SetReverse(frameOpt.inverse)
                 cooldown:SetDrawEdge(frameOpt.edge)
             end
-            
+
             local idx = frame_registry[frame].placedAuraStart - 1 + maxUserPlaced
             for k, v in pairs(auraGroup) do
                 frame_registry[frame].auraGroupStart[k] = idx + 1
@@ -618,21 +617,21 @@ function Debuffs:OnDisable()
         local frameHeight = frame:GetHeight()
         local componentScale = min(frameWidth / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH)
         local buffSize = math.min(15, 11 * componentScale)
-        for i=1,#frame.debuffFrames do  
+        for i = 1, #frame.debuffFrames do
             frame.debuffFrames[i]:SetSize(buffSize, buffSize)
         end
         local powerBarUsedHeight = frame.powerBar:IsShown() and frame.powerBar:GetHeight() or 0
         local debuffPos, debuffRelativePoint, debuffOffset = "BOTTOMLEFT", "BOTTOMRIGHT", CUF_AURA_BOTTOM_OFFSET + powerBarUsedHeight
         frame.debuffFrames[1]:ClearAllPoints()
         frame.debuffFrames[1]:SetPoint(debuffPos, frame, "BOTTOMLEFT", 3, debuffOffset)
-        for i=1, #frame.debuffFrames do
+        for i = 1, #frame.debuffFrames do
             local debuffFrame = frame.debuffFrames[i]
             debuffFrame:SetFrameStrata(frame:GetFrameStrata())
             debuffFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
             debuffFrame.border:SetTexCoord(0.296875, 0, 0.296875, 0.515625, 0.5703125, 0, 0.5703125, 0.515625)
-            debuffFrame.border:SetTextureSliceMargins(0,0,0,0)
-            debuffFrame.icon:SetTexCoord(0,1,0,1)
-            if ( i > 1 ) then
+            debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
+            debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
+            if (i > 1) then
                 debuffFrame:ClearAllPoints();
                 debuffFrame:SetPoint(debuffPos, frame.debuffFrames[i - 1], debuffRelativePoint, 0, 0);
             end

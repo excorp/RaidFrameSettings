@@ -48,7 +48,6 @@ SpellGetVisibilityInfo = function(spellId, visType)
                     return true, false, true
                 end
                 return true, true, false
-    
             else
                 -- hide
                 return true, false, false
@@ -136,8 +135,8 @@ function Buffs:OnEnable()
         end
     end
     --Buff size
-    local width  = frameOpt.width
-    local height = frameOpt.height
+    local width      = frameOpt.width
+    local height     = frameOpt.height
     local big_width  = width * frameOpt.increase
     local big_height = height * frameOpt.increase
     local resizeBuffFrame
@@ -146,19 +145,19 @@ function Buffs:OnEnable()
         if height ~= width then
             if height < width then
                 local delta = width - height
-                local scale_factor = ((( 100 / width )  * delta) / 100) / 2
+                local scale_factor = (((100 / width) * delta) / 100) / 2
                 top = top + scale_factor
                 bottom = bottom - scale_factor
             else
-                local delta = height - width 
-                local scale_factor = ((( 100 / height )  * delta) / 100) / 2
+                local delta = height - width
+                local scale_factor = (((100 / height) * delta) / 100) / 2
                 left = left + scale_factor
                 right = right - scale_factor
             end
         end
         resizeBuffFrame = function(buffFrame)
             buffFrame:SetSize(width, height)
-            buffFrame.icon:SetTexCoord(left,right,top,bottom)
+            buffFrame.icon:SetTexCoord(left, right, top, bottom)
         end
     else
         resizeBuffFrame = function(buffFrame)
@@ -200,7 +199,7 @@ function Buffs:OnEnable()
             end
 
             if aura.applications > 0 then
-                if  aura.duration == 0 then
+                if aura.duration == 0 then
                     buffFrame.count:SetParent(buffFrame)
                 else
                     buffFrame.count:SetParent(cooldown)
@@ -240,7 +239,7 @@ function Buffs:OnEnable()
             end
             if frameNum <= frame_registry[frame].maxBuffs then
                 local priority = filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
-                tinsert(sorted[0], {spellId = aura.spellId, priority = priority, aura = aura})
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura })
                 frameNum = frameNum + 1
             end
             return false
@@ -301,8 +300,8 @@ function Buffs:OnEnable()
                 if v.orientation == 5 or v.orientation == 6 then
                     local idx = frame_registry[frame].auraGroupStart[groupNo]
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                    local x,y = 0,0
-                    for i = 2, groupFrameNum[groupNo] -1 do
+                    local x, y = 0, 0
+                    for i = 2, groupFrameNum[groupNo] - 1 do
                         local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                         local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                         local w, h = buffFrame:GetSize()
@@ -313,7 +312,7 @@ function Buffs:OnEnable()
                         end
                     end
                     buffFrame:ClearAllPoints()
-                    buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x/2, v.yOffset + y/2)
+                    buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
                 end
             end
             local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
@@ -555,12 +554,12 @@ function Buffs:OnDisable()
         local buffPos, buffRelativePoint, buffOffset = "BOTTOMRIGHT", "BOTTOMLEFT", CUF_AURA_BOTTOM_OFFSET + powerBarUsedHeight;
         frame.buffFrames[1]:ClearAllPoints();
         frame.buffFrames[1]:SetPoint(buffPos, frame, "BOTTOMRIGHT", -3, buffOffset);
-        for i=1, #frame.buffFrames do
+        for i = 1, #frame.buffFrames do
             local buffFrame = frame.buffFrames[i]
             buffFrame:SetFrameStrata(frame:GetFrameStrata())
             buffFrame:SetSize(Display, Display)
-            buffFrame.icon:SetTexCoord(0,1,0,1)
-            if ( i > 1 ) then
+            buffFrame.icon:SetTexCoord(0, 1, 0, 1)
+            if (i > 1) then
                 buffFrame:ClearAllPoints();
                 buffFrame:SetPoint(buffPos, frame.buffFrames[i - 1], buffRelativePoint, 0, 0);
             end

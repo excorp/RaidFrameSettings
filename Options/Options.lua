@@ -3245,6 +3245,12 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 group.unlimitAura = true
                 group.maxAuras = 1
             end
+            -- for backward compatibility 
+            if group.orientation > 6 then
+                group.orientation = 1
+                group.unlimitAura = false
+                group.maxAuras = 1
+            end
             -- sort
             sorted = {}
             for spellId, v in pairs(group.auraList) do

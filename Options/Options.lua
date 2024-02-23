@@ -1062,6 +1062,10 @@ options = {
                                                     relativePoint = 1,
                                                     frame = 1,
                                                     frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
                                                     xOffset = 0,
                                                     yOffset = 0,
                                                     orientation = 2,
@@ -1096,6 +1100,8 @@ options = {
                                                             relativePoint = 1,
                                                             frame = 1,
                                                             frameNo = 0,
+                                                            frameSelect = 1,
+                                                            frameManualSelect = 1,
                                                             xOffset = 0,
                                                             yOffset = 0,
                                                             setSize = false,
@@ -1459,6 +1465,10 @@ options = {
                                                     relativePoint = 1,
                                                     frame = 1,
                                                     frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
                                                     xOffset = 0,
                                                     yOffset = 0,
                                                     orientation = 2,
@@ -1493,6 +1503,8 @@ options = {
                                                             relativePoint = 1,
                                                             frame = 1,
                                                             frameNo = 0,
+                                                            frameSelect = 1,
+                                                            frameManualSelect = 1,
                                                             xOffset = 0,
                                                             yOffset = 0,
                                                             setSize = false,
@@ -2239,10 +2251,17 @@ options = {
     },
 }
 
+function RaidFrameSettings:count(table)
+    local count = 0
+    for _ in pairs(table) do
+        count = count + 1
+    end
+    return count
+end
+
 function RaidFrameSettings:GetProfiles()
     RaidFrameSettings.db:GetProfiles(profiles)
 end
-
 
 function RaidFrameSettings:GetOptionsTable()
     return options
@@ -2255,10 +2274,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
-    local maxEntry = 0
-    for _ in pairs(auraFilterOptions) do
-        maxEntry = maxEntry + 1
-    end
+    local maxEntry = self:count(auraFilterOptions)
     local aurafilter_entry = {
         order = maxEntry + 1,
         name = "",
@@ -2351,10 +2367,7 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
-    local maxEntry = 0
-    for _ in pairs(increaseOptions) do
-        maxEntry = maxEntry + 1
-    end
+    local maxEntry = self:count(increaseOptions)
     local increase_entry = {
         order = maxEntry + 1,
         name = "",
@@ -2461,10 +2474,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
-    local maxEntry = 0
-    for _ in pairs(auraPositionOptions) do
-        maxEntry = maxEntry + 1
-    end
+    local maxEntry = self:count(auraPositionOptions)
     local aura_entry = {
         order = maxEntry + 1,
         name = "|cffFFFFFF" .. (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ") |r",
@@ -2560,6 +2570,39 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     dbObj.frameNo = frameNo
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.6,
+            },
+            frameSelect = {
+                hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
+                order = 4.3,
+                name = "Frame Select",
+                type = "select",
+                values = {"Last", "First", "Select"},
+                sorting = {1,2,3},
+                get = function()
+                    return dbObj.frameSelect
+                end,
+                set = function(_, value)
+                    dbObj.frameSelect = value
+                end,
+                width = 0.5,
+            },
+            frameManualSelect = {
+                hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
+                order = 4.4,
+                name = "Frame No",
+                type = "input",
+                pattern = "^%d+$",
+                usage = "please enter a number (The n th frame of the aura group)",
+                get = function()
+                    return tostring(dbObj.frameManualSelect)
+                end,
+                set = function(_, value)
+                    local frameNoNo = tonumber(value)
+                    local dbGroup = self.db.profile[category].AuraGroup[dbObj.frameNo]
+                    local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
+                    dbObj.frameManualSelect = frameNoNo > maxAuras and maxAuras or frameNoNo
                 end,
                 width = 0.6,
             },
@@ -2673,10 +2716,7 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
-    local maxEntry = 0
-    for _ in pairs(groupOptions) do
-        maxEntry = maxEntry + 1
-    end
+    local maxEntry = self:count(groupOptions)
     -- for backward compatibility 
     if type(dbObj[spellId]) ~= "table" then
         dbObj[spellId] = {
@@ -2861,6 +2901,39 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 end,
                 width = 0.6,
             },
+            frameSelect = {
+                hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
+                order = 3.3,
+                name = "Frame Select",
+                type = "select",
+                values = {"Last", "First", "Select"},
+                sorting = {1,2,3},
+                get = function()
+                    return dbObj.frameSelect
+                end,
+                set = function(_, value)
+                    dbObj.frameSelect = value
+                end,
+                width = 0.5,
+            },
+            frameManualSelect = {
+                hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
+                order = 3.4,
+                name = "Frame No",
+                type = "input",
+                pattern = "^%d+$",
+                usage = "please enter a number (The n th frame of the aura group)",
+                get = function()
+                    return tostring(dbObj.frameManualSelect)
+                end,
+                set = function(_, value)
+                    local frameNoNo = tonumber(value)
+                    local dbGroup = self.db.profile[category].AuraGroup[dbObj.frameNo]
+                    local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
+                    dbObj.frameManualSelect = frameNoNo > maxAuras and maxAuras or frameNoNo
+                end,
+                width = 0.6,
+            },
             xOffset = {
                 order = 4,
                 name = "x - offset",
@@ -2902,8 +2975,8 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 order = 7,
                 name = "Grow Direction",
                 type = "select",
-                values = {"Left", "Right", "Up", "Down", "Horizontal Center", "Vertical Center", "None"},
-                sorting = {1,2,3,4,5,6,7},
+                values = {"Left", "Right", "Up", "Down", "Horizontal Center", "Vertical Center"},
+                sorting = {1,2,3,4,5,6},
                 get = function()
                     return dbObj.orientation
                 end,
@@ -2913,8 +2986,39 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 end,
                 width = 1,
             },
-            gap = {
+            unlimitAura = {
                 order = 7.1,
+                type = "toggle",
+                name = "Unlimit Auras",
+                desc = "",
+                get = function()
+                    return dbObj.unlimitAura
+                end,
+                set = function(_, value)
+                    dbObj.unlimitAura = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.8,
+            },
+            maxAuras = {
+                hidden = function() return dbObj.unlimitAura end,
+                order = 7.2,
+                name = "Max Auras",
+                type = "range",
+                get = function()
+                    return dbObj.maxAuras
+                end,
+                set = function(_, value)
+                    dbObj.maxAuras = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                min = 1,
+                softMax = 10,
+                step = 1,
+                width = 0.8,
+            },
+            gap = {
+                order = 7.3,
                 name = "Gap",
                 type = "range",
                 get = function()

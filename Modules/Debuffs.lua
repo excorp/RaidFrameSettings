@@ -548,8 +548,9 @@ function Debuffs:OnEnable()
             prevFrame = debuffFrame
             resizeDebuffFrame(debuffFrame)
         end
+        local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
-            local idx = frame_registry[frame].placedAuraStart + place.idx - 1
+            idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
             local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
                 (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + auraGroup[place.frameNo].frameNoNo - 1))

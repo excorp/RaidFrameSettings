@@ -115,18 +115,10 @@ function Debuffs:OnEnable()
     local userPlacedIdx = 1
     local maxUserPlaced = 0
     for _, auraInfo in pairs(addon.db.profile.Debuffs.AuraPosition) do
-        userPlaced[auraInfo.spellId] = {
-            idx = userPlacedIdx,
-            point = addon:ConvertDbNumberToPosition(auraInfo.point),
-            relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint),
-            frame = auraInfo.frame,
-            frameNo = auraInfo.frameNo,
-            xOffset = auraInfo.xOffset,
-            yOffset = auraInfo.yOffset,
-            setSize = auraInfo.setSize,
-            width = auraInfo.width,
-            height = auraInfo.height,
-        }
+        userPlaced[auraInfo.spellId] = CopyTable(auraInfo)
+        userPlaced[auraInfo.spellId].idx = userPlacedIdx
+        userPlaced[auraInfo.spellId].point = addon:ConvertDbNumberToPosition(auraInfo.point)
+        userPlaced[auraInfo.spellId].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
         userPlacedIdx = userPlacedIdx + 1
     end
     maxUserPlaced = userPlacedIdx - 1
@@ -138,11 +130,24 @@ function Debuffs:OnEnable()
         auraGroup[k] = CopyTable(auraInfo)
         auraGroup[k].point = addon:ConvertDbNumberToPosition(auraInfo.point)
         auraGroup[k].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
+        auraGroup[k].frameNoNo = auraInfo.frameSelect == 3 and auraInfo.frameManualSelect or 1
+        local maxAuras = auraInfo.unlimitAura ~= false and addon:count(auraInfo.auraList) or auraInfo.maxAuras or 1
+        if maxAuras == 0 then
+            maxAuras = 1
+        end
+        auraGroup[k].maxAuras = maxAuras
+        maxAuraGroup = maxAuraGroup + maxAuras
         auraGroup[k].auraList = {}
         for aura, v in pairs(auraInfo.auraList) do
             auraGroup[k].auraList[tonumber(aura)] = v
             auraGroupList[tonumber(aura)] = auraGroupList[tonumber(aura)] or k
-            maxAuraGroup = maxAuraGroup + 1
+        end
+    end
+    for k, v in pairs(auraGroup) do
+        if v.frame == 3 and v.frameNo > 0 then
+            if v.frameNoNo > auraGroup[v.frameNo].maxAuras then
+                v.frameNoNo = auraGroup[v.frameNo].maxAuras
+            end
         end
     end
     --Debuffframe size
@@ -258,7 +263,6 @@ function Debuffs:OnEnable()
         local sorted = {
             [0] = {},
         }
-        local needReAnchor = {}
         while true do
             local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(frame.displayedUnit, index, filter)
             if not debuffName then
@@ -271,12 +275,6 @@ function Debuffs:OnEnable()
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
-                    local placed = userPlaced[spellId]
-                    if placed.frame == 3 and placed.frameNo > 0 then
-                        if auraGroup[placed.frameNo].orientation ~= 7 then
-                            tinsert(needReAnchor, { frame = debuffFrame, to = placed.frameNo, conf = placed })
-                        end
-                    end
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
                     local auraList = auraGroup[groupNo].auraList
@@ -284,14 +282,6 @@ function Debuffs:OnEnable()
                     if not sorted[groupNo] then sorted[groupNo] = {} end
                     tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index })
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
-                    local group = auraGroup[groupNo]
-                    if group.frame == 3 and group.frameNo > 0 then
-                        if auraGroup[group.frameNo].orientation ~= 7 then
-                            local idx = frame_registry[frame].auraGroupStart[groupNo]
-                            local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                            tinsert(needReAnchor, { frame = debuffFrame, to = group.frameNo, conf = auraGroup[groupNo] })
-                        end
-                    end
                 elseif frameNum <= frame_registry[frame].maxDebuffs then
                     local priority = filteredAuras[spellId] and filteredAuras[spellId].priority or 0
                     tinsert(sorted[0], { spellId = spellId, priority = priority, index = index })
@@ -315,20 +305,25 @@ function Debuffs:OnEnable()
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter)
-                    -- grow direction == NONE
-                    if auraGroup[groupNo].orientation == 7 then
+                    if k >= auraGroup[groupNo].maxAuras then
                         break
                     end
                 end
             end
         end
 
-        -- placed, groups' frame==3(Group), and parent group's orientation ~= 7(NONE), we need to modify the anchor
-        for _, v in pairs(needReAnchor) do
-            local idx = frame_registry[frame].auraGroupStart[v.to] + (groupFrameNum[v.to] or 2) - 2
-            local parent = frame_registry[frame].extraDebuffFrames[idx]
-            v.frame:ClearAllPoints()
-            v.frame:SetPoint(v.conf.point, parent, v.conf.relativePoint, v.conf.xOffset, v.conf.yOffset)
+        -- reanchor
+        for groupNo, v in pairs(frame_registry[frame].reanchor) do
+            local lastNum = groupFrameNum[groupNo] or 2
+            if v.lastNum ~= lastNum then
+                v.lastNum = lastNum
+                for _, child in pairs(v.children) do
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + v.lastNum - 2
+                    local parent = frame_registry[frame].extraDebuffFrames[idx]
+                    child.frame:ClearAllPoints()
+                    child.frame:SetPoint(child.conf.point, parent, child.conf.relativePoint, child.conf.xOffset, child.conf.yOffset)
+                end
+            end
         end
 
         -- hide left aura frames
@@ -391,6 +386,7 @@ function Debuffs:OnEnable()
                 auraGroupStart    = {},
                 auraGroupEnd      = {},
                 extraDebuffFrames = {},
+                reanchor          = {},
                 dirty             = true,
             }
         end
@@ -486,6 +482,46 @@ function Debuffs:OnEnable()
                 cooldown:SetReverse(frameOpt.inverse)
                 cooldown:SetDrawEdge(frameOpt.edge)
             end
+
+            local idx = frame_registry[frame].placedAuraStart - 1 + maxUserPlaced
+            for k, v in pairs(auraGroup) do
+                frame_registry[frame].auraGroupStart[k] = idx + 1
+                frame_registry[frame].auraGroupEnd[k] = idx - 1 + v.maxAuras
+                idx = idx + v.maxAuras
+            end
+
+            frame_registry[frame].reanchor = {}
+            local reanchor = frame_registry[frame].reanchor
+            for _, v in pairs(userPlaced) do
+                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo].maxAuras > 1 then
+                    if not reanchor[v.frameNo] then
+                        reanchor[v.frameNo] = {
+                            lastNum = 2,
+                            children = {}
+                        }
+                    end
+                    idx = frame_registry[frame].placedAuraStart + v.idx - 1
+                    tinsert(reanchor[v.frameNo].children, {
+                        frame = frame_registry[frame].extraDebuffFrames[idx],
+                        conf  = v,
+                    })
+                end
+            end
+            for groupNo, v in pairs(auraGroup) do
+                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo].maxAuras > 1 then
+                    if not reanchor[v.frameNo] then
+                        reanchor[v.frameNo] = {
+                            lastNum = 2,
+                            children = {}
+                        }
+                    end
+                    idx = frame_registry[frame].auraGroupStart[groupNo]
+                    tinsert(reanchor[v.frameNo].children, {
+                        frame = frame_registry[frame].extraDebuffFrames[idx],
+                        conf  = v,
+                    })
+                end
+            end
         end
 
         -- set anchor and resize
@@ -508,7 +544,7 @@ function Debuffs:OnEnable()
             idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
             local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
-                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and frame_registry[frame].auraGroupStart[place.frameNo])
+                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + auraGroup[place.frameNo].frameNoNo - 1))
             local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or frame
             debuffFrame:ClearAllPoints()
             debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
@@ -518,12 +554,12 @@ function Debuffs:OnEnable()
             frame_registry[frame].auraGroupStart[k] = idx + 1
             local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
             anchorSet, prevFrame = false, nil
-            for _ in pairs(v.auraList) do
+            for _ = 1, v.maxAuras do
                 idx = idx + 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 if not anchorSet then
                     local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
-                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo]))
+                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + auraGroup[v.frameNo].frameNoNo - 1))
                     local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or frame
                     debuffFrame:ClearAllPoints()
                     debuffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)

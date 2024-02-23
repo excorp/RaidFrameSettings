@@ -76,6 +76,7 @@ function Buffs:OnEnable()
         userPlaced[auraInfo.spellId].idx = userPlacedIdx
         userPlaced[auraInfo.spellId].point = addon:ConvertDbNumberToPosition(auraInfo.point)
         userPlaced[auraInfo.spellId].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
+        userPlaced[auraInfo.spellId].frameNoNo = auraInfo.frameSelect == 3 and auraInfo.frameManualSelect or 1
         userPlacedIdx = userPlacedIdx + 1
     end
     maxUserPlaced = userPlacedIdx - 1
@@ -337,6 +338,7 @@ function Buffs:OnEnable()
                     buffFrame.cooldown:SetHideCountdownNumbers(true)
                     frame_registry[frame].extraBuffFrames[i] = buffFrame
                 end
+                buffFrame:ClearAllPoints()
                 buffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 placedAuraStart = i + 1
             end
@@ -351,6 +353,7 @@ function Buffs:OnEnable()
                     buffFrame.cooldown:SetHideCountdownNumbers(true)
                     frame_registry[frame].extraBuffFrames[idx] = buffFrame
                 end
+                buffFrame:ClearAllPoints()
                 buffFrame.icon:SetTexCoord(0, 1, 0, 1)
             end
 
@@ -413,7 +416,7 @@ function Buffs:OnEnable()
             frame_registry[frame].reanchor = {}
             local reanchor = frame_registry[frame].reanchor
             for _, v in pairs(userPlaced) do
-                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo].maxAuras > 1 then
+                if v.frame == 3 and v.frameSelect == 1 and  auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
                     if not reanchor[v.frameNo] then
                         reanchor[v.frameNo] = {
                             lastNum = 2,
@@ -428,7 +431,7 @@ function Buffs:OnEnable()
                 end
             end
             for groupNo, v in pairs(auraGroup) do
-                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo].maxAuras > 1 then
+                if v.frame == 3 and v.frameSelect == 1 and  auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
                     if not reanchor[v.frameNo] then
                         reanchor[v.frameNo] = {
                             lastNum = 2,
@@ -464,7 +467,7 @@ function Buffs:OnEnable()
             idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
             local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
-                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + auraGroup[place.frameNo].frameNoNo - 1))
+                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
             local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
             buffFrame:ClearAllPoints()
             buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
@@ -479,7 +482,7 @@ function Buffs:OnEnable()
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 if not anchorSet then
                     local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
-                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + auraGroup[v.frameNo].frameNoNo - 1))
+                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
                     local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
                     buffFrame:ClearAllPoints()
                     buffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)

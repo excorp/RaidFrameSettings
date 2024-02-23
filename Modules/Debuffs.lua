@@ -89,6 +89,7 @@ function Debuffs:OnEnable()
         userPlaced[auraInfo.spellId].idx = userPlacedIdx
         userPlaced[auraInfo.spellId].point = addon:ConvertDbNumberToPosition(auraInfo.point)
         userPlaced[auraInfo.spellId].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
+        userPlaced[auraInfo.spellId].frameNoNo = auraInfo.frameSelect == 3 and auraInfo.frameManualSelect or 1
         userPlacedIdx = userPlacedIdx + 1
     end
     maxUserPlaced = userPlacedIdx - 1
@@ -389,6 +390,7 @@ function Debuffs:OnEnable()
                     debuffFrame.cooldown:SetHideCountdownNumbers(true)
                     frame_registry[frame].extraDebuffFrames[i] = debuffFrame
                 end
+                debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
                 debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
@@ -409,6 +411,7 @@ function Debuffs:OnEnable()
                     debuffFrame.cooldown:SetHideCountdownNumbers(true)
                     frame_registry[frame].extraDebuffFrames[idx] = debuffFrame
                 end
+                debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 debuffFrame.border:SetTexture("Interface/Buttons/UI-Debuff-Overlays")
                 debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
@@ -474,7 +477,7 @@ function Debuffs:OnEnable()
             frame_registry[frame].reanchor = {}
             local reanchor = frame_registry[frame].reanchor
             for _, v in pairs(userPlaced) do
-                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo].maxAuras > 1 then
+                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
                     if not reanchor[v.frameNo] then
                         reanchor[v.frameNo] = {
                             lastNum = 2,
@@ -489,7 +492,7 @@ function Debuffs:OnEnable()
                 end
             end
             for groupNo, v in pairs(auraGroup) do
-                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo].maxAuras > 1 then
+                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
                     if not reanchor[v.frameNo] then
                         reanchor[v.frameNo] = {
                             lastNum = 2,
@@ -525,7 +528,7 @@ function Debuffs:OnEnable()
             idx = frame_registry[frame].placedAuraStart + place.idx - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
             local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
-                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + auraGroup[place.frameNo].frameNoNo - 1))
+                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
             local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or frame
             debuffFrame:ClearAllPoints()
             debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
@@ -539,7 +542,7 @@ function Debuffs:OnEnable()
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 if not anchorSet then
                     local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
-                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + auraGroup[v.frameNo].frameNoNo - 1))
+                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
                     local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or frame
                     debuffFrame:ClearAllPoints()
                     debuffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)

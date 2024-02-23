@@ -2605,6 +2605,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 end,
                 set = function(_, value)
                     dbObj.frameSelect = value
+                    RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
             },
@@ -2623,6 +2624,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     local dbGroup = self.db.profile[category].AuraGroup[dbObj.frameNo]
                     local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
                     dbObj.frameManualSelect = frameNoNo > maxAuras and maxAuras or frameNoNo
+                    RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.6,
             },
@@ -2831,6 +2833,21 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     table.remove(self.db.profile[category].AuraGroup, groupNo)
                     table.insert(self.db.profile[category].AuraGroup, newGroupNo, info)
                     local children = getChildren(category, 3, groupNo)
+                    if newGroupNo > groupNo then
+                        for i = groupNo + 1, newGroupNo do
+                            local children = getChildren(category, 3, i)
+                            for _, v in pairs(children) do
+                                v.frameNo = i - 1
+                            end
+                        end
+                    elseif newGroupNo < groupNo then
+                        for i = groupNo - 1, newGroupNo, -1 do
+                            local children = getChildren(category, 3, i)
+                            for _, v in pairs(children) do
+                                v.frameNo = i + 1
+                            end
+                        end
+                    end
                     for _, v in pairs(children) do
                         v.frameNo = newGroupNo
                     end
@@ -2933,6 +2950,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 end,
                 set = function(_, value)
                     dbObj.frameSelect = value
+                    RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
             },
@@ -2951,6 +2969,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     local dbGroup = self.db.profile[category].AuraGroup[dbObj.frameNo]
                     local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
                     dbObj.frameManualSelect = frameNoNo > maxAuras and maxAuras or frameNoNo
+                    RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.6,
             },

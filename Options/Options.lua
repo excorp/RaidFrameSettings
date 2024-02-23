@@ -2629,6 +2629,12 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 end,
                 width = 0.6,
             },
+            newline0 = {
+                hidden = function() return dbObj.frame == 1 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
+                order = 4.5,
+                type = "description",
+                name = "",
+            },
             xOffset = {
                 order = 5,
                 name = "x - offset",
@@ -2974,6 +2980,12 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.6,
+            },
+            newline0 = {
+                hidden = function() return dbObj.frame == 1 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
+                order = 3.5,
+                type = "description",
+                name = "",
             },
             xOffset = {
                 order = 4,

@@ -2617,6 +2617,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 pattern = "^%d+$",
                 usage = "please enter a number (The n th frame of the aura group)",
                 get = function()
+                    dbObj.frameManualSelect = dbObj.frameManualSelect or 1
                     return tostring(dbObj.frameManualSelect)
                 end,
                 set = function(_, value)
@@ -2962,6 +2963,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 pattern = "^%d+$",
                 usage = "please enter a number (The n th frame of the aura group)",
                 get = function()
+                    dbObj.frameManualSelect = dbObj.frameManualSelect or 1
                     return tostring(dbObj.frameManualSelect)
                 end,
                 set = function(_, value)

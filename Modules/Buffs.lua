@@ -493,7 +493,6 @@ function Buffs:OnEnable()
             resizeBuffFrame(buffFrame)
         end
         for k, v in pairs(auraGroup) do
-            frame_registry[frame].auraGroupStart[k] = idx + 1
             local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
             anchorSet, prevFrame = false, nil
             for _ = 1, v.maxAuras do
@@ -513,7 +512,6 @@ function Buffs:OnEnable()
                 prevFrame = buffFrame
                 resizeBuffFrame(buffFrame)
             end
-            frame_registry[frame].auraGroupEnd[k] = idx
         end
 
         if frame.unit then

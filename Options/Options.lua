@@ -1134,87 +1134,6 @@ options = {
                                     type = "group",
                                     args = getFontOptions()
                                 },
-                                AuraPosition = {
-                                    order = 4,
-                                    name = "Aura Position",
-                                    type = "group",
-                                    childGroups = "tab",
-                                    args = {
-                                        addGroup = {
-                                            order = 1,
-                                            name = "New Group",
-                                            type = "execute",
-                                            func = function()
-                                                local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
-                                                tinsert(dbObjGroup, {
-                                                    name = "",
-                                                    point = 1,
-                                                    relativePoint = 1,
-                                                    frame = 1,
-                                                    frameNo = 0,
-                                                    frameSelect = 1,
-                                                    frameManualSelect = 1,
-                                                    unlimitAura = true,
-                                                    maxAuras = 1,
-                                                    xOffset = 0,
-                                                    yOffset = 0,
-                                                    orientation = 2,
-                                                    gap = 0,
-                                                    setSize = false,
-                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
-                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
-                                                    auraList = {},
-                                                })
-                                                local groupNo = #dbObjGroup
-                                                dbObjGroup[groupNo].name = "Group " .. groupNo
-                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
-                                                RaidFrameSettings:UpdateModule("Buffs")
-                                            end,
-                                            width = 1,
-                                        },
-                                        auraGroup = {
-                                            order = 2,
-                                            name = "Auras",
-                                            type = "group",
-                                            args = {
-                                                addAura = {
-                                                    order = 1,
-                                                    name = "Enter spellId:",
-                                                    type = "input",
-                                                    pattern = "^%d+$",
-                                                    usage = "please enter a number",
-                                                    set = function(_, value)
-                                                        RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
-                                                            ["spellId"] = tonumber(value),
-                                                            point = 1,
-                                                            relativePoint = 1,
-                                                            frame = 1,
-                                                            frameNo = 0,
-                                                            frameSelect = 1,
-                                                            frameManualSelect = 1,
-                                                            xOffset = 0,
-                                                            yOffset = 0,
-                                                            setSize = false,
-                                                            width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
-                                                            height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
-                                                        }
-                                                        RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
-                                                        RaidFrameSettings:UpdateModule("Buffs")
-                                                    end
-                                                },
-                                                auraList = {
-                                                    order = 2,
-                                                    name = "",
-                                                    type = "group",
-                                                    inline = true,
-                                                    args = {
-
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
                             },
                         },
                         Increase = {
@@ -1246,6 +1165,87 @@ options = {
 
                                     },
                                 },                           
+                            },
+                        },
+                        AuraPosition = {
+                            order = 3,
+                            name = "Aura Position",
+                            type = "group",
+                            childGroups = "tab",
+                            args = {
+                                addGroup = {
+                                    order = 1,
+                                    name = "New Group",
+                                    type = "execute",
+                                    func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
+                                        tinsert(dbObjGroup, {
+                                            name = "",
+                                            point = 1,
+                                            relativePoint = 1,
+                                            frame = 1,
+                                            frameNo = 0,
+                                            frameSelect = 1,
+                                            frameManualSelect = 1,
+                                            unlimitAura = true,
+                                            maxAuras = 1,
+                                            xOffset = 0,
+                                            yOffset = 0,
+                                            orientation = 2,
+                                            gap = 0,
+                                            setSize = false,
+                                            width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                            height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        dbObjGroup[groupNo].name = "Group " .. groupNo
+                                        RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                    width = 1,
+                                },
+                                auraGroup = {
+                                    order = 2,
+                                    name = "Auras",
+                                    type = "group",
+                                    args = {
+                                        addAura = {
+                                            order = 1,
+                                            name = "Enter spellId:",
+                                            type = "input",
+                                            pattern = "^%d+$",
+                                            usage = "please enter a number",
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
+                                                    ["spellId"] = tonumber(value),
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                }
+                                                RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
+                                                RaidFrameSettings:UpdateModule("Buffs")
+                                            end
+                                        },
+                                        auraList = {
+                                            order = 2,
+                                            name = "",
+                                            type = "group",
+                                            inline = true,
+                                            args = {
+
+                                            },
+                                        },
+                                    },
+                                },
                             },
                         },
                     },  
@@ -1501,87 +1501,6 @@ options = {
                                     type = "group",
                                     args = getFontOptions()
                                 },
-                                AuraPosition = {
-                                    order = 4,
-                                    name = "Aura Position",
-                                    type = "group",
-                                    childGroups = "tab",
-                                    args = {
-                                        addGroup = {
-                                            order = 1,
-                                            name = "New Group",
-                                            type = "execute",
-                                            func = function()
-                                                local dbObjGroup = RaidFrameSettings.db.profile["Debuffs"].AuraGroup
-                                                tinsert(dbObjGroup, {
-                                                    name = "",
-                                                    point = 1,
-                                                    relativePoint = 1,
-                                                    frame = 1,
-                                                    frameNo = 0,
-                                                    frameSelect = 1,
-                                                    frameManualSelect = 1,
-                                                    unlimitAura = true,
-                                                    maxAuras = 1,
-                                                    xOffset = 0,
-                                                    yOffset = 0,
-                                                    orientation = 2,
-                                                    gap = 0,
-                                                    setSize = false,
-                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
-                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
-                                                    auraList = {},
-                                                })
-                                                local groupNo = #dbObjGroup
-                                                dbObjGroup[groupNo].name = "Group " .. groupNo
-                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Debuffs")
-                                                RaidFrameSettings:UpdateModule("Debuffs")
-                                            end,
-                                            width = 1,
-                                        },
-                                        auraGroup = {
-                                            order = 2,
-                                            name = "Auras",
-                                            type = "group",
-                                            args = {
-                                                addAura = {
-                                                    order = 1,
-                                                    name = "Enter spellId:",
-                                                    type = "input",
-                                                    pattern = "^%d+$",
-                                                    usage = "please enter a number",
-                                                    set = function(_, value)
-                                                        RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
-                                                            ["spellId"] = tonumber(value),
-                                                            point = 1,
-                                                            relativePoint = 1,
-                                                            frame = 1,
-                                                            frameNo = 0,
-                                                            frameSelect = 1,
-                                                            frameManualSelect = 1,
-                                                            xOffset = 0,
-                                                            yOffset = 0,
-                                                            setSize = false,
-                                                            width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
-                                                            height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
-                                                        }
-                                                        RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
-                                                        RaidFrameSettings:UpdateModule("Debuffs")
-                                                    end
-                                                },
-                                                auraList = {
-                                                    order = 2,
-                                                    name = "",
-                                                    type = "group",
-                                                    inline = true,
-                                                    args = {
-
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
                             },
                         },
 						Increase = {
@@ -1613,6 +1532,87 @@ options = {
 
                                     },
                                 },                           
+                            },
+                        },
+                        AuraPosition = {
+                            order = 3,
+                            name = "Aura Position",
+                            type = "group",
+                            childGroups = "tab",
+                            args = {
+                                addGroup = {
+                                    order = 1,
+                                    name = "New Group",
+                                    type = "execute",
+                                    func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile["Debuffs"].AuraGroup
+                                        tinsert(dbObjGroup, {
+                                            name = "",
+                                            point = 1,
+                                            relativePoint = 1,
+                                            frame = 1,
+                                            frameNo = 0,
+                                            frameSelect = 1,
+                                            frameManualSelect = 1,
+                                            unlimitAura = true,
+                                            maxAuras = 1,
+                                            xOffset = 0,
+                                            yOffset = 0,
+                                            orientation = 2,
+                                            gap = 0,
+                                            setSize = false,
+                                            width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                            height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        dbObjGroup[groupNo].name = "Group " .. groupNo
+                                        RaidFrameSettings:CreateAuraGroup(groupNo, "Debuffs")
+                                        RaidFrameSettings:UpdateModule("Debuffs")
+                                    end,
+                                    width = 1,
+                                },
+                                auraGroup = {
+                                    order = 2,
+                                    name = "Auras",
+                                    type = "group",
+                                    args = {
+                                        addAura = {
+                                            order = 1,
+                                            name = "Enter spellId:",
+                                            type = "input",
+                                            pattern = "^%d+$",
+                                            usage = "please enter a number",
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
+                                                    ["spellId"] = tonumber(value),
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
+                                                }
+                                                RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
+                                                RaidFrameSettings:UpdateModule("Debuffs")
+                                            end
+                                        },
+                                        auraList = {
+                                            order = 2,
+                                            name = "",
+                                            type = "group",
+                                            inline = true,
+                                            args = {
+
+                                            },
+                                        },
+                                    },
+                                },
                             },
                         },
                     },  
@@ -2489,7 +2489,7 @@ end
 
 function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
     local dbObj = self.db.profile[category].AuraPosition[spellId]
-    local auraPositionOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args.auraGroup.args.auraList.args
+    local auraPositionOptions = options.args.Auras.args[category].args.AuraPosition.args.auraGroup.args.auraList.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -2731,7 +2731,7 @@ end
 
 function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
     local dbObj = self.db.profile[category].AuraGroup[groupNo].auraList
-    local groupOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args["group" .. groupNo].args.auraList.args
+    local groupOptions = options.args.Auras.args[category].args.AuraPosition.args["group" .. groupNo].args.auraList.args
     local spellName, _, icon 
     if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -2795,7 +2795,7 @@ end
 
 function RaidFrameSettings:CreateAuraGroup(groupNo, category)
     local dbObj = self.db.profile[category].AuraGroup[groupNo]
-    local groupOptions = options.args.Auras.args[category].args[category].args.AuraPosition.args
+    local groupOptions = options.args.Auras.args[category].args.AuraPosition.args
     local auragroup_entry = {
         order = 2 + groupNo,
         name = "<" .. groupNo .. "> " .. dbObj.name,
@@ -3200,7 +3200,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end
 
         --aura positions
-        options.args.Auras.args[category].args[category].args.AuraPosition.args.auraGroup.args.auraList.args = {}
+        options.args.Auras.args[category].args.AuraPosition.args.auraGroup.args.auraList.args = {}
         -- sort
         sorted = {}
         local placed = CopyTable(self.db.profile[category].AuraPosition)
@@ -3234,9 +3234,9 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end
 
         --aura groups
-        for k in pairs(options.args.Auras.args[category].args[category].args.AuraPosition.args) do
+        for k in pairs(options.args.Auras.args[category].args.AuraPosition.args) do
             if k:match("^group") then
-                options.args.Auras.args[category].args[category].args.AuraPosition.args[k] = nil
+                options.args.Auras.args[category].args.AuraPosition.args[k] = nil
             end
         end
         for groupNo, group in pairs(self.db.profile[category].AuraGroup) do

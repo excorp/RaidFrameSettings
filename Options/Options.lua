@@ -1577,7 +1577,7 @@ options = {
                                 },
                                 auraGroup = {
                                     order = 2,
-                                    name = L["Auras"],
+                                    name = L["Aura Position"],
                                     type = "group",
                                     args = {
                                         addAura = {
@@ -2603,7 +2603,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.4,
             },
             frameSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
@@ -2636,13 +2636,14 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     local frameNoNo = tonumber(value)
                     local dbGroup = self.db.profile[category].AuraGroup[dbObj.frameNo]
                     local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
-                    dbObj.frameManualSelect = frameNoNo > maxAuras and maxAuras or frameNoNo
+                    if maxAuras < 1 then maxAuras = 1 end
+                    dbObj.frameManualSelect = frameNoNo < 1 and 1 or frameNoNo > maxAuras and maxAuras or frameNoNo
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.4,
             },
             newline0 = {
-                hidden = function() return dbObj.frame == 1 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
+                hidden = function() return dbObj.frame == 1 end,
                 order = 4.5,
                 type = "description",
                 name = "",
@@ -2955,7 +2956,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.4,
             },
             frameSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
@@ -2988,13 +2989,14 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     local frameNoNo = tonumber(value)
                     local dbGroup = self.db.profile[category].AuraGroup[dbObj.frameNo]
                     local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
-                    dbObj.frameManualSelect = frameNoNo > maxAuras and maxAuras or frameNoNo
+                    if maxAuras < 1 then maxAuras = 1 end
+                    dbObj.frameManualSelect = frameNoNo < 1 and 1 or frameNoNo > maxAuras and maxAuras or frameNoNo
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.4,
             },
             newline0 = {
-                hidden = function() return dbObj.frame == 1 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
+                hidden = function() return dbObj.frame == 1 end,
                 order = 3.5,
                 type = "description",
                 name = "",

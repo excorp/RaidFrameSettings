@@ -1,6 +1,6 @@
 ## Interface: 11501
 ## Version: @project-version@
-## Title: RaidFrameSettings
+## Title: RaidFrameSettings_Fork
 ## Author: Slothpala
 ## SavedVariables: RaidFrameSettingsDB, RaidFrameSettingsDBPP, RaidFrameSettingsDBRP
 ## OptionalDeps: Ace3, LibDeflate, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibDDI-1.0, AceGUI-3.0_SFX-Widgets, LibCanDispel-1.0

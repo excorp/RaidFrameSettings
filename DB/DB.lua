@@ -1,5 +1,5 @@
 --[[
-    Created by Slothpala 
+    Created by Slothpala
     DB:
     Setup the default database structure for the user settings.
 --]]
@@ -14,42 +14,42 @@ local function findFont(font)
     local filename = fontObj:GetFont()
     for fontstring, fontfile in pairs(Media.MediaTable.font) do
         if fontfile == filename then
-            return fontstring, {fontObj:GetFont()}
+            return fontstring, { fontObj:GetFont() }
         end
     end
     return nil
 end
 
-local defaults = {
+local defaults                                    = {
     profile = {
         Module = {
-            ["*"]   = true,
-            CustomScale = false,
+            ["*"]         = true,
+            CustomScale   = false,
             AuraHighlight = false,
         },
-        HealthBars = { 
-            Textures = { 
+        HealthBars = {
+            Textures = {
                 statusbar  = "Solid",
                 powerbar   = "Solid",
                 background = "Solid",
                 border     = "Solid",
             },
-            Colors = { 
+            Colors = {
                 statusbarmode = 1,
-                statusbar     = {r=1,g=1,b=1,a=1},
-                background    = {r=0.2,g=0.2,b=0.2,a=1},
-                border        = {r=0,g=0,b=0,a=1},
+                statusbar     = { r = 1, g = 1, b = 1, a = 1 },
+                background    = { r = 0.2, g = 0.2, b = 0.2, a = 1 },
+                border        = { r = 0, g = 0, b = 0, a = 1 },
             },
         },
-        Fonts = { 
+        Fonts = {
             ["**"] = {
-                font          = "Friz Quadrata TT",
-                fontcolor     = {r=1,g=1,b=1,a=1},
-                outline       = true,
-                thick         = false,
-                monochrome    = false,
+                font       = "Friz Quadrata TT",
+                fontcolor  = { r = 1, g = 1, b = 1, a = 1 },
+                outline    = true,
+                thick      = false,
+                monochrome = false,
             },
-            Name = { 
+            Name = {
                 fontsize      = 12,
                 useclasscolor = false,
                 point         = 4,
@@ -59,7 +59,7 @@ local defaults = {
                 x_offset      = 0,
                 y_offset      = 0,
             },
-            Status = { 
+            Status = {
                 fontsize      = 14,
                 useclasscolor = false,
                 point         = 6,
@@ -69,7 +69,7 @@ local defaults = {
                 y_offset      = -5,
             },
             Advanced = {
-                shadowColor = {r=0,g=0,b=0,a=1},
+                shadowColor = { r = 0, g = 0, b = 0, a = 1 },
                 x_offset = 1,
                 y_offset = -1,
             },
@@ -103,8 +103,8 @@ local defaults = {
                 outlinemode = 2,
                 fontSize = 11,
                 debuffColor = true,
-                fontColor = {r=0.8274,g=0.8274,b=0.8274,a=1},
-                shadowColor = {r=0,g=0,b=0,a=1},
+                fontColor = { r = 0.8274, g = 0.8274, b = 0.8274, a = 1 },
+                shadowColor = { r = 0, g = 0, b = 0, a = 1 },
                 xOffsetShadow = 1,
                 yOffsetShadow = -1,
                 point = 1,
@@ -116,8 +116,8 @@ local defaults = {
                 font = "Friz Quadrata TT",
                 outlinemode = 2,
                 fontSize = 12,
-                fontColor = {r=1,g=1,b=0,a=1},
-                shadowColor = {r=0,g=0,b=0,a=1},
+                fontColor = { r = 1, g = 1, b = 0, a = 1 },
+                shadowColor = { r = 0, g = 0, b = 0, a = 1 },
                 xOffsetShadow = 1,
                 yOffsetShadow = -1,
                 point = 9,
@@ -131,8 +131,8 @@ local defaults = {
             AuraGroup = {
 
             },
-			Increase = {
-                --[[spellID = name                ]]--
+            Increase = {
+                --[[spellID = name                ]] --
             },
             AuraFilter = {
 
@@ -163,8 +163,8 @@ local defaults = {
                 font = "Friz Quadrata TT",
                 outlinemode = 2,
                 fontSize = 10,
-                fontColor = {r=1,g=1,b=1,a=1},
-                shadowColor = {r=0,g=0,b=0,a=1},
+                fontColor = { r = 1, g = 1, b = 1, a = 1 },
+                shadowColor = { r = 0, g = 0, b = 0, a = 1 },
                 xOffsetShadow = 1,
                 yOffsetShadow = -1,
                 point = 1,
@@ -176,8 +176,8 @@ local defaults = {
                 font = "Friz Quadrata TT",
                 outlinemode = 2,
                 fontSize = 11,
-                fontColor = {r=0,g=1,b=1,a=1},
-                shadowColor = {r=0,g=0,b=0,a=1},
+                fontColor = { r = 0, g = 1, b = 1, a = 1 },
+                shadowColor = { r = 0, g = 0, b = 0, a = 1 },
                 xOffsetShadow = 1,
                 yOffsetShadow = -1,
                 point = 9,
@@ -192,7 +192,7 @@ local defaults = {
 
             },
             Increase = {
-                --[[spellID = name                ]]--
+                --[[spellID = name                ]] --
             },
             AuraFilter = {
 
@@ -211,7 +211,7 @@ local defaults = {
             },
             MissingAura = {
                 classSelection = 1,
-                missingAuraColor = {r=0.8156863451004028,g=0.5803921818733215,b=0.658823549747467}, 
+                missingAuraColor = { r = 0.8156863451004028, g = 0.5803921818733215, b = 0.658823549747467 },
                 ["*"] = {
                     input_field = "",
                     spellIDs = {},
@@ -240,17 +240,17 @@ local defaults = {
                 background = 0.2,
             },
             DispelColor = {
-                curse   = {r=0.6,g=0.0,b=1.0},
-                disease = {r=0.6,g=0.4,b=0.0},
-                magic   = {r=0.2,g=0.6,b=1.0},
-                poison  = {r=0.0,g=0.6,b=0.0},
+                curse   = { r = 0.6, g = 0.0, b = 1.0 },
+                disease = { r = 0.6, g = 0.4, b = 0.0 },
+                magic   = { r = 0.2, g = 0.6, b = 1.0 },
+                poison  = { r = 0.0, g = 0.6, b = 0.0 },
             },
             DebuffColors = {
-                Curse   = {r=0.6,g=0.0,b=1.0},
-                Disease = {r=0.6,g=0.4,b=0.0},
-                Magic   = {r=0.2,g=0.6,b=1.0},
-                Poison  = {r=0.0,g=0.6,b=0.0},
-                Bleed   = {r=0.8,g=0.0,b=0.0},
+                Curse   = { r = 0.6, g = 0.0, b = 1.0 },
+                Disease = { r = 0.6, g = 0.4, b = 0.0 },
+                Magic   = { r = 0.2, g = 0.6, b = 1.0 },
+                Poison  = { r = 0.0, g = 0.6, b = 0.0 },
+                Bleed   = { r = 0.8, g = 0.0, b = 0.0 },
             },
             CustomScale = {
                 Party = 1,
@@ -285,16 +285,16 @@ local defaults = {
 }
 
 local fontstring, font, fontheight
-fontstring, font = findFont("GameFontHighlightSmall")
-fontheight = font and font[2] or 10
+fontstring, font                                  = findFont("GameFontHighlightSmall")
+fontheight                                        = font and font[2] or 10
 defaults.profile.Fonts.Name.font                  = fontstring
 defaults.profile.Fonts.Name.fontsize              = fontheight
-fontstring, font = findFont("GameFontDisable")
-fontheight = font and font[2] or 14
+fontstring, font                                  = findFont("GameFontDisable")
+fontheight                                        = font and font[2] or 14
 defaults.profile.Fonts.Status.font                = fontstring
 -- defaults.profile.Fonts.Status.fontsize            = fontheight
-fontstring, font = findFont("NumberFontNormalSmall")
-fontheight = font and font[2] or 12
+fontstring, font                                  = findFont("NumberFontNormalSmall")
+fontheight                                        = font and font[2] or 12
 defaults.profile.Buffs.DurationDisplay.font       = fontstring
 defaults.profile.Buffs.DurationDisplay.fontsize   = fontheight
 defaults.profile.Buffs.StacksDisplay.font         = fontstring
@@ -305,7 +305,7 @@ defaults.profile.Debuffs.StacksDisplay.font       = fontstring
 defaults.profile.Debuffs.StacksDisplay.fontsize   = fontheight
 
 function RaidFrameSettings:LoadDataBase()
-    self.db = LibStub("AceDB-3.0"):New("RaidFrameSettingsDB", defaults, true) 
+    self.db = LibStub("AceDB-3.0"):New("RaidFrameSettingsDB", defaults, true)
     --db callbacks
     self.db.RegisterCallback(self, "OnNewProfile", "ReloadConfig")
     self.db.RegisterCallback(self, "OnProfileDeleted", "ReloadConfig")
@@ -314,7 +314,7 @@ function RaidFrameSettings:LoadDataBase()
     self.db.RegisterCallback(self, "OnProfileReset", "ReloadConfig")
 end
 
---for modules having this seperated makes it easier to iterate modules 
+--for modules having this seperated makes it easier to iterate modules
 function RaidFrameSettings:GetModuleStatus(info)
     return self.db.profile.Module[info[#info]]
 end
@@ -327,34 +327,43 @@ end
 
 --status
 function RaidFrameSettings:GetStatus(info)
-    return self.db.profile[info[#info-2]][info[#info-1]][info[#info]]
+    return self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]]
 end
 
 function RaidFrameSettings:SetStatus(info, value)
-    self.db.profile[info[#info-2]][info[#info-1]][info[#info]] = value
+    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]] = value
     --will reload the config each time the settings have been adjusted
-    local module_name = info[#info-2] == "MinorModules" and info[#info-1] or info[#info-2]
+    local module_name = info[#info - 2] == "MinorModules" and info[#info - 1] or info[#info - 2]
     self:UpdateModule(module_name)
 end
 
 --color
 function RaidFrameSettings:GetColor(info)
-    return self.db.profile[info[#info-2]][info[#info-1]][info[#info]].r, self.db.profile[info[#info-2]][info[#info-1]][info[#info]].g, self.db.profile[info[#info-2]][info[#info-1]][info[#info]].b, self.db.profile[info[#info-2]][info[#info-1]][info[#info]].a
+    return self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].r, self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].g, self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].b, self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].a
 end
 
-function RaidFrameSettings:SetColor(info, r,g,b,a)
-    self.db.profile[info[#info-2]][info[#info-1]][info[#info]].r = r 
-    self.db.profile[info[#info-2]][info[#info-1]][info[#info]].g = g
-    self.db.profile[info[#info-2]][info[#info-1]][info[#info]].b = b
-    self.db.profile[info[#info-2]][info[#info-1]][info[#info]].a = a
-    local module_name = info[#info-2] == "MinorModules" and info[#info-1] or info[#info-2]
-    self:UpdateModule(module_name)
+function RaidFrameSettings:SetColor(info, r, g, b, a)
+    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].r = r
+    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].g = g
+    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].b = b
+    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].a = a
+    local module_name = info[#info - 2] == "MinorModules" and info[#info - 1] or info[#info - 2]
+    if module_name == "DebuffColors" then
+        if self.db.profile.Module.Debuffs then
+            self:UpdateModule("Debuffs")
+        end
+        if self.db.profile.Module.AuraHighlight then
+            self:UpdateModule("AuraHighlight")
+        end
+    else
+        self:UpdateModule(module_name)
+    end
 end
 
 function RaidFrameSettings:GetGlobal(info)
-    return self.db.profile[info[#info-2]][info[#info-1]][info[#info]]
+    return self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]]
 end
 
 function RaidFrameSettings:SetGlobal(info, value)
-    self.db.profile[info[#info-2]][info[#info-1]][info[#info]] = value
+    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]] = value
 end

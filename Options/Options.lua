@@ -787,7 +787,7 @@ options = {
             },
         },
         AuraFilter = {
-            order = 3.1,
+            order = 4,
             name = L["Aura Filter"],
             type = "group",
             hidden = AuraFilter_disabled,
@@ -868,7 +868,7 @@ options = {
             }
         },
         Auras = {
-            order = 4,
+            order = 5,
             name = L["Auras"],
             type = "group",
             childGroups = "select",
@@ -1623,7 +1623,7 @@ options = {
             },
         },
         AuraHighlight = {
-            order = 5,
+            order = 6,
             name = L["Aura Highlight"],
             type = "group",
             hidden = AuraHighlight_disabled,
@@ -1768,7 +1768,7 @@ options = {
             },
         },
         MinorModules = {
-            order = 5,
+            order = 7,
             name = L["Module Settings"],
             type = "group",
             args = {

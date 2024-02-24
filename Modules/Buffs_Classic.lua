@@ -445,53 +445,6 @@ function Buffs:OnEnable()
                     })
                 end
             end
-
-            for _, v in pairs(frame.buffFrames) do
-                if frameOpt.tooltip then
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", function(self)
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
-                        self:UpdateTooltip()
-                        local function RunOnUpdate()
-                            if (GameTooltip:IsOwned(self)) then
-                                self:UpdateTooltip()
-                            end
-                        end
-                        self:SetScript("OnUpdate", RunOnUpdate)
-                    end)
-                    v:SetScript("OnLeave", function(self)
-                        GameTooltip:Hide();
-                        self:SetScript("OnUpdate", nil)
-                    end)
-                else
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", nil)
-                    v:SetScript("OnLeave", nil)
-                end
-            end
-            for _, v in pairs(frame_registry[frame].extraBuffFrames) do
-                if frameOpt.tooltip then
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", function(self)
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
-                        self:UpdateTooltip()
-                        local function RunOnUpdate()
-                            if (GameTooltip:IsOwned(self)) then
-                                self:UpdateTooltip()
-                            end
-                        end
-                        self:SetScript("OnUpdate", RunOnUpdate)
-                    end)
-                    v:SetScript("OnLeave", function()
-                        GameTooltip:Hide();
-                        self:SetScript("OnUpdate", nil)
-                    end)
-                else
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", nil)
-                    v:SetScript("OnLeave", nil)
-                end
-            end
         end
 
         -- set anchor and resize
@@ -566,21 +519,6 @@ function Buffs:OnDisable()
             return
         end
         for _, buffFrame in pairs(frame.buffFrames) do
-            buffFrame:SetScript("OnUpdate", nil)
-            buffFrame:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
-                self:UpdateTooltip()
-                local function RunOnUpdate()
-                    if (GameTooltip:IsOwned(self)) then
-                        self:UpdateTooltip()
-                    end
-                end
-                self:SetScript("OnUpdate", RunOnUpdate)
-            end)
-            buffFrame:SetScript("OnLeave", function()
-                GameTooltip:Hide();
-                self:SetScript("OnUpdate", nil)
-            end)
             buffFrame:Hide()
         end
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do

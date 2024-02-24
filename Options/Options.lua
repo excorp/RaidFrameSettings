@@ -940,6 +940,7 @@ options = {
                                             width = 0.6,
                                         },
                                         tooltip = {
+                                            hidden = function() return isClassic end,
                                             order = 2.3,
                                             type = "toggle",
                                             name = L["Show Tooltip"],
@@ -1325,6 +1326,7 @@ options = {
                                             width = 0.6,
                                         },
                                         tooltip = {
+                                            hidden = function() return isClassic end,
                                             order = 2.3,
                                             type = "toggle",
                                             name = L["Show Tooltip"],

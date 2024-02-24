@@ -1,27 +1,28 @@
 --[[
-    Created by Slothpala 
+    Created by Slothpala
     Options:
     Create an options table for the GUI
 --]]
-local _, addonTable = ...
+local addonName, addonTable                   = ...
 local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
-local RaidFrameSettings = addonTable.RaidFrameSettings
-local Media = LibStub("LibSharedMedia-3.0")
-local lastEntry = 10
-local HealthBars_disabled  = function() return not RaidFrameSettings.db.profile.Module.HealthBars end
-local Fonts_disabled       = function() return not RaidFrameSettings.db.profile.Module.Fonts end
-local RoleIcon_disabled    = function() return not RaidFrameSettings.db.profile.Module.RoleIcon end
-local RaidMark_disabled    = function() return not RaidFrameSettings.db.profile.Module.RaidMark end
-local Range_disabled       = function() return not RaidFrameSettings.db.profile.Module.Range end
-local AuraFilter_disabled  = function() return not RaidFrameSettings.db.profile.Module.AuraFilter end
-local Buffs_disabled       = function() return not RaidFrameSettings.db.profile.Module.Buffs end
-local Debuffs_disabled     = function() return not RaidFrameSettings.db.profile.Module.Debuffs end
-local AuraHighlight_disabled = function() return not RaidFrameSettings.db.profile.Module.AuraHighlight end
-local CustomScale_disabled = function() return not RaidFrameSettings.db.profile.Module.CustomScale end
-local Overabsorb_disabled = function() return not RaidFrameSettings.db.profile.Module.Overabsorb end
+local RaidFrameSettings                       = addonTable.RaidFrameSettings
+local L                                       = LibStub('AceLocale-3.0'):GetLocale(addonName)
+local Media                                   = LibStub("LibSharedMedia-3.0")
+local lastEntry                               = 10
+local HealthBars_disabled                     = function() return not RaidFrameSettings.db.profile.Module.HealthBars end
+local Fonts_disabled                          = function() return not RaidFrameSettings.db.profile.Module.Fonts end
+local RoleIcon_disabled                       = function() return not RaidFrameSettings.db.profile.Module.RoleIcon end
+local RaidMark_disabled                       = function() return not RaidFrameSettings.db.profile.Module.RaidMark end
+local Range_disabled                          = function() return not RaidFrameSettings.db.profile.Module.Range end
+local AuraFilter_disabled                     = function() return not RaidFrameSettings.db.profile.Module.AuraFilter end
+local Buffs_disabled                          = function() return not RaidFrameSettings.db.profile.Module.Buffs end
+local Debuffs_disabled                        = function() return not RaidFrameSettings.db.profile.Module.Debuffs end
+local AuraHighlight_disabled                  = function() return not RaidFrameSettings.db.profile.Module.AuraHighlight end
+local CustomScale_disabled                    = function() return not RaidFrameSettings.db.profile.Module.CustomScale end
+local Overabsorb_disabled                     = function() return not RaidFrameSettings.db.profile.Module.Overabsorb end
 
 --LibDDI-1.0
-local statusbars =  LibStub("LibSharedMedia-3.0"):List("statusbar")
+local statusbars                              = LibStub("LibSharedMedia-3.0"):List("statusbar")
 
 --[[
     tmp locals
@@ -32,18 +33,18 @@ local function getFontOptions()
         font = {
             order = 1,
             type = "select",
-            dialogControl = "LSM30_Font", 
-            name = "Font",
-            values = Media:HashTable("font"), 
+            dialogControl = "LSM30_Font",
+            name = L["Font"],
+            values = Media:HashTable("font"),
             get = "GetStatus",
             set = "SetStatus",
         },
         outlinemode = {
             order = 2,
-            name = "Outlinemode",
+            name = L["Outlinemode"],
             type = "select",
-            values = {"None", "Outline", "Thick Outline", "Monochrome", "Monochrome Outline", "Monochrome Thick Outline"},
-            sorting = {1,2,3,4,5,6},
+            values = { L["None"], L["Outline"], L["Thick Outline"], L["Monochrome"], L["Monochrome Outline"], L["Monochrome Thick Outline"] },
+            sorting = { 1, 2, 3, 4, 5, 6 },
             get = "GetStatus",
             set = "SetStatus",
         },
@@ -54,7 +55,7 @@ local function getFontOptions()
         },
         fontSize = {
             order = 4,
-            name = "Font Size",
+            name = L["Font Size"],
             type = "range",
             get = "GetStatus",
             set = "SetStatus",
@@ -65,7 +66,7 @@ local function getFontOptions()
         fontColor = {
             order = 5,
             type = "color",
-            name = "Font Color", 
+            name = L["Font Color"],
             get = "GetColor",
             set = "SetColor",
             width = 0.8,
@@ -73,7 +74,7 @@ local function getFontOptions()
         shadowColor = {
             order = 6,
             type = "color",
-            name = "Shadow Color", 
+            name = L["Shadow Color"],
             get = "GetColor",
             set = "SetColor",
             hasAlpha = true,
@@ -81,7 +82,7 @@ local function getFontOptions()
         },
         xOffsetShadow = {
             order = 7,
-            name = "Shadow x-offset",
+            name = L["Shadow x-offset"],
             type = "range",
             get = "GetStatus",
             set = "SetStatus",
@@ -92,7 +93,7 @@ local function getFontOptions()
         },
         yOffsetShadow = {
             order = 8,
-            name = "Shadow y-offset",
+            name = L["Shadow y-offset"],
             type = "range",
             get = "GetStatus",
             set = "SetStatus",
@@ -108,25 +109,25 @@ local function getFontOptions()
         },
         point = {
             order = 10,
-            name = "Anchor",
+            name = L["Anchor"],
             type = "select",
-            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-            sorting = {1,2,3,4,5,6,7,8,9},
+            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
             get = "GetStatus",
             set = "SetStatus",
         },
         relativePoint = {
             order = 11,
-            name = "to Frames",
+            name = L["to Frames"],
             type = "select",
-            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-            sorting = {1,2,3,4,5,6,7,8,9},
+            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
             get = "GetStatus",
             set = "SetStatus",
         },
         xOffsetFont = {
             order = 12,
-            name = "x - offset",
+            name = L["x - offset"],
             type = "range",
             get = "GetStatus",
             set = "SetStatus",
@@ -137,7 +138,7 @@ local function getFontOptions()
         },
         yOffsetFont = {
             order = 13,
-            name = "y - offset",
+            name = L["y - offset"],
             type = "range",
             get = "GetStatus",
             set = "SetStatus",
@@ -155,7 +156,7 @@ local function getDebuffDurationOptions()
     local options = getFontOptions()
     options.debuffColor = {
         order = 4.1,
-        name = "Debuff Colored",
+        name = L["Debuff Colored"],
         type = "toggle",
         get = "GetStatus",
         set = "SetStatus",
@@ -167,7 +168,7 @@ end
 local profiles = {}
 local options
 options = {
-    name = "Raid Frame Settings",
+    name = L["Raid Frame Settings"],
     handler = RaidFrameSettings,
     type = "group",
     childGroups = "tree",
@@ -180,29 +181,29 @@ options = {
             args = {},
         },
         Config = {
-            order = lastEntry-1,
-            name = "Enabled Modules",
+            order = lastEntry - 1,
+            name = L["Enabled Modules"],
             type = "group",
             args = {
                 Modules = {
                     order = 1,
-                    name = "Modules",
+                    name = L["Modules"],
                     type = "group",
                     inline = true,
                     args = {
                         HealthBars = {
                             order = 1,
                             type = "toggle",
-                            name = "Health Bars",
-                            desc = "Choose colors and textures for Health Bars.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r",
+                            name = L["Health Bars"],
+                            desc = L["Choose colors and textures for Health Bars.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         Fonts = {
                             order = 2,
                             type = "toggle",
-                            name = "Fonts",
-                            desc = "Adjust the Font, Font Size, Font Color as well as the position for the Names and Status Texts.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r",
+                            name = L["Fonts"],
+                            desc = L["Adjust the Font, Font Size, Font Color as well as the position for the Names and Status Texts.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -210,48 +211,48 @@ options = {
                             hidden = isVanilla,
                             order = 3,
                             type = "toggle",
-                            name = "Role Icon",
-                            desc = "Position the Role Icon.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r",
+                            name = L["Role Icon"],
+                            desc = L["Position the Role Icon.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         RaidMark = {
                             order = 3.1,
                             type = "toggle",
-                            name = "Raid Mark",
-                            desc = "Position the Raid Mark.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r",
+                            name = L["Raid Mark"],
+                            desc = L["Position the Raid Mark.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         RangeAlpha = {
                             order = 4,
                             type = "toggle",
-                            name = "Range",
-                            desc = "Use custom alpha values for out of range units.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r",
+                            name = L["Range"],
+                            desc = L["Use custom alpha values for out of range units.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         AuraFilter = {
-                            order = 5,
+                            order = 4.1,
                             type = "toggle",
-                            name = "Aura Filter",
-                            desc = "Sets the visibility, hiding, and priority of the aura.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r",
+                            name = L["Aura Filter"],
+                            desc = L["Sets the visibility, hiding, and priority of the aura.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         Buffs = {
                             order = 5,
                             type = "toggle",
-                            name = "Buffs",
-                            desc = "Adjust the position, orientation and size of buffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r",
+                            name = L["Buffs"],
+                            desc = L["Adjust the position, orientation and size of buffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         Debuffs = {
                             order = 6,
                             type = "toggle",
-                            name = "Debuffs",
-                            desc = "Adjust the position, orientation and size of debuffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r",
+                            name = L["Debuffs"],
+                            desc = L["Adjust the position, orientation and size of debuffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -259,16 +260,16 @@ options = {
                             hidden = not isRetail,
                             order = 7,
                             type = "toggle",
-                            name = "Overabsorb",
-                            desc = "Show absorbs above the units max hp.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r",
+                            name = L["Overabsorb"],
+                            desc = L["Show absorbs above the units max hp.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         AuraHighlight = {
                             order = 8,
                             type = "toggle",
-                            name = "Aura Highlight",
-                            desc = "Recolor unit health bars based on debuff type.\n|cffF4A460CPU Impact: |r|cffFFFF00MEDIUM|r to |r|cffFF474DHIGH|r",
+                            name = L["Aura Highlight"],
+                            desc = L["Recolor unit health bars based on debuff type.\n|cffF4A460CPU Impact: |r|cffFFFF00MEDIUM|r to |r|cffFF474DHIGH|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -276,16 +277,16 @@ options = {
                             hidden = not isRetail,
                             order = 9,
                             type = "toggle",
-                            name = "Custom Scale",
-                            desc = "Set a scaling factor for raid and party frames.\n|cffF4A460CPU Impact: |r|cff90EE90NEGLIGIBLE|r",
+                            name = L["Custom Scale"],
+                            desc = L["Set a scaling factor for raid and party frames.\n|cffF4A460CPU Impact: |r|cff90EE90NEGLIGIBLE|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
                         Solo = {
                             order = 10,
                             type = "toggle",
-                            name = "Solo",
-                            desc = "Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r",
+                            name = L["Solo"],
+                            desc = L["Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -293,13 +294,13 @@ options = {
                 },
                 DescriptionBox = {
                     order = 2,
-                    name = "Hints:",
+                    name = L["Hints:"],
                     type = "group",
                     inline = true,
                     args = {
                         description = {
                             order = 1,
-                            name = "The default UI links the name text to the right of the role icon, so in some cases you will need to use both modules if you want to use either one.",
+                            name = L["The default UI links the name text to the right of the role icon, so in some cases you will need to use both modules if you want to use either one."],
                             fontSize = "medium",
                             type = "description",
                         },
@@ -311,7 +312,7 @@ options = {
                         },
                         performanceNote = {
                             order = 2,
-                            name = "About |cffF4A460CPU Impact:|r The first value means small 5 man groups, the last value massive 40 man raids. As more frames are added, the addon must do more work. The addon runs very efficiently when the frames are set up, but you can get spikes when people spam leave and/or join the group, such as at the end of a battleground or in massive open world farm groups. The blizzard frames update very often in these scenarios and the addon needs to follow this.",
+                            name = L["About |cffF4A460CPU Impact:|r The first value means small 5 man groups, the last value massive 40 man raids. As more frames are added, the addon must do more work. The addon runs very efficiently when the frames are set up, but you can get spikes when people spam leave and/or join the group, such as at the end of a battleground or in massive open world farm groups. The blizzard frames update very often in these scenarios and the addon needs to follow this."],
                             fontSize = "medium",
                             type = "description",
                         },
@@ -321,7 +322,7 @@ options = {
         },
         HealthBars = {
             order = 2,
-            name = "Health Bars",
+            name = L["Health Bars"],
             type = "group",
             hidden = HealthBars_disabled,
             args = {
@@ -334,12 +335,12 @@ options = {
                         Header = {
                             order = 1,
                             type = "header",
-                            name = "Textures",
+                            name = L["Textures"],
                         },
                         statusbar = {
                             order = 2,
                             type = "select",
-                            name = "Health Bar",
+                            name = L["Health Bar"],
                             values = statusbars,
                             get = function()
                                 for i, v in next, statusbars do
@@ -347,16 +348,16 @@ options = {
                                 end
                             end,
                             set = function(_, value)
-                                RaidFrameSettings.db.profile.HealthBars.Textures.statusbar  = statusbars[value]
+                                RaidFrameSettings.db.profile.HealthBars.Textures.statusbar = statusbars[value]
                                 RaidFrameSettings:ReloadConfig()
                             end,
-                          itemControl = "DDI-Statusbar",
-                          width = 1.6,
+                            itemControl = "DDI-Statusbar",
+                            width = 1.6,
                         },
                         background = {
                             order = 3,
                             type = "select",
-                            name = "Health Bar Background",
+                            name = L["Health Bar Background"],
                             values = statusbars,
                             get = function()
                                 for i, v in next, statusbars do
@@ -364,11 +365,11 @@ options = {
                                 end
                             end,
                             set = function(_, value)
-                                RaidFrameSettings.db.profile.HealthBars.Textures.background  = statusbars[value]
+                                RaidFrameSettings.db.profile.HealthBars.Textures.background = statusbars[value]
                                 RaidFrameSettings:ReloadConfig()
                             end,
-                          itemControl = "DDI-Statusbar",
-                          width = 1.6,
+                            itemControl = "DDI-Statusbar",
+                            width = 1.6,
                         },
                         newline = {
                             order = 4,
@@ -378,7 +379,7 @@ options = {
                         powerbar = {
                             order = 5,
                             type = "select",
-                            name = "Power Bar",
+                            name = L["Power Bar"],
                             values = statusbars,
                             get = function()
                                 for i, v in next, statusbars do
@@ -386,19 +387,19 @@ options = {
                                 end
                             end,
                             set = function(_, value)
-                                RaidFrameSettings.db.profile.HealthBars.Textures.powerbar  = statusbars[value]
+                                RaidFrameSettings.db.profile.HealthBars.Textures.powerbar = statusbars[value]
                                 RaidFrameSettings:ReloadConfig()
                             end,
-                          itemControl = "DDI-Statusbar",
-                          width = 1.6,
+                            itemControl = "DDI-Statusbar",
+                            width = 1.6,
                         },
                         border = {
                             guiHidden = true,
                             order = 6,
                             type = "select",
-                            dialogControl = "LSM30_Border", 
-                            name = "Border", 
-                            values = Media:HashTable("statusbar"), 
+                            dialogControl = "LSM30_Border",
+                            name = L["Border"],
+                            values = Media:HashTable("statusbar"),
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 1.6,
@@ -414,26 +415,28 @@ options = {
                         Header = {
                             order = 1,
                             type = "header",
-                            name = "Colors",
+                            name = L["Colors"],
                         },
                         statusbarmode = {
                             order = 2,
-                            name = "Health Bar",
-                            desc = "1. - Blizzards setting for Class Colors. \n2. - Blizzards setting for a unified green color. \n3. - AddOns setting for a customizable unified color.",
+                            name = L["Health Bar"],
+                            desc = L["1. - Blizzards setting for Class Colors. \n2. - Blizzards setting for a unified green color. \n3. - AddOns setting for a customizable unified color."],
                             type = "select",
-                            values = {"Blizzard - Class Color", "Blizzard - Green Color", "AddOn - Static Color"},
-                            sorting = {1,2,3},
+                            values = { L["Blizzard - Class Color"], L["Blizzard - Green Color"], L["AddOn - Static Color"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
                         },
                         statusbar = {
                             order = 2.1,
                             type = "color",
-                            name = "Health Bar", 
+                            name = L["Health Bar"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 1,
-                            hidden = function() if RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode == 3 then return false end; return true end
+                            hidden = function()
+                                if RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode == 3 then return false end; return true
+                            end
                         },
                         newline = {
                             order = 3,
@@ -443,7 +446,7 @@ options = {
                         background = {
                             order = 4,
                             type = "color",
-                            name = "Health Bar Background", 
+                            name = L["Health Bar Background"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 1,
@@ -456,7 +459,7 @@ options = {
                         border = {
                             order = 6,
                             type = "color",
-                            name = "Border", 
+                            name = L["Border"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 1,
@@ -467,28 +470,28 @@ options = {
         },
         Fonts = {
             order = 3,
-            name = "Fonts",
+            name = L["Fonts"],
             type = "group",
             childGroups = "tab",
             hidden = Fonts_disabled,
             args = {
                 Name = {
                     order = 1,
-                    name = "Name",
+                    name = L["Name"],
                     type = "group",
                     args = {
                         font = {
                             order = 2,
                             type = "select",
-                            dialogControl = "LSM30_Font", 
-                            name = "Font",
-                            values = Media:HashTable("font"), 
+                            dialogControl = "LSM30_Font",
+                            name = L["Font"],
+                            values = Media:HashTable("font"),
                             get = "GetStatus",
                             set = "SetStatus",
                         },
                         outline = {
                             order = 3,
-                            name = "OUTLINE",
+                            name = L["OUTLINE"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -497,7 +500,7 @@ options = {
                         thick = {
                             disabled = function() return not RaidFrameSettings.db.profile.Fonts.Name.outline end,
                             order = 3.1,
-                            name = "THICK",
+                            name = L["THICK"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -505,7 +508,7 @@ options = {
                         },
                         monochrome = {
                             order = 3.2,
-                            name = "MONOCHROME",
+                            name = L["MONOCHROME"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -518,7 +521,7 @@ options = {
                         },
                         fontsize = {
                             order = 4,
-                            name = "Font size",
+                            name = L["Font Size"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -528,7 +531,7 @@ options = {
                         },
                         useclasscolor = {
                             order = 5,
-                            name = "Class Colored",
+                            name = L["Class Colored"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -537,7 +540,7 @@ options = {
                         fontcolor = {
                             order = 6,
                             type = "color",
-                            name = "Name color", 
+                            name = L["Name color"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.8,
@@ -550,9 +553,9 @@ options = {
                         },
                         point = {
                             order = 7,
-                            name = "Point",
+                            name = L["Anchor"],
                             type = "select",
-                            values = { "Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right" },
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
@@ -560,29 +563,29 @@ options = {
                         },
                         relativePoint = {
                             order = 7.1,
-                            name = "to Frames",
+                            name = L["to Frames"],
                             type = "select",
-                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                            sorting = {1,2,3,4,5,6,7,8,9},
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 0.8,
                         },
                         frame = {
                             order = 7.2,
-                            name = "Frame",
+                            name = L["to Attach Frame"],
                             type = "select",
-                            values = function() return RaidFrameSettings.db.profile.Module.RaidMark and {"Unit Frame", "Role Icon", "Raid Mark"} or {"Unit Frame", "Role Icon"} end,
-                            sorting = function() return RaidFrameSettings.db.profile.Module.RaidMark and {1,2,3} or {1,2} end,
+                            values = function() return RaidFrameSettings.db.profile.Module.RaidMark and { L["Unit Frame"], L["Role Icon"], L["Raid Mark"] } or { L["Unit Frame"], L["Role Icon"] } end,
+                            sorting = function() return RaidFrameSettings.db.profile.Module.RaidMark and { 1, 2, 3 } or { 1, 2 } end,
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 0.8,
                         },
                         justifyH = {
                             order = 7.2,
-                            name = "Align",
+                            name = L["Align"],
                             type = "select",
-                            values = { "Left", "Center", "Right" },
+                            values = { L["Left"], L["Center"], L["Right"] },
                             sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
@@ -595,7 +598,7 @@ options = {
                         },
                         x_offset = {
                             order = 8,
-                            name = "x - offset",
+                            name = L["x - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -606,7 +609,7 @@ options = {
                         },
                         y_offset = {
                             order = 9,
-                            name = "y - offset",
+                            name = L["y - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -619,21 +622,21 @@ options = {
                 },
                 Status = {
                     order = 2,
-                    name = "Status",
+                    name = L["Status"],
                     type = "group",
                     args = {
                         font = {
                             order = 2,
                             type = "select",
-                            dialogControl = "LSM30_Font", 
-                            name = "Font",
-                            values = Media:HashTable("font"), 
+                            dialogControl = "LSM30_Font",
+                            name = L["Font"],
+                            values = Media:HashTable("font"),
                             get = "GetStatus",
                             set = "SetStatus",
                         },
                         outline = {
                             order = 3,
-                            name = "OUTLINE",
+                            name = L["OUTLINE"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -642,7 +645,7 @@ options = {
                         thick = {
                             disabled = function() return not RaidFrameSettings.db.profile.Fonts.Status.outline end,
                             order = 3.1,
-                            name = "THICK",
+                            name = L["THICK"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -650,7 +653,7 @@ options = {
                         },
                         monochrome = {
                             order = 3.2,
-                            name = "MONOCHROME",
+                            name = L["MONOCHROME"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -663,7 +666,7 @@ options = {
                         },
                         fontsize = {
                             order = 4,
-                            name = "Font size",
+                            name = L["Font Size"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -674,7 +677,7 @@ options = {
                         fontcolor = {
                             order = 6,
                             type = "color",
-                            name = "Status color", 
+                            name = L["Status color"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.8,
@@ -686,9 +689,9 @@ options = {
                         },
                         point = {
                             order = 7,
-                            name = "Point",
+                            name = L["Anchor"],
                             type = "select",
-                            values = { "Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right" },
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
@@ -696,19 +699,19 @@ options = {
                         },
                         relativePoint = {
                             order = 7.1,
-                            name = "to Frames",
+                            name = L["to Frames"],
                             type = "select",
-                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                            sorting = {1,2,3,4,5,6,7,8,9},
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 0.8,
                         },
                         justifyH = {
                             order = 7.2,
-                            name = "Align",
+                            name = L["Align"],
                             type = "select",
-                            values = { "Left", "Center", "Right" },
+                            values = { L["Left"], L["Center"], L["Right"] },
                             sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
@@ -721,7 +724,7 @@ options = {
                         },
                         x_offset = {
                             order = 8,
-                            name = "x - offset",
+                            name = L["x - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -732,7 +735,7 @@ options = {
                         },
                         y_offset = {
                             order = 9,
-                            name = "y - offset",
+                            name = L["y - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -745,13 +748,13 @@ options = {
                 },
                 Advanced = {
                     order = 3,
-                    name = "Advanced",
+                    name = L["Advanced"],
                     type = "group",
                     args = {
                         shadowColor = {
                             order = 2,
                             type = "color",
-                            name = "Shadow color", 
+                            name = L["Shadow Color"],
                             get = "GetColor",
                             set = "SetColor",
                             hasAlpha = true,
@@ -759,7 +762,7 @@ options = {
                         },
                         x_offset = {
                             order = 3,
-                            name = "Shadow x-offset",
+                            name = L["Shadow x-offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -770,7 +773,7 @@ options = {
                         },
                         y_offset = {
                             order = 4,
-                            name = "Shadow y-offset",
+                            name = L["Shadow y-offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -785,24 +788,24 @@ options = {
         },
         AuraFilter = {
             order = 3.1,
-            name = "Aura Filter",
+            name = L["Aura Filter"],
             type = "group",
             hidden = AuraFilter_disabled,
             childGroups = "tab",
             args = {
                 Buffs = {
-                    order = 3,
-                    name = "Buffs",
+                    order = 1,
+                    name = L["Buffs"],
                     type = "group",
                     args = {
                         addAura = {
                             order = 1,
-                            name = "Enter spellId:",
+                            name = L["Enter spellId:"],
                             desc = "",
                             type = "input",
                             width = 1.5,
                             pattern = "^%d+$",
-                            usage = "please enter a number",
+                            usage = L["please enter a number"],
                             set = function(_, value)
                                 RaidFrameSettings.db.profile.AuraFilter.Buffs[value] = {
                                     spellId = tonumber(value),
@@ -817,7 +820,7 @@ options = {
                         },
                         FilteredAuras = {
                             order = 4,
-                            name = "Filtered Auras:",
+                            name = L["Filtered Auras:"],
                             type = "group",
                             inline = true,
                             args = {
@@ -827,18 +830,18 @@ options = {
                     },
                 },
                 Debuffs = {
-                    order = 3,
-                    name = "Debuffs",
+                    order = 2,
+                    name = L["Debuffs"],
                     type = "group",
                     args = {
                         addAura = {
                             order = 1,
-                            name = "Enter spellId:",
+                            name = L["Enter spellId:"],
                             desc = "",
                             type = "input",
                             width = 1.5,
                             pattern = "^%d+$",
-                            usage = "please enter a number",
+                            usage = L["please enter a number"],
                             set = function(_, value)
                                 RaidFrameSettings.db.profile.AuraFilter.Debuffs[value] = {
                                     spellId = tonumber(value),
@@ -853,7 +856,7 @@ options = {
                         },
                         FilteredAuras = {
                             order = 4,
-                            name = "Filtered Auras:",
+                            name = L["Filtered Auras:"],
                             type = "group",
                             inline = true,
                             args = {
@@ -866,34 +869,34 @@ options = {
         },
         Auras = {
             order = 4,
-            name = "Auras",
+            name = L["Auras"],
             type = "group",
             childGroups = "select",
             hidden = function()
-                return not RaidFrameSettings.db.profile.Module.Buffs and not RaidFrameSettings.db.profile.Module.Debuffs 
+                return not RaidFrameSettings.db.profile.Module.Buffs and not RaidFrameSettings.db.profile.Module.Debuffs
             end,
             args = {
                 Buffs = {
                     hidden = Buffs_disabled,
                     order = 1,
-                    name = "Buffs",
+                    name = L["Buffs"],
                     type = "group",
                     childGroups = "tab",
                     args = {
                         Buffs = { --name of the group is a workaround to not have several Set/Get functions just for that
                             order = 1,
-                            name = "Display",
+                            name = L["Display"],
                             type = "group",
                             childGroups = "tab",
                             args = {
                                 BuffFramesDisplay = {
                                     order = 1,
-                                    name = "Buff Frames",
+                                    name = L["Buff Frames"],
                                     type = "group",
                                     args = {
                                         width = {
                                             order = 1,
-                                            name = "width",
+                                            name = L["width"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -904,7 +907,7 @@ options = {
                                         },
                                         height = {
                                             order = 2,
-                                            name = "height",
+                                            name = L["height"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -915,8 +918,8 @@ options = {
                                         },
                                         increase = {
                                             order = 2.1,
-                                            name = "Aura increase",
-                                            desc = "This will increase the size of the auras added in the \34Increase\34 section.",
+                                            name = L["Aura Increase"],
+                                            desc = L["This will increase the size of the auras added in the \34Increase\34 section."],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -929,9 +932,9 @@ options = {
                                         cleanIcons = {
                                             order = 2.2,
                                             type = "toggle",
-                                            name = "Clean Icons",
+                                            name = L["Clean Icons"],
                                             -- and replace it with a 1pixel border #later
-                                            desc = "Crop the border. Keep the aspect ratio of icons when width is not equal to height.",
+                                            desc = L["Crop the border. Keep the aspect ratio of icons when width is not equal to height."],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
@@ -942,35 +945,35 @@ options = {
                                         },
                                         point = {
                                             order = 4,
-                                            name = "Buffframe anchor",
+                                            name = L["Buffframe anchor"],
                                             type = "select",
-                                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                                            sorting = {1,2,3,4,5,6,7,8,9},
+                                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
                                         relativePoint = {
                                             order = 5,
-                                            name = "to Frames",
+                                            name = L["to Frames"],
                                             type = "select",
-                                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                                            sorting = {1,2,3,4,5,6,7,8,9},
+                                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
                                         orientation = {
                                             order = 6,
-                                            name = "direction of growth",
+                                            name = L["Directions for growth"],
                                             type = "select",
-                                            values = {"Left", "Right", "Up", "Down"},
-                                            sorting = {1,2,3,4},
+                                            values = { L["Left"], L["Right"], L["Up"], L["Down"] },
+                                            sorting = { 1, 2, 3, 4 },
                                             get = function()
                                                 local orientation = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation
                                                 local baselineObj = options.args.Auras.args.Buffs.args.Buffs.args.BuffFramesDisplay.args.baseline
                                                 if orientation == 1 or orientation == 2 then
-                                                    baselineObj.values = { "Top", "Middle", "Bottom" }
+                                                    baselineObj.values = { L["Top"], L["Middle"], L["Bottom"] }
                                                 elseif orientation == 3 or orientation == 4 then
-                                                    baselineObj.values = { "Left", "Center", "Right" }
+                                                    baselineObj.values = { L["Left"], L["Center"], L["Right"] }
                                                 end
                                                 return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation
                                             end,
@@ -992,10 +995,10 @@ options = {
                                         },
                                         baseline = {
                                             order = 6.1,
-                                            name = "baseline",
+                                            name = L["Baseline"],
                                             type = "select",
-                                            values = { "Top/Left", "Middle/Center", "Bottom/Right"},
-                                            sorting = { 1, 2, 3},
+                                            values = { "Top/Left", "Middle/Center", "Bottom/Right" },
+                                            sorting = { 1, 2, 3 },
                                             get = function()
                                                 local baseline = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baseline
                                                 return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.orientation >= 3 and (baseline - 3) or baseline
@@ -1013,7 +1016,7 @@ options = {
                                         },
                                         xOffset = {
                                             order = 8,
-                                            name = "x - offset",
+                                            name = L["x - offset"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1024,7 +1027,7 @@ options = {
                                         },
                                         yOffset = {
                                             order = 9,
-                                            name = "y - offset",
+                                            name = L["y - offset"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1035,7 +1038,7 @@ options = {
                                         },
                                         gap = {
                                             order = 9.1,
-                                            name = "Gap",
+                                            name = L["Gap"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1052,8 +1055,8 @@ options = {
                                         swipe = {
                                             order = 11,
                                             type = "toggle",
-                                            name = "Show \"Swipe\"", 
-                                            desc = "Show the swipe radial overlay",
+                                            name = L["Show \"Swipe\""],
+                                            desc = L["Show the swipe radial overlay"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.8,
@@ -1061,8 +1064,8 @@ options = {
                                         edge = {
                                             order = 12,
                                             type = "toggle",
-                                            name = "Show \"Edge\"", 
-                                            desc = "Show the glowing edge at the end of the radial overlay",
+                                            name = L["Show \"Edge\""],
+                                            desc = L["Show the glowing edge at the end of the radial overlay"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.8,
@@ -1070,8 +1073,8 @@ options = {
                                         inverse = {
                                             order = 13,
                                             type = "toggle",
-                                            name = "Inverse", 
-                                            desc = "Invert the direction of the radial overlay",
+                                            name = L["Inverse"],
+                                            desc = L["Invert the direction of the radial overlay"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.6,
@@ -1079,8 +1082,8 @@ options = {
                                         timerText = {
                                             order = 14,
                                             type = "toggle",
-                                            name = "Show Duration Timer Text", 
-                                            desc = "Show an aura timer",
+                                            name = L["Show Duration Timer Text"],
+                                            desc = L["Show an aura timer"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 1.2,
@@ -1092,7 +1095,7 @@ options = {
                                         },
                                         maxbuffsAuto = {
                                             order = 41,
-                                            name = "Auto Max buffes",
+                                            name = L["Auto Max buffes"],
                                             type = "toggle",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1101,7 +1104,7 @@ options = {
                                         maxbuffs = {
                                             disabled = function() return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.maxbuffsAuto end,
                                             order = 42,
-                                            name = "Max buffes",
+                                            name = L["Max buffes"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1113,9 +1116,9 @@ options = {
                                         },
                                         framestrata = {
                                             order = 43,
-                                            name = "Frame Strata",
+                                            name = L["Frame Strata"],
                                             type = "select",
-                                            values = { "Inherited", "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" },
+                                            values = { L["Inherited"], L["BACKGROUND"], L["LOW"], L["MEDIUM"], L["HIGH"], L["DIALOG"], L["FULLSCREEN"], L["FULLSCREEN_DIALOG"], L["TOOLTIP"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1124,13 +1127,13 @@ options = {
                                 },
                                 DurationDisplay = {
                                     order = 2,
-                                    name = "Duration",
+                                    name = L["Duration"],
                                     type = "group",
                                     args = getFontOptions()
                                 },
                                 StacksDisplay = {
                                     order = 3,
-                                    name = "Stacks",
+                                    name = L["Stacks"],
                                     type = "group",
                                     args = getFontOptions()
                                 },
@@ -1138,18 +1141,18 @@ options = {
                         },
                         Increase = {
                             order = 2,
-                            name = "Increase",
-                            desc = "Set up auras to a big aura like a boss aura.",
+                            name = L["Increase"],
+                            desc = L["Set up auras to a big aura like a boss aura."],
                             type = "group",
                             args = {
                                 addAura = {
                                     order = 1,
-                                    name = "Enter spellId:",
+                                    name = L["Enter spellId:"],
                                     desc = "",
                                     type = "input",
                                     width = 1.5,
                                     pattern = "^%d+$",
-                                    usage = "please enter a number",
+                                    usage = L["please enter a number"],
                                     set = function(_, value)
                                         RaidFrameSettings.db.profile.Buffs.Increase[value] = true
                                         RaidFrameSettings:CreateIncreaseEntry(value, "Buffs")
@@ -1158,24 +1161,24 @@ options = {
                                 },
                                 IncreasedAuras = {
                                     order = 4,
-                                    name = "Increase:",
+                                    name = L["Increase:"],
                                     type = "group",
                                     inline = true,
                                     args = {
 
                                     },
-                                },                           
+                                },
                             },
                         },
                         AuraPosition = {
                             order = 3,
-                            name = "Aura Position",
+                            name = L["Aura Position"],
                             type = "group",
                             childGroups = "tab",
                             args = {
                                 addGroup = {
                                     order = 1,
-                                    name = "New Group",
+                                    name = L["New Group"],
                                     type = "execute",
                                     func = function()
                                         local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
@@ -1199,7 +1202,7 @@ options = {
                                             auraList = {},
                                         })
                                         local groupNo = #dbObjGroup
-                                        dbObjGroup[groupNo].name = "Group " .. groupNo
+                                        dbObjGroup[groupNo].name = L["Group "] .. groupNo
                                         RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
                                         RaidFrameSettings:UpdateModule("Buffs")
                                     end,
@@ -1207,15 +1210,15 @@ options = {
                                 },
                                 auraGroup = {
                                     order = 2,
-                                    name = "Auras",
+                                    name = L["Aura Position"],
                                     type = "group",
                                     args = {
                                         addAura = {
                                             order = 1,
-                                            name = "Enter spellId:",
+                                            name = L["Enter spellId:"],
                                             type = "input",
                                             pattern = "^%d+$",
-                                            usage = "please enter a number",
+                                            usage = L["please enter a number"],
                                             set = function(_, value)
                                                 RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
                                                     ["spellId"] = tonumber(value),
@@ -1248,29 +1251,29 @@ options = {
                                 },
                             },
                         },
-                    },  
+                    },
                 },
                 Debuffs = {
                     hidden = Debuffs_disabled,
                     order = 2,
-                    name = "Debuffs",
+                    name = L["Debuffs"],
                     type = "group",
                     childGroups = "tab",
                     args = {
                         Debuffs = {
                             order = 1,
-                            name = "Display",
+                            name = L["Display"],
                             type = "group",
                             childGroups = "tab",
                             args = {
                                 DebuffFramesDisplay = {
                                     order = 1,
-                                    name = "Debuff Frames",
+                                    name = L["Debuff Frames"],
                                     type = "group",
                                     args = {
                                         width = {
                                             order = 1,
-                                            name = "width",
+                                            name = L["width"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1281,7 +1284,7 @@ options = {
                                         },
                                         height = {
                                             order = 2,
-                                            name = "height",
+                                            name = L["height"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1292,8 +1295,8 @@ options = {
                                         },
                                         increase = {
                                             order = 2.1,
-                                            name = "Aura increase",
-                                            desc = "This will increase the size of \34Boss Auras\34 and the auras added in the \34Increase\34 section. Boss Auras are auras that the game deems to be more important by default.",
+                                            name = L["Aura Increase"],
+                                            desc = L["This will increase the size of \34Boss Auras\34 and the auras added in the \34Increase\34 section. Boss Auras are auras that the game deems to be more important by default."],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1306,8 +1309,8 @@ options = {
                                         cleanIcons = {
                                             order = 2.2,
                                             type = "toggle",
-                                            name = "Clean Icons",
-                                            desc = "Crop the border. Keep the aspect ratio of icons when width is not equal to height.",
+                                            name = L["Clean Icons"],
+                                            desc = L["Crop the border. Keep the aspect ratio of icons when width is not equal to height."],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
@@ -1318,35 +1321,35 @@ options = {
                                         },
                                         point = {
                                             order = 4,
-                                            name = "Debuffframe anchor",
+                                            name = L["Debuffframe anchor"],
                                             type = "select",
-                                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                                            sorting = {1,2,3,4,5,6,7,8,9},
+                                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
                                         relativePoint = {
                                             order = 5,
-                                            name = "to Frames",
+                                            name = L["to Frames"],
                                             type = "select",
-                                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                                            sorting = {1,2,3,4,5,6,7,8,9},
+                                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
                                         orientation = {
                                             order = 6,
-                                            name = "direction of growth",
+                                            name = L["Directions for growth"],
                                             type = "select",
-                                            values = {"Left", "Right", "Up", "Down"},
-                                            sorting = {1,2,3,4},
+                                            values = { L["Left"], L["Right"], L["Up"], L["Down"] },
+                                            sorting = { 1, 2, 3, 4 },
                                             get = function()
                                                 local orientation = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation
                                                 local baselineObj = options.args.Auras.args.Debuffs.args.Debuffs.args.DebuffFramesDisplay.args.baseline
                                                 if orientation == 1 or orientation == 2 then
-                                                    baselineObj.values = { "Top", "Middle", "Bottom" }
+                                                    baselineObj.values = { L["Top"], L["Middle"], L["Bottom"] }
                                                 elseif orientation == 3 or orientation == 4 then
-                                                    baselineObj.values = { "Left", "Center", "Right" }
+                                                    baselineObj.values = { L["Left"], L["Center"], L["Right"] }
                                                 end
                                                 return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation
                                             end,
@@ -1368,10 +1371,10 @@ options = {
                                         },
                                         baseline = {
                                             order = 6.1,
-                                            name = "baseline",
+                                            name = L["Baseline"],
                                             type = "select",
-                                            values = { "Top/Left", "Middle/Center", "Bottom/Right"},
-                                            sorting = { 1, 2, 3},
+                                            values = { "Top/Left", "Middle/Center", "Bottom/Right" },
+                                            sorting = { 1, 2, 3 },
                                             get = function()
                                                 local baseline = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baseline
                                                 return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.orientation >= 3 and (baseline - 3) or baseline
@@ -1389,7 +1392,7 @@ options = {
                                         },
                                         xOffset = {
                                             order = 8,
-                                            name = "x - offset",
+                                            name = L["x - offset"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1400,7 +1403,7 @@ options = {
                                         },
                                         yOffset = {
                                             order = 9,
-                                            name = "y - offset",
+                                            name = L["y - offset"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1411,7 +1414,7 @@ options = {
                                         },
                                         gap = {
                                             order = 9.1,
-                                            name = "Gap",
+                                            name = L["Gap"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1428,8 +1431,8 @@ options = {
                                         swipe = {
                                             order = 11,
                                             type = "toggle",
-                                            name = "Show \"Swipe\"", 
-                                            desc = "Show the swipe radial overlay",
+                                            name = L["Show \"Swipe\""],
+                                            desc = L["Show the swipe radial overlay"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.8,
@@ -1437,8 +1440,8 @@ options = {
                                         edge = {
                                             order = 12,
                                             type = "toggle",
-                                            name = "Show \"Edge\"", 
-                                            desc = "Show the glowing edge at the end of the radial overlay",
+                                            name = L["Show \"Edge\""],
+                                            desc = L["Show the glowing edge at the end of the radial overlay"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.8,
@@ -1446,8 +1449,8 @@ options = {
                                         inverse = {
                                             order = 13,
                                             type = "toggle",
-                                            name = "Inverse", 
-                                            desc = "Invert the direction of the radial overlay",
+                                            name = L["Inverse"],
+                                            desc = L["Invert the direction of the radial overlay"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.6,
@@ -1455,8 +1458,8 @@ options = {
                                         timerText = {
                                             order = 14,
                                             type = "toggle",
-                                            name = "Show Duration Timer Text", 
-                                            desc = "Show an aura timer",
+                                            name = L["Show Duration Timer Text"],
+                                            desc = L["Show an aura timer"],
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 1.2,
@@ -1468,7 +1471,7 @@ options = {
                                         },
                                         maxdebuffs = {
                                             order = 41,
-                                            name = "Max Debuffes",
+                                            name = L["Max Debuffes"],
                                             type = "range",
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1480,9 +1483,9 @@ options = {
                                         },
                                         framestrata = {
                                             order = 42,
-                                            name = "Frame Strata",
+                                            name = L["Frame Strata"],
                                             type = "select",
-                                            values = { "Inherited", "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" },
+                                            values = { L["Inherited"], L["BACKGROUND"], L["LOW"], L["MEDIUM"], L["HIGH"], L["DIALOG"], L["FULLSCREEN"], L["FULLSCREEN_DIALOG"], L["TOOLTIP"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
@@ -1491,32 +1494,32 @@ options = {
                                 },
                                 DurationDisplay = {
                                     order = 2,
-                                    name = "Duration",
+                                    name = L["Duration"],
                                     type = "group",
                                     args = getDebuffDurationOptions()
                                 },
                                 StacksDisplay = {
                                     order = 3,
-                                    name = "Stacks",
+                                    name = L["Stacks"],
                                     type = "group",
                                     args = getFontOptions()
                                 },
                             },
                         },
-						Increase = {
+                        Increase = {
                             order = 2,
-                            name = "Increase",
-                            desc = "Set up auras to have the same size increase as boss auras.",
+                            name = L["Increase"],
+                            desc = L["Set up auras to have the same size increase as boss auras."],
                             type = "group",
                             args = {
                                 addAura = {
                                     order = 1,
-                                    name = "Enter spellId:",
+                                    name = L["Enter spellId:"],
                                     desc = "",
                                     type = "input",
                                     width = 1.5,
                                     pattern = "^%d+$",
-                                    usage = "please enter a number",
+                                    usage = L["please enter a number"],
                                     set = function(_, value)
                                         RaidFrameSettings.db.profile.Debuffs.Increase[value] = true
                                         RaidFrameSettings:CreateIncreaseEntry(value, "Debuffs")
@@ -1525,24 +1528,24 @@ options = {
                                 },
                                 IncreasedAuras = {
                                     order = 4,
-                                    name = "Increase:",
+                                    name = L["Increase:"],
                                     type = "group",
                                     inline = true,
                                     args = {
 
                                     },
-                                },                           
+                                },
                             },
                         },
                         AuraPosition = {
                             order = 3,
-                            name = "Aura Position",
+                            name = L["Aura Position"],
                             type = "group",
                             childGroups = "tab",
                             args = {
                                 addGroup = {
                                     order = 1,
-                                    name = "New Group",
+                                    name = L["New Group"],
                                     type = "execute",
                                     func = function()
                                         local dbObjGroup = RaidFrameSettings.db.profile["Debuffs"].AuraGroup
@@ -1566,7 +1569,7 @@ options = {
                                             auraList = {},
                                         })
                                         local groupNo = #dbObjGroup
-                                        dbObjGroup[groupNo].name = "Group " .. groupNo
+                                        dbObjGroup[groupNo].name = L["Group "] .. groupNo
                                         RaidFrameSettings:CreateAuraGroup(groupNo, "Debuffs")
                                         RaidFrameSettings:UpdateModule("Debuffs")
                                     end,
@@ -1574,15 +1577,15 @@ options = {
                                 },
                                 auraGroup = {
                                     order = 2,
-                                    name = "Auras",
+                                    name = L["Auras"],
                                     type = "group",
                                     args = {
                                         addAura = {
                                             order = 1,
-                                            name = "Enter spellId:",
+                                            name = L["Enter spellId:"],
                                             type = "input",
                                             pattern = "^%d+$",
-                                            usage = "please enter a number",
+                                            usage = L["please enter a number"],
                                             set = function(_, value)
                                                 RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
                                                     ["spellId"] = tonumber(value),
@@ -1615,35 +1618,35 @@ options = {
                                 },
                             },
                         },
-                    },  
+                    },
                 },
             },
         },
         AuraHighlight = {
             order = 5,
-            name = "Aura Highlight",
+            name = L["Aura Highlight"],
             type = "group",
             hidden = AuraHighlight_disabled,
             args = {
                 Config = {
                     order = 1,
-                    name = "Config",
+                    name = L["Config"],
                     type = "group",
                     inline = true,
                     args = {
                         operation_mode = {
                             order = 1,
-                            name = "Operation mode",
+                            name = L["Operation mode"],
                             desc = "Smart - The add-on will determine which debuffs you can dispel based on your talents and class, and will only highlight those debuffs. \nManual - You choose which debuff types you want to see.",
                             type = "select",
-                            values = {"Smart", "Manual"},
-                            sorting = {1,2},
+                            values = { L["Smart"], L["Manual"] },
+                            sorting = { 1, 2 },
                             get = "GetStatus",
                             set = "SetStatus",
                         },
                         useHealthBarColor = {
                             order = 1.1,
-                            name = "Color HealthBar",
+                            name = L["Color HealthBar"],
                             desc = "",
                             type = "toggle",
                             get = "GetStatus",
@@ -1652,7 +1655,7 @@ options = {
                         },
                         useHealthBarGlow = {
                             order = 1.2,
-                            name = "Glow HealthBar",
+                            name = L["Glow HealthBar"],
                             desc = "",
                             type = "toggle",
                             get = "GetStatus",
@@ -1667,7 +1670,7 @@ options = {
                         Curse = {
                             hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 2,
-                            name = "Curse",
+                            name = L["Curse"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1676,7 +1679,7 @@ options = {
                         Disease = {
                             hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 3,
-                            name = "Disease",
+                            name = L["Disease"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1685,7 +1688,7 @@ options = {
                         Magic = {
                             hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 4,
-                            name = "Magic",
+                            name = L["Magic"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1694,7 +1697,7 @@ options = {
                         Poison = {
                             hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 5,
-                            name = "Poison",
+                            name = L["Poison"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1703,7 +1706,7 @@ options = {
                         Bleed = {
                             hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 6,
-                            name = "Bleed",
+                            name = L["Bleed"],
                             type = "toggle",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1713,83 +1716,83 @@ options = {
                 },
                 DebuffColors = {
                     order = 2,
-                    name = "Debuff colors",
+                    name = L["Debuff colors"],
                     type = "group",
                     inline = true,
                     args = {
-                        Curse = {
+                        Curse       = {
                             order = 1,
                             type = "color",
-                            name = "Curse", 
+                            name = L["Curse"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.5,
                         },
-                        Disease  = {
+                        Disease     = {
                             order = 2,
                             type = "color",
-                            name = "Disease", 
+                            name = L["Disease"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.5,
                         },
-                        Magic = {
+                        Magic       = {
                             order = 3,
                             type = "color",
-                            name = "Magic",
+                            name = L["Magic"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.5,
                         },
-                        Poison = {
+                        Poison      = {
                             order = 4,
                             type = "color",
-                            name = "Poison", 
+                            name = L["Poison"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.5,
                         },
-                        Bleed = {
+                        Bleed       = {
                             order = 5,
                             type = "color",
-                            name = "Bleed", 
+                            name = L["Bleed"],
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.5,
                         },
-                        newline = {
+                        newline     = {
                             order = 6,
                             type = "description",
                             name = "",
                         },
                         ResetColors = {
                             order = 7,
-                            name = "reset",
-                            desc = "to default",
+                            name = L["reset"],
+                            desc = L["to default"],
                             type = "execute",
                             width = 0.4,
                             confirm = true,
-                            func = 
-                            function() 
-                                RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Curse   = {r=0.6,g=0.0,b=1.0}
-                                RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Disease = {r=0.6,g=0.4,b=0.0}
-                                RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Magic   = {r=0.2,g=0.6,b=1.0}
-                                RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Poison  = {r=0.0,g=0.6,b=0.0}
-                                RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Bleed   = {r=0.8,g=0.0,b=0.0}
-                                RaidFrameSettings:ReloadConfig()
-                            end,
+                            func =
+                                function()
+                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Curse   = { r = 0.6, g = 0.0, b = 1.0 }
+                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Disease = { r = 0.6, g = 0.4, b = 0.0 }
+                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Magic   = { r = 0.2, g = 0.6, b = 1.0 }
+                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Poison  = { r = 0.0, g = 0.6, b = 0.0 }
+                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Bleed   = { r = 0.8, g = 0.0, b = 0.0 }
+                                    RaidFrameSettings:ReloadConfig()
+                                end,
                         },
                     },
                 },
                 MissingAura = {
                     order = 3,
-                    name = "Missing Aura",
+                    name = L["Missing Aura"],
                     type = "group",
                     inline = true,
                     args = {
                         classSelection = {
                             order = 1,
-                            name = "Class:",
+                            name = L["Class:"],
                             type = "select",
                             values = addonTable.playableHealerClasses,
                             get = "GetStatus",
@@ -1797,15 +1800,15 @@ options = {
                         },
                         missingAuraColor = {
                             order = 2,
-                            name = "Missing Aura Color",
+                            name = L["Missing Aura Color"],
                             type = "color",
                             get = "GetColor",
                             set = "SetColor",
                         },
                         input_field = {
                             order = 3,
-                            name = "Enter spellIDs",
-                            desc = "enter spellIDs seperated by a semicolon or comma\nExample: 12345; 123; 456;",
+                            name = L["Enter spellIDs"],
+                            desc = L["enter spellIDs seperated by a semicolon or comma\nExample: 12345; 123; 456;"],
                             type = "input",
                             width = "full",
                             multiline = 5,
@@ -1824,7 +1827,7 @@ options = {
                                 dbObj[class].spellIDs = tbl
                                 RaidFrameSettings:UpdateModule("AuraHighlight")
                             end,
-                            get = function() 
+                            get = function()
                                 local dbObj = RaidFrameSettings.db.profile.AuraHighlight.MissingAura
                                 local class = addonTable.playableHealerClasses[dbObj.classSelection]
                                 return dbObj[class].input_field
@@ -1836,28 +1839,28 @@ options = {
         },
         MinorModules = {
             order = 5,
-            name = "Module Settings",
+            name = L["Module Settings"],
             type = "group",
             args = {
                 RoleIcon = {
                     hidden = isVanilla or RoleIcon_disabled,
                     order = 1,
-                    name = "Role Icon",
+                    name = L["Role Icon"],
                     type = "group",
                     inline = true,
                     args = {
                         position = {
                             order = 1,
-                            name = "Position",
+                            name = L["Position"],
                             type = "select",
-                            values = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"},
-                            sorting = {1,2,3,4},
+                            values = { L["Top Left"], L["Top Right"], L["Bottom Left"], L["Bottom Right"] },
+                            sorting = { 1, 2, 3, 4 },
                             get = "GetStatus",
                             set = "SetStatus",
                         },
                         x_offset = {
                             order = 2,
-                            name = "x - offset",
+                            name = L["x - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1868,7 +1871,7 @@ options = {
                         },
                         y_offset = {
                             order = 3,
-                            name = "y - offset",
+                            name = L["y - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1879,7 +1882,7 @@ options = {
                         },
                         scaleFactor = {
                             order = 4,
-                            name = "scale",
+                            name = L["scale"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1893,15 +1896,15 @@ options = {
                 RaidMark = {
                     hidden = RaidMark_disabled,
                     order = 1.1,
-                    name = "Raid Mark",
+                    name = L["Raid Mark"],
                     type = "group",
                     inline = true,
                     args = {
                         point = {
                             order = 1,
-                            name = "Point",
+                            name = L["Anchor"],
                             type = "select",
-                            values = { "Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right" },
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1909,27 +1912,27 @@ options = {
                         },
                         relativePoint = {
                             order = 1.1,
-                            name = "to Frames",
+                            name = L["to Frames"],
                             type = "select",
-                            values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                            sorting = {1,2,3,4,5,6,7,8,9},
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 0.8,
                         },
                         frame = {
                             order = 1.2,
-                            name = "Frame",
+                            name = L["to Attach Frame"],
                             type = "select",
-                            values = {"Unit Frame", "Role Icon"},
-                            sorting = {1,2},
+                            values = { L["Unit Frame"], L["Role Icon"] },
+                            sorting = { 1, 2 },
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 0.8,
                         },
                         x_offset = {
                             order = 2,
-                            name = "x - offset",
+                            name = L["x - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1940,7 +1943,7 @@ options = {
                         },
                         y_offset = {
                             order = 3,
-                            name = "y - offset",
+                            name = L["y - offset"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1956,7 +1959,7 @@ options = {
                         },
                         width = {
                             order = 5,
-                            name = "width",
+                            name = L["width"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1967,7 +1970,7 @@ options = {
                         },
                         height = {
                             order = 6,
-                            name = "height",
+                            name = L["height"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1978,7 +1981,7 @@ options = {
                         },
                         alpha = {
                             order = 7,
-                            name = "alpha",
+                            name = L["alpha"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -1992,14 +1995,14 @@ options = {
                 RangeAlpha = {
                     hidden = Range_disabled,
                     order = 2,
-                    name = "Range Alpha",
+                    name = L["Range Alpha"],
                     type = "group",
                     inline = true,
                     args = {
                         statusbar = {
                             order = 1,
-                            name = "Foreground",
-                            desc = "the foreground alpha level when a target is out of range",
+                            name = L["Foreground"],
+                            desc = L["the foreground alpha level when a target is out of range"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -2011,8 +2014,8 @@ options = {
                         },
                         background = {
                             order = 2,
-                            name = "Background",
-                            desc = "the background alpha level when a target is out of range",
+                            name = L["Background"],
+                            desc = L["the background alpha level when a target is out of range"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -2027,13 +2030,13 @@ options = {
                 CustomScale = {
                     hidden = isClassic or CustomScale_disabled,
                     order = 6,
-                    name = "Custom Scale",
+                    name = L["Custom Scale"],
                     type = "group",
                     inline = true,
                     args = {
                         Party = {
                             order = 1,
-                            name = "Party",
+                            name = L["Party"],
                             desc = "",
                             type = "range",
                             get = "GetStatus",
@@ -2046,7 +2049,7 @@ options = {
                         },
                         Arena = {
                             order = 2,
-                            name = "Arena",
+                            name = L["Arena"],
                             desc = "",
                             type = "range",
                             get = "GetStatus",
@@ -2059,7 +2062,7 @@ options = {
                         },
                         Raid = {
                             order = 3,
-                            name = "Raid",
+                            name = L["Raid"],
                             desc = "",
                             type = "range",
                             get = "GetStatus",
@@ -2075,13 +2078,13 @@ options = {
                 Overabsorb = {
                     hidden = isClassic or Overabsorb_disabled,
                     order = 7,
-                    name = "Overabsorb",
+                    name = L["Overabsorb"],
                     type = "group",
                     inline = true,
                     args = {
                         glowAlpha = {
                             order = 1,
-                            name = "Glow intensity",
+                            name = L["Glow intensity"],
                             type = "range",
                             get = "GetStatus",
                             set = "SetStatus",
@@ -2092,10 +2095,10 @@ options = {
                         },
                         position = {
                             order = 7.1,
-                            name = "Glow position",
+                            name = L["Glow position"],
                             type = "select",
-                            values = {"Default", "Move overflow", "Move left"},
-                            sorting = {1,2,3},
+                            values = { L["Default"], L["Move overflow"], L["Move left"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
                             width = 0.8,
@@ -2105,42 +2108,42 @@ options = {
                 TimerTextLimit = {
                     hidden = Buffs_disabled and Debuffs_disabled,
                     order = 7,
-                    name = "TimerText Format Limit (by seconds)",
+                    name = L["TimerText Format Limit (by seconds)"],
                     type = "group",
                     inline = true,
                     args = {
                         sec = {
                             order = 1,
-                            name = "Second Limit",
+                            name = L["Second Limit"],
                             type = "input",
                             get = function() return tostring(RaidFrameSettings.db.profile.MinorModules.TimerTextLimit.sec) end,
                             set = function(info, value)
                                 RaidFrameSettings.db.profile.MinorModules.TimerTextLimit.sec = tonumber(value)
                             end,
                             pattern = "^%d+$",
-                            usage = "Display in minutes if second limit is exceeded. (please enter a number)",
+                            usage = L["Display in minutes if second limit is exceeded. (please enter a number)"],
                         },
                         min = {
                             order = 2,
-                            name = "Minute Limit",
+                            name = L["Minute Limit"],
                             type = "input",
                             get = function() return tostring(RaidFrameSettings.db.profile.MinorModules.TimerTextLimit.min) end,
                             set = function(info, value)
                                 RaidFrameSettings.db.profile.MinorModules.TimerTextLimit.min = tonumber(value)
                             end,
                             pattern = "^%d+$",
-                            usage = "Display in hours if minute limit is exceeded. (please enter a number)",
+                            usage = L["Display in hours if minute limit is exceeded. (please enter a number)"],
                         },
                         hour = {
                             order = 3,
-                            name = "Hour Limit",
+                            name = L["Hour Limit"],
                             type = "input",
                             get = function() return tostring(RaidFrameSettings.db.profile.MinorModules.TimerTextLimit.hour) end,
                             set = function(info, value)
                                 RaidFrameSettings.db.profile.MinorModules.TimerTextLimit.hour = tonumber(value)
                             end,
                             pattern = "^%d+$",
-                            usage = "Display in days if hour limit is exceeded. (please enter a number)",
+                            usage = L["Display in days if hour limit is exceeded. (please enter a number)"],
                         },
                     },
                 },
@@ -2148,88 +2151,88 @@ options = {
         },
         PorfileManagement = {
             order = lastEntry,
-            name = "Profiles",
+            name = L["Profiles"],
             type = "group",
             childGroups = "tab",
             args = {
                 --order 1 is the ace profile tab
                 GroupProfiles = {
                     order = 2,
-                    name = "Raid/Party Profile",
+                    name = L["Raid/Party Profile"],
                     type = "group",
                     inline = true,
                     args = {
                         party = {
                             order = 1,
-                            name = "Party",
+                            name = L["Party"],
                             type = "select",
                             values = profiles,
-                            get = function() 
-                                for i,value in pairs(profiles) do
+                            get = function()
+                                for i, value in pairs(profiles) do
                                     if value == RaidFrameSettings.db.global.GroupProfiles.party then
                                         return i
                                     end
                                 end
                             end,
-                            set = function(info,value) 
+                            set = function(info, value)
                                 RaidFrameSettings.db.global.GroupProfiles.party = profiles[value]
                                 RaidFrameSettings:LoadGroupBasedProfile()
                             end,
                         },
                         raid = {
                             order = 2,
-                            name = "Raid",
+                            name = L["Raid"],
                             type = "select",
                             values = profiles,
-                            get = function() 
-                                for i,value in pairs(profiles) do
+                            get = function()
+                                for i, value in pairs(profiles) do
                                     if value == RaidFrameSettings.db.global.GroupProfiles.raid then
                                         return i
                                     end
                                 end
                             end,
-                            set = function(info,value) 
+                            set = function(info, value)
                                 RaidFrameSettings.db.global.GroupProfiles.raid = profiles[value]
                                 RaidFrameSettings:LoadGroupBasedProfile()
                             end,
                         },
                         arena = {
                             order = 3,
-                            name = "Arena",
+                            name = L["Arena"],
                             type = "select",
                             values = profiles,
-                            get = function() 
-                                for i,value in pairs(profiles) do
+                            get = function()
+                                for i, value in pairs(profiles) do
                                     if value == RaidFrameSettings.db.global.GroupProfiles.arena then
                                         return i
                                     end
                                 end
                             end,
-                            set = function(info,value) 
+                            set = function(info, value)
                                 RaidFrameSettings.db.global.GroupProfiles.arena = profiles[value]
                                 RaidFrameSettings:LoadGroupBasedProfile()
                             end,
                         },
                         battleground = {
                             order = 4,
-                            name = "Battleground",
+                            name = L["Battleground"],
                             type = "select",
                             values = profiles,
-                            get = function() 
-                                for i,value in pairs(profiles) do
+                            get = function()
+                                for i, value in pairs(profiles) do
                                     if value == RaidFrameSettings.db.global.GroupProfiles.battleground then
                                         return i
                                     end
                                 end
                             end,
-                            set = function(info,value) 
+                            set = function(info, value)
                                 RaidFrameSettings.db.global.GroupProfiles.battleground = profiles[value]
                                 RaidFrameSettings:LoadGroupBasedProfile()
                             end,
                         },
                         description = {
                             order = 5,
-                            name = "The profiles you select above will be loaded based on the type of group you are in, if you want to use the same profile for all cases select it for all cases.",
+                            name = L["The profiles you select above will be loaded based on the type of group you are in, if you want to use the same profile for all cases select it for all cases."],
                             fontSize = "medium",
                             type = "description",
                         },
@@ -2237,30 +2240,32 @@ options = {
                 },
                 ImportExportPofile = {
                     order = 3,
-                    name = "Import/Export Profile",
+                    name = L["Import/Export Profile"],
                     type = "group",
                     args = {
                         Header = {
                             order = 1,
-                            name = "Share your profile or import one",
+                            name = L["Share your profile or import one"],
                             type = "header",
                         },
                         Desc = {
                             order = 2,
-                            name = "To export your current profile copy the code below.\nTo import a profile replace the code below and press Accept",
+                            name = L["To export your current profile copy the code below.\nTo import a profile replace the code below and press Accept"],
                             fontSize = "medium",
                             type = "description",
                         },
                         Textfield = {
                             order = 3,
-                            name = "import/export from or to your current profile",
-                            desc = "|cffFF0000Caution|r: Importing a profile will overwrite your current profile.",
+                            name = L["import/export from or to your current profile"],
+                            desc = L["|cffFF0000Caution|r: Importing a profile will overwrite your current profile."],
                             type = "input",
                             multiline = 18,
                             width = "full",
                             confirm = function() return "Caution: Importing a profile will overwrite your current profile." end,
                             get = function() return RaidFrameSettings:ShareProfile() end,
-                            set = function(self, input) RaidFrameSettings:ImportProfile(input); ReloadUI() end, 
+                            set = function(self, input)
+                                RaidFrameSettings:ImportProfile(input); ReloadUI()
+                            end,
                         },
                     },
                 },
@@ -2279,7 +2284,7 @@ end
 
 function RaidFrameSettings:compareSpell(a, b)
     local aname = GetSpellInfo(a) or "aura not found"
-    local bname =GetSpellInfo(b) or "aura not found"
+    local bname = GetSpellInfo(b) or "aura not found"
     return aname < bname
 end
 
@@ -2294,8 +2299,8 @@ end
 function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
     local dbObj = self.db.profile.AuraFilter[category][spellId]
     local auraFilterOptions = options.args.AuraFilter.args[category].args.FilteredAuras.args
-    local spellName, _, icon 
-    if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
+    local spellName, _, icon
+    if #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
     local maxEntry = self:count(auraFilterOptions)
@@ -2308,14 +2313,14 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
             auraInfo = {
                 order = 1,
                 image = icon,
-                imageCoords = {0.1,0.9,0.1,0.9},
+                imageCoords = { 0.1, 0.9, 0.1, 0.9 },
                 name = (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ")",
                 type = "description",
                 width = 1.5,
             },
             show = {
                 order = 2,
-                name = "Show",
+                name = L["Show"],
                 type = "toggle",
                 get = function() return dbObj.show end,
                 set = function(_, value)
@@ -2327,7 +2332,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
             others = {
                 hidden = function() return not dbObj.show or category == "Debuffs" end,
                 order = 3,
-                name = "Other's buff",
+                name = L["Other's buff"],
                 type = "toggle",
                 get = function() return dbObj.other end,
                 set = function(_, value)
@@ -2339,7 +2344,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
             hideInCombat = {
                 hidden = function() return not dbObj.show end,
                 order = 4,
-                name = "Hide In Combat",
+                name = L["Hide In Combat"],
                 type = "toggle",
                 get = function() return dbObj.hideInCombat end,
                 set = function(_, value)
@@ -2349,14 +2354,14 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 width = 0.8,
             },
             priority = {
-                hidden = function() 
+                hidden = function()
                     return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
                 end,
                 order = 5,
-                name = "Priority",
+                name = L["Priority"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number",
+                usage = L["please enter a number"],
                 get = function()
                     if dbObj.priority and dbObj.priority > 0 then
                         return tostring(dbObj.priority)
@@ -2371,7 +2376,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
             },
             remove = {
                 order = 6,
-                name = "remove",
+                name = L["remove"],
                 type = "execute",
                 func = function()
                     self.db.profile.AuraFilter[category][spellId] = nil
@@ -2389,8 +2394,8 @@ end
 function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
     local dbObj = self.db.profile[category].Increase
     local increaseOptions = options.args.Auras.args[category].args.Increase.args.IncreasedAuras.args
-    local spellName, _, icon 
-    if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
+    local spellName, _, icon
+    if #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
     local maxEntry = self:count(increaseOptions)
@@ -2403,14 +2408,14 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
             auraInfo = {
                 order = 1,
                 image = icon,
-                imageCoords = {0.1,0.9,0.1,0.9},
+                imageCoords = { 0.1, 0.9, 0.1, 0.9 },
                 name = (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ")",
                 type = "description",
                 width = 1.5,
             },
             remove = {
                 order = 2,
-                name = "remove",
+                name = L["remove"],
                 type = "execute",
                 func = function()
                     self.db.profile[category].Increase[spellId] = nil
@@ -2418,7 +2423,7 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
-            },  
+            },
         },
     }
     increaseOptions[spellId] = increase_entry
@@ -2496,14 +2501,14 @@ end
 function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
     local dbObj = self.db.profile[category].AuraPosition[spellId]
     local auraPositionOptions = options.args.Auras.args[category].args.AuraPosition.args.auraGroup.args.auraList.args
-    local spellName, _, icon 
-    if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
+    local spellName, _, icon
+    if #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
     local maxEntry = self:count(auraPositionOptions)
     local aura_entry = {
         order = maxEntry + 1,
-        name = "|cffFFFFFF" .. (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ") |r",
+        name = "|cffFFFFFF" .. (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ") |r",
         type = "group",
         inline = true,
         args = {
@@ -2511,7 +2516,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 order = 1,
                 name = "",
                 image = icon,
-                imageCoords = {0.1,0.9,0.1,0.9},
+                imageCoords = { 0.1, 0.9, 0.1, 0.9 },
                 imageWidth = 28,
                 imageHeight = 28,
                 type = "description",
@@ -2519,10 +2524,10 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             point = {
                 order = 3,
-                name = "anchor",
+                name = L["Anchor"],
                 type = "select",
-                values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                sorting = {1,2,3,4,5,6,7,8,9},
+                values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
                     return dbObj.point
                 end,
@@ -2534,10 +2539,10 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             relativePoint = {
                 order = 4,
-                name = "to Frames",
+                name = L["to Frames"],
                 type = "select",
-                values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                sorting = {1,2,3,4,5,6,7,8,9},
+                values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
                     return dbObj.relativePoint
                 end,
@@ -2549,18 +2554,18 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             frame = {
                 order = 4.1,
-                name = "Frame",
+                name = L["to Attach Frame"],
                 type = "select",
-                values = {"Unit", "Placed", "Group"},
-                sorting = {1,2,3},
+                values = { L["Unit Frame"], L["Placed"], L["Group"] },
+                sorting = { 1, 2, 3 },
                 get = function()
                     local optObj = auraPositionOptions[spellId].args
                     if dbObj.frame == 2 then
-                        optObj.frameNo.name = "SpellId"
-                        optObj.frameNo.usage = "please enter a number (spellId of the aura frame you want to attach.)"
+                        optObj.frameNo.name = L["SpellId"]
+                        optObj.frameNo.usage = L["please enter a number (spellId of the aura frame you want to attach.)"]
                     elseif dbObj.frame == 3 then
-                        optObj.frameNo.name = "GroupNo"
-                        optObj.frameNo.usage = "please enter a number (no of aura group you want to attach.)"
+                        optObj.frameNo.name = L["GroupNo"]
+                        optObj.frameNo.usage = L["please enter a number (no of aura group you want to attach.)"]
                     end
                     return dbObj.frame
                 end,
@@ -2572,15 +2577,15 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     dbObj.frameNo = 0
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.5,
+                width = 0.8,
             },
             frameNo = {
                 hidden = function() return dbObj.frame == 1 end,
                 order = 4.2,
-                name = "FrameNo",
+                name = L["FrameNo"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number (spellId of the aura frame you want to attach.)",
+                usage = L["please enter a number (spellId of the aura frame you want to attach.)"],
                 get = function()
                     return dbObj.frameNo ~= nil and dbObj.frameNo ~= 0 and tostring(dbObj.frameNo) or ""
                 end,
@@ -2602,10 +2607,10 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             frameSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
                 order = 4.3,
-                name = "Frame Select",
+                name = L["Frame Select"],
                 type = "select",
-                values = {"Last", "First", "Select"},
-                sorting = {1,2,3},
+                values = { L["Last"], L["First"], L["Select"] },
+                sorting = { 1, 2, 3 },
                 get = function()
                     return dbObj.frameSelect
                 end,
@@ -2618,10 +2623,10 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             frameManualSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
                 order = 4.4,
-                name = "Frame No",
+                name = L["Frame No"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number (The n th frame of the aura group)",
+                usage = L["please enter a number (The n th frame of the aura group)"],
                 get = function()
                     dbObj.frameManualSelect = dbObj.frameManualSelect or 1
                     return tostring(dbObj.frameManualSelect)
@@ -2643,7 +2648,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             xOffset = {
                 order = 5,
-                name = "x - offset",
+                name = L["x - offset"],
                 type = "range",
                 get = function()
                     return dbObj.xOffset
@@ -2659,7 +2664,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             yOffset = {
                 order = 6,
-                name = "y - offset",
+                name = L["y - offset"],
                 type = "range",
                 get = function()
                     return dbObj.yOffset
@@ -2675,7 +2680,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             remove = {
                 order = 7,
-                name = "remove",
+                name = L["remove"],
                 type = "execute",
                 func = function()
                     -- This will be deleted, so link the parent and child.
@@ -2694,7 +2699,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             setSize = {
                 order = 9,
                 type = "toggle",
-                name = "Set Size",
+                name = L["Set Size"],
                 desc = "",
                 get = function()
                     return dbObj.setSize
@@ -2708,7 +2713,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             width = {
                 order = 10,
                 hidden = function() return not dbObj.setSize end,
-                name = "Icon Width",
+                name = L["Icon Width"],
                 type = "range",
                 get = function()
                     return dbObj.width
@@ -2725,7 +2730,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             height = {
                 order = 11,
                 hidden = function() return not dbObj.setSize end,
-                name = "Icon Height",
+                name = L["Icon Height"],
                 type = "range",
                 get = function()
                     return dbObj.height
@@ -2747,12 +2752,12 @@ end
 function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
     local dbObj = self.db.profile[category].AuraGroup[groupNo].auraList
     local groupOptions = options.args.Auras.args[category].args.AuraPosition.args["group" .. groupNo].args.auraList.args
-    local spellName, _, icon 
-    if  #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
+    local spellName, _, icon
+    if #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
     end
     local maxEntry = self:count(groupOptions)
-    -- for backward compatibility 
+    -- for backward compatibility
     if type(dbObj[spellId]) ~= "table" then
         dbObj[spellId] = {
             spellId = tonumber(spellId),
@@ -2768,17 +2773,17 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
             auraInfo = {
                 order = 1,
                 image = icon,
-                imageCoords = {0.1,0.9,0.1,0.9},
+                imageCoords = { 0.1, 0.9, 0.1, 0.9 },
                 name = (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ")",
                 type = "description",
                 width = 1.5,
             },
             priority = {
                 order = 2,
-                name = "Priority",
+                name = L["Priority"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number",
+                usage = L["please enter a number"],
                 get = function()
                     if dbObj[spellId].priority > 0 then
                         return tostring(dbObj[spellId].priority)
@@ -2793,7 +2798,7 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
             },
             remove = {
                 order = 3,
-                name = "remove",
+                name = L["remove"],
                 type = "execute",
                 func = function()
                     dbObj[spellId] = nil
@@ -2818,7 +2823,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
         args = {
             groupname = {
                 order = 1,
-                name = "Groupname",
+                name = L["Groupname"],
                 type = "input",
                 get = function()
                     return dbObj.name
@@ -2832,7 +2837,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             groupNo = {
                 order = 1.1,
-                name = "Order",
+                name = L["Order"],
                 type = "input",
                 get = function()
                     return tostring(groupNo)
@@ -2871,10 +2876,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             point = {
                 order = 2,
-                name = "anchor",
+                name = L["Anchor"],
                 type = "select",
-                values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                sorting = {1,2,3,4,5,6,7,8,9},
+                values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
                     return dbObj.point
                 end,
@@ -2886,10 +2891,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             relativePoint = {
                 order = 3,
-                name = "to Frames",
+                name = L["to Frames"],
                 type = "select",
-                values = {"Top Left", "Top", "Top Right", "Left", "Center", "Right", "Bottom Left", "Bottom", "Bottom Right"},
-                sorting = {1,2,3,4,5,6,7,8,9},
+                values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
                     return dbObj.relativePoint
                 end,
@@ -2901,18 +2906,18 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             frame = {
                 order = 3.1,
-                name = "Frame",
+                name = L["to Attach Frame"],
                 type = "select",
-                values = {"Unit", "Placed", "Group"},
-                sorting = {1,2,3},
+                values = { L["Unit Frame"], L["Placed"], L["Group"] },
+                sorting = { 1, 2, 3 },
                 get = function()
                     local optObj = groupOptions["group" .. groupNo].args
                     if dbObj.frame == 2 then
-                        optObj.frameNo.name = "SpellId"
-                        optObj.frameNo.usage = "please enter a number (spellId of the aura frame you want to attach.)"
+                        optObj.frameNo.name = L["SpellId"]
+                        optObj.frameNo.usage = L["please enter a number (spellId of the aura frame you want to attach.)"]
                     elseif dbObj.frame == 3 then
-                        optObj.frameNo.name = "GroupNo"
-                        optObj.frameNo.usage = "please enter a number (no of aura group you want to attach.)"
+                        optObj.frameNo.name = L["GroupNo"]
+                        optObj.frameNo.usage = L["please enter a number (no of aura group you want to attach.)"]
                     end
                     return dbObj.frame
                 end,
@@ -2922,17 +2927,17 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     end
                     dbObj.frame = value
                     dbObj.frameNo = 0
-                RaidFrameSettings:UpdateModule(category)
+                    RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.5,
+                width = 0.8,
             },
             frameNo = {
                 hidden = function() return dbObj.frame == 1 end,
                 order = 3.2,
-                name = "FrameNo",
+                name = L["FrameNo"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number (spellId of the aura frame you want to attach.)",
+                usage = L["please enter a number (spellId of the aura frame you want to attach.)"],
                 get = function()
                     return dbObj.frameNo ~= nil and dbObj.frameNo ~= 0 and tostring(dbObj.frameNo) or ""
                 end,
@@ -2954,10 +2959,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             frameSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
                 order = 3.3,
-                name = "Frame Select",
+                name = L["Frame Select"],
                 type = "select",
-                values = {"Last", "First", "Select"},
-                sorting = {1,2,3},
+                values = { L["Last"], L["First"], L["Select"] },
+                sorting = { 1, 2, 3 },
                 get = function()
                     return dbObj.frameSelect
                 end,
@@ -2970,10 +2975,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             frameManualSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
                 order = 3.4,
-                name = "Frame No",
+                name = L["Frame No"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number (The n th frame of the aura group)",
+                usage = L["please enter a number (The n th frame of the aura group)"],
                 get = function()
                     dbObj.frameManualSelect = dbObj.frameManualSelect or 1
                     return tostring(dbObj.frameManualSelect)
@@ -2995,7 +3000,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             xOffset = {
                 order = 4,
-                name = "x - offset",
+                name = L["x - offset"],
                 type = "range",
                 get = function()
                     return dbObj.xOffset
@@ -3011,7 +3016,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             yOffset = {
                 order = 5,
-                name = "y - offset",
+                name = L["y - offset"],
                 type = "range",
                 get = function()
                     return dbObj.yOffset
@@ -3032,10 +3037,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             orientation = {
                 order = 7,
-                name = "Grow Direction",
+                name = L["Directions for growth"],
                 type = "select",
-                values = {"Left", "Right", "Up", "Down", "Horizontal Center", "Vertical Center"},
-                sorting = {1,2,3,4,5,6},
+                values = { L["Left"], L["Right"], L["Up"], L["Down"], L["Horizontal Center"], L["Vertical Center"] },
+                sorting = { 1, 2, 3, 4, 5, 6 },
                 get = function()
                     return dbObj.orientation
                 end,
@@ -3048,7 +3053,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             unlimitAura = {
                 order = 7.1,
                 type = "toggle",
-                name = "Unlimit Auras",
+                name = L["Unlimit Auras"],
                 desc = "",
                 get = function()
                     return dbObj.unlimitAura
@@ -3062,7 +3067,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             maxAuras = {
                 hidden = function() return dbObj.unlimitAura end,
                 order = 7.2,
-                name = "Max Auras",
+                name = L["Max Auras"],
                 type = "range",
                 get = function()
                     return dbObj.maxAuras
@@ -3078,7 +3083,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             gap = {
                 order = 7.3,
-                name = "Gap",
+                name = L["Gap"],
                 type = "range",
                 get = function()
                     return dbObj.gap
@@ -3095,7 +3100,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             setSize = {
                 order = 8,
                 type = "toggle",
-                name = "Set Size",
+                name = L["Set Size"],
                 desc = "",
                 get = function()
                     return dbObj.setSize
@@ -3109,7 +3114,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             width = {
                 order = 9,
                 hidden = function() return not dbObj.setSize end,
-                name = "Icon Width",
+                name = L["Icon Width"],
                 type = "range",
                 get = function()
                     return dbObj.width
@@ -3126,7 +3131,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             height = {
                 order = 10,
                 hidden = function() return not dbObj.setSize end,
-                name = "Icon Height",
+                name = L["Icon Height"],
                 type = "range",
                 get = function()
                     return dbObj.height
@@ -3142,7 +3147,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             remove = {
                 order = 11,
-                name = "remove",
+                name = L["remove"],
                 type = "execute",
                 func = function()
                     -- This will be deleted, so link the parent and child.
@@ -3166,10 +3171,10 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             addAura = {
                 order = 13,
-                name = "Enter spellId:",
+                name = L["Enter spellId:"],
                 type = "input",
                 pattern = "^%d+$",
-                usage = "please enter a number",
+                usage = L["please enter a number"],
                 set = function(_, value)
                     dbObj.auraList[value] = {
                         spellId = tonumber(value),
@@ -3181,7 +3186,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
             },
             auraList = {
                 order = 14,
-                name = "Auras:",
+                name = L["Auras:"],
                 type = "group",
                 inline = true,
                 args = {
@@ -3198,7 +3203,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
         "Buffs",
         "Debuffs",
     }) do
-        -- Importing previous blacklist settings 
+        -- Importing previous blacklist settings
         if self.db.profile[category].Blacklist then
             for spellId in pairs(self.db.profile[category].Blacklist) do
                 self.db.AuraFilter[category][spellId].profile[category] = {
@@ -3209,7 +3214,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
             end
             self.db.profile[category].Blacklist = nil
         end
-        -- Importing previous aurafilter settings 
+        -- Importing previous aurafilter settings
         if self.db.profile[category].AuraFilter then
             for spellId, v in pairs(self.db.profile[category].AuraFilter) do
                 self.db.profile.AuraFilter[category][spellId] = v
@@ -3231,7 +3236,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
             end
             tinsert(sorted, v)
         end
-        table.sort(sorted, function (a, b)
+        table.sort(sorted, function(a, b)
             return a.priority == b.priority and self:compareSpell(a.spellId, b.spellId) or a.priority > b.priority
         end)
         for _, v in pairs(sorted) do
@@ -3290,7 +3295,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 group.unlimitAura = true
                 group.maxAuras = 1
             end
-            -- for backward compatibility 
+            -- for backward compatibility
             if group.orientation > 6 then
                 group.orientation = 1
                 group.unlimitAura = false
@@ -3307,7 +3312,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 end
                 tinsert(sorted, v)
             end
-            table.sort(sorted, function (a, b)
+            table.sort(sorted, function(a, b)
                 return a.priority == b.priority and self:compareSpell(a.spellId, b.spellId) or a.priority > b.priority
             end)
             for _, v in pairs(sorted) do

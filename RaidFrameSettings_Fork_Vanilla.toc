@@ -7,6 +7,7 @@
 ## X-Curse-Project-ID: 688930
 
 Init_Vanilla.lua
+locales.xml
 
 #Libs
 embeds.xml

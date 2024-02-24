@@ -2284,8 +2284,8 @@ function RaidFrameSettings:count(table)
 end
 
 function RaidFrameSettings:compareSpell(a, b)
-    local aname = GetSpellInfo(a) or "aura not found"
-    local bname = GetSpellInfo(b) or "aura not found"
+    local aname = GetSpellInfo(a) or L["|cffff0000aura not found|r"]
+    local bname = GetSpellInfo(b) or L["|cffff0000aura not found|r"]
     return aname < bname
 end
 
@@ -2315,7 +2315,7 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 order = 1,
                 image = icon,
                 imageCoords = { 0.1, 0.9, 0.1, 0.9 },
-                name = (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ")",
+                name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
                 type = "description",
                 width = 1.5,
             },
@@ -2410,7 +2410,7 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
                 order = 1,
                 image = icon,
                 imageCoords = { 0.1, 0.9, 0.1, 0.9 },
-                name = (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ")",
+                name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
                 type = "description",
                 width = 1.5,
             },
@@ -2775,7 +2775,7 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 order = 1,
                 image = icon,
                 imageCoords = { 0.1, 0.9, 0.1, 0.9 },
-                name = (spellName or "|cffff0000aura not found|r") .. " (" .. spellId .. ")",
+                name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
                 type = "description",
                 width = 1.5,
             },

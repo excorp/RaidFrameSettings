@@ -175,7 +175,7 @@ options = {
     args = {
         Version = {
             order = 0,
-            name = "@project-version@",
+            name = "v2.22.1-mod9",
             type = "group",
             disabled = true,
             args = {},
@@ -1714,76 +1714,6 @@ options = {
                         },
                     },
                 },
-                DebuffColors = {
-                    order = 2,
-                    name = L["Debuff colors"],
-                    type = "group",
-                    inline = true,
-                    args = {
-                        Curse       = {
-                            order = 1,
-                            type = "color",
-                            name = L["Curse"],
-                            get = "GetColor",
-                            set = "SetColor",
-                            width = 0.5,
-                        },
-                        Disease     = {
-                            order = 2,
-                            type = "color",
-                            name = L["Disease"],
-                            get = "GetColor",
-                            set = "SetColor",
-                            width = 0.5,
-                        },
-                        Magic       = {
-                            order = 3,
-                            type = "color",
-                            name = L["Magic"],
-                            get = "GetColor",
-                            set = "SetColor",
-                            width = 0.5,
-                        },
-                        Poison      = {
-                            order = 4,
-                            type = "color",
-                            name = L["Poison"],
-                            get = "GetColor",
-                            set = "SetColor",
-                            width = 0.5,
-                        },
-                        Bleed       = {
-                            order = 5,
-                            type = "color",
-                            name = L["Bleed"],
-                            get = "GetColor",
-                            set = "SetColor",
-                            width = 0.5,
-                        },
-                        newline     = {
-                            order = 6,
-                            type = "description",
-                            name = "",
-                        },
-                        ResetColors = {
-                            order = 7,
-                            name = L["reset"],
-                            desc = L["to default"],
-                            type = "execute",
-                            width = 0.4,
-                            confirm = true,
-                            func =
-                                function()
-                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Curse   = { r = 0.6, g = 0.0, b = 1.0 }
-                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Disease = { r = 0.6, g = 0.4, b = 0.0 }
-                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Magic   = { r = 0.2, g = 0.6, b = 1.0 }
-                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Poison  = { r = 0.0, g = 0.6, b = 0.0 }
-                                    RaidFrameSettings.db.profile.AuraHighlight.DebuffColors.Bleed   = { r = 0.8, g = 0.0, b = 0.0 }
-                                    RaidFrameSettings:ReloadConfig()
-                                end,
-                        },
-                    },
-                },
                 MissingAura = {
                     order = 3,
                     name = L["Missing Aura"],
@@ -2024,6 +1954,77 @@ options = {
                             step = 0.01,
                             width = 1.2,
                             isPercent = true,
+                        },
+                    },
+                },
+                DebuffColors = {
+                    hidden = function() return not RaidFrameSettings.db.profile.Module.Debuffs and not RaidFrameSettings.db.profile.Module.AuraHighlight end,
+                    order = 2,
+                    name = L["Debuff colors"],
+                    type = "group",
+                    inline = true,
+                    args = {
+                        Curse       = {
+                            order = 1,
+                            type = "color",
+                            name = L["Curse"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.5,
+                        },
+                        Disease     = {
+                            order = 2,
+                            type = "color",
+                            name = L["Disease"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.5,
+                        },
+                        Magic       = {
+                            order = 3,
+                            type = "color",
+                            name = L["Magic"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.5,
+                        },
+                        Poison      = {
+                            order = 4,
+                            type = "color",
+                            name = L["Poison"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.5,
+                        },
+                        Bleed       = {
+                            order = 5,
+                            type = "color",
+                            name = L["Bleed"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.5,
+                        },
+                        newline     = {
+                            order = 6,
+                            type = "description",
+                            name = "",
+                        },
+                        ResetColors = {
+                            order = 7,
+                            name = L["reset"],
+                            desc = L["to default"],
+                            type = "execute",
+                            width = 0.4,
+                            confirm = true,
+                            func =
+                                function()
+                                    RaidFrameSettings.db.profile.MinorModules.DebuffColors.Curse   = { r = 0.6, g = 0.0, b = 1.0 }
+                                    RaidFrameSettings.db.profile.MinorModules.DebuffColors.Disease = { r = 0.6, g = 0.4, b = 0.0 }
+                                    RaidFrameSettings.db.profile.MinorModules.DebuffColors.Magic   = { r = 0.2, g = 0.6, b = 1.0 }
+                                    RaidFrameSettings.db.profile.MinorModules.DebuffColors.Poison  = { r = 0.0, g = 0.6, b = 0.0 }
+                                    RaidFrameSettings.db.profile.MinorModules.DebuffColors.Bleed   = { r = 0.8, g = 0.0, b = 0.0 }
+                                    RaidFrameSettings:ReloadConfig()
+                                end,
                         },
                     },
                 },

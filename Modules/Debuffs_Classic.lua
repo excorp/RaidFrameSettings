@@ -47,14 +47,12 @@ function Debuffs:OnEnable()
     }
     local Bleeds = addonTable.Bleeds
 
-    if addon.db.profile.Module.AuraHighlight then
-        local dbObj = addon.db.profile.AuraHighlight.DebuffColors
-        debuffColors.Curse = dbObj.Curse
-        debuffColors.Disease = dbObj.Disease
-        debuffColors.Magic = dbObj.Magic
-        debuffColors.Poison = dbObj.Poison
-        debuffColors.Bleed = dbObj.Bleed
-    end
+    local dbObj = addon.db.profile.MinorModules.DebuffColors
+    debuffColors.Curse = dbObj.Curse
+    debuffColors.Disease = dbObj.Disease
+    debuffColors.Magic = dbObj.Magic
+    debuffColors.Poison = dbObj.Poison
+    debuffColors.Bleed = dbObj.Bleed
 
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
 

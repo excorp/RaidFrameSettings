@@ -291,7 +291,7 @@ function module:SetUpdateHealthColor()
 end
 
 function module:GetDebuffColors()
-    local dbObj = RaidFrameSettings.db.profile.AuraHighlight.DebuffColors
+    local dbObj = RaidFrameSettings.db.profile.MinorModules.DebuffColors
     debuffColors.Curse = dbObj.Curse
     debuffColors.Disease = dbObj.Disease
     debuffColors.Magic = dbObj.Magic

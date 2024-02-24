@@ -42,20 +42,19 @@ function Debuffs:OnEnable()
     }
     local Bleeds = addonTable.Bleeds
 
-    if addon.db.profile.Module.AuraHighlight then
-        local dbObj = addon.db.profile.AuraHighlight.DebuffColors
-        debuffColors.Curse = dbObj.Curse
-        debuffColors.Disease = dbObj.Disease
-        debuffColors.Magic = dbObj.Magic
-        debuffColors.Poison = dbObj.Poison
-        debuffColors.Bleed = dbObj.Bleed
-    end
-
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
 
     local frameOpt = CopyTable(addon.db.profile.Debuffs.DebuffFramesDisplay)
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
+
+    local dbObj = addon.db.profile.MinorModules.DebuffColors
+    debuffColors.Curse = dbObj.Curse
+    debuffColors.Disease = dbObj.Disease
+    debuffColors.Magic = dbObj.Magic
+    debuffColors.Poison = dbObj.Poison
+    debuffColors.Bleed = dbObj.Bleed
+
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Debuffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
     durationOpt.font = Media:Fetch("font", durationOpt.font)

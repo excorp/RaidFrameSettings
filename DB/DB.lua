@@ -209,13 +209,6 @@ local defaults = {
                 Poison = false,
                 Bleed = false,
             },
-            DebuffColors = {
-                Curse   = {r=0.6,g=0.0,b=1.0},
-                Disease = {r=0.6,g=0.4,b=0.0},
-                Magic   = {r=0.2,g=0.6,b=1.0},
-                Poison  = {r=0.0,g=0.6,b=0.0},
-                Bleed   = {r=0.8,g=0.0,b=0.0},
-            },
             MissingAura = {
                 classSelection = 1,
                 missingAuraColor = {r=0.8156863451004028,g=0.5803921818733215,b=0.658823549747467}, 
@@ -251,6 +244,13 @@ local defaults = {
                 disease = {r=0.6,g=0.4,b=0.0},
                 magic   = {r=0.2,g=0.6,b=1.0},
                 poison  = {r=0.0,g=0.6,b=0.0},
+            },
+            DebuffColors = {
+                Curse   = {r=0.6,g=0.0,b=1.0},
+                Disease = {r=0.6,g=0.4,b=0.0},
+                Magic   = {r=0.2,g=0.6,b=1.0},
+                Poison  = {r=0.0,g=0.6,b=0.0},
+                Bleed   = {r=0.8,g=0.0,b=0.0},
             },
             CustomScale = {
                 Party = 1,

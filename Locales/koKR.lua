@@ -127,6 +127,7 @@ L["Debuffframe anchor"]         = "디버프 고정위치"
 L["Debuff Colored"]             = "디버프 색상 사용"
 
 L["Clean Icons"]                = "깨끗한 아이콘"
+L["Show Tooltip"]               = "툴팁 표시"
 L["Frame Strata"]               = "Frame Strata"
 L["Show \"Edge\""]              = "Edge 표시"
 L["Show \"Swipe\""]             = "Swipe 사용"

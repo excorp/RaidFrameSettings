@@ -469,7 +469,7 @@ function Debuffs:OnEnable()
             frame_registry[frame].reanchor = {}
             local reanchor = frame_registry[frame].reanchor
             for _, v in pairs(userPlaced) do
-                if v.frame == 3 and v.frameSelect == 1 and  auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
+                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
                     if not reanchor[v.frameNo] then
                         reanchor[v.frameNo] = {
                             lastNum = 2,
@@ -484,7 +484,7 @@ function Debuffs:OnEnable()
                 end
             end
             for groupNo, v in pairs(auraGroup) do
-                if v.frame == 3 and v.frameSelect == 1 and  auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
+                if v.frame == 3 and v.frameSelect == 1 and auraGroup[v.frameNo] and auraGroup[v.frameNo].maxAuras > 1 then
                     if not reanchor[v.frameNo] then
                         reanchor[v.frameNo] = {
                             lastNum = 2,
@@ -496,6 +496,53 @@ function Debuffs:OnEnable()
                         frame = frame_registry[frame].extraDebuffFrames[idx],
                         conf  = v,
                     })
+                end
+            end
+
+            for _, v in pairs(frame.debuffFrames) do
+                if frameOpt.tooltip then
+                    v:SetScript("OnUpdate", nil)
+                    v:SetScript("OnEnter", function(self)
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                        self:UpdateTooltip()
+                        local function RunOnUpdate()
+                            if (GameTooltip:IsOwned(self)) then
+                                self:UpdateTooltip()
+                            end
+                        end
+                        self:SetScript("OnUpdate", RunOnUpdate)
+                    end)
+                    v:SetScript("OnLeave", function(self)
+                        GameTooltip:Hide();
+                        self:SetScript("OnUpdate", nil)
+                    end)
+                else
+                    v:SetScript("OnUpdate", nil)
+                    v:SetScript("OnEnter", nil)
+                    v:SetScript("OnLeave", nil)
+                end
+            end
+            for _, v in pairs(frame_registry[frame].extraDebuffFrames) do
+                if frameOpt.tooltip then
+                    v:SetScript("OnUpdate", nil)
+                    v:SetScript("OnEnter", function(self)
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                        self:UpdateTooltip()
+                        local function RunOnUpdate()
+                            if (GameTooltip:IsOwned(self)) then
+                                self:UpdateTooltip()
+                            end
+                        end
+                        self:SetScript("OnUpdate", RunOnUpdate)
+                    end)
+                    v:SetScript("OnLeave", function()
+                        GameTooltip:Hide();
+                        self:SetScript("OnUpdate", nil)
+                    end)
+                else
+                    v:SetScript("OnUpdate", nil)
+                    v:SetScript("OnEnter", nil)
+                    v:SetScript("OnLeave", nil)
                 end
             end
         end
@@ -546,10 +593,6 @@ function Debuffs:OnEnable()
                 end
                 prevFrame = debuffFrame
                 resizeDebuffFrame(debuffFrame)
-                -- grow direction == NONE
-                if v.orientation == 7 then
-                    break
-                end
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end
@@ -576,6 +619,21 @@ function Debuffs:OnDisable()
             return
         end
         for _, debuffFrame in pairs(frame.debuffFrames) do
+            debuffFrame:SetScript("OnUpdate", nil)
+            debuffFrame:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                self:UpdateTooltip()
+                local function RunOnUpdate()
+                    if (GameTooltip:IsOwned(self)) then
+                        self:UpdateTooltip()
+                    end
+                end
+                self:SetScript("OnUpdate", RunOnUpdate)
+            end)
+            debuffFrame:SetScript("OnLeave", function()
+                GameTooltip:Hide();
+                self:SetScript("OnUpdate", nil)
+            end)
             debuffFrame:Hide()
         end
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do

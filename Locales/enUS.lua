@@ -128,6 +128,7 @@ L["Debuffframe anchor"]         = "Debuffframe anchor"
 L["Debuff Colored"]             = "Debuff Colored"
 
 L["Clean Icons"]                = "Clean Icons"
+L["Show Tooltip"]               = "Show Tooltip"
 L["Frame Strata"]               = "Frame Strata"
 L["Show \"Edge\""]              = "Show \"Edge\""
 L["Show \"Swipe\""]             = "Show \"Swipe\""

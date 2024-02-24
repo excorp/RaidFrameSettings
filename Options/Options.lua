@@ -937,6 +937,15 @@ options = {
                                             desc = L["Crop the border. Keep the aspect ratio of icons when width is not equal to height."],
                                             get = "GetStatus",
                                             set = "SetStatus",
+                                            width = 0.6,
+                                        },
+                                        tooltip = {
+                                            order = 2.3,
+                                            type = "toggle",
+                                            name = L["Show Tooltip"],
+                                            get = "GetStatus",
+                                            set = "SetStatus",
+                                            width = 0.5,
                                         },
                                         newline = {
                                             order = 3,
@@ -1313,6 +1322,15 @@ options = {
                                             desc = L["Crop the border. Keep the aspect ratio of icons when width is not equal to height."],
                                             get = "GetStatus",
                                             set = "SetStatus",
+                                            width = 0.6,
+                                        },
+                                        tooltip = {
+                                            order = 2.3,
+                                            type = "toggle",
+                                            name = L["Show Tooltip"],
+                                            get = "GetStatus",
+                                            set = "SetStatus",
+                                            width = 0.5,
                                         },
                                         newline = {
                                             order = 3,

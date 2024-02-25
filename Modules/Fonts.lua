@@ -24,46 +24,46 @@ local GetClassColor = GetClassColor
 local fontObj = CreateFont("RaidFrameSettingsFont")
 
 function Fonts:OnEnable()
-    local dbObj = RaidFrameSettings.db.profile.Fonts
+    local dbObj          = RaidFrameSettings.db.profile.Fonts
     --Name
-    local Name = {}
-    Name.Font             = Media:Fetch("font",dbObj.Name.font)
-    Name.FontSize         = dbObj.Name.fontsize
-    Name.FontColor        = dbObj.Name.fontcolor
-    Name.Classcolored     = dbObj.Name.useclasscolor
+    local Name           = {}
+    Name.Font            = Media:Fetch("font", dbObj.Name.font)
+    Name.FontSize        = dbObj.Name.fontsize
+    Name.FontColor       = dbObj.Name.fontcolor
+    Name.Classcolored    = dbObj.Name.useclasscolor
     --OUTLINEMODE
-    local flag1           = dbObj.Name.thick and "THICK" or ""
-    local flag2           = dbObj.Name.outline and "OUTLINE" or ""
-    local flag3           = dbObj.Name.monochrome and "MONOCHROME" or ""
-    Name.Outlinemode      = ( flag1 .. flag2 .. ", " .. flag3 )
-    Name.point            = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.point)
-    Name.relativePoint    = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.relativePoint)
-    Name.frame            = dbObj.Name.frame
-    Name.JustifyH         = ( dbObj.Name.justifyH == 1 and "LEFT" ) or ( dbObj.Name.justifyH == 2 and "CENTER" )  or ( dbObj.Name.justifyH == 3 and "RIGHT" )
-    Name.X_Offset         = dbObj.Name.x_offset
-    Name.Y_Offset         = dbObj.Name.y_offset
+    local flag1          = dbObj.Name.thick and "THICK" or ""
+    local flag2          = dbObj.Name.outline and "OUTLINE" or ""
+    local flag3          = dbObj.Name.monochrome and "MONOCHROME" or ""
+    Name.Outlinemode     = (flag1 .. flag2 .. ", " .. flag3)
+    Name.point           = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.point)
+    Name.relativePoint   = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.relativePoint)
+    Name.frame           = dbObj.Name.frame
+    Name.JustifyH        = (dbObj.Name.justifyH == 1 and "LEFT") or (dbObj.Name.justifyH == 2 and "CENTER") or (dbObj.Name.justifyH == 3 and "RIGHT")
+    Name.X_Offset        = dbObj.Name.x_offset
+    Name.Y_Offset        = dbObj.Name.y_offset
     --Status
-    local Status = {}
-    Status.Font           = Media:Fetch("font",dbObj.Status.font)
-    Status.FontSize       = dbObj.Status.fontsize
-    Status.FontColor      = dbObj.Status.fontcolor
-    Status.Classcolored   = dbObj.Status.useclasscolor
+    local Status         = {}
+    Status.Font          = Media:Fetch("font", dbObj.Status.font)
+    Status.FontSize      = dbObj.Status.fontsize
+    Status.FontColor     = dbObj.Status.fontcolor
+    Status.Classcolored  = dbObj.Status.useclasscolor
     --OUTLINEMODE
-    local flag1           = dbObj.Status.thick and "THICK" or ""
-    local flag2           = dbObj.Status.outline and "OUTLINE" or ""
-    local flag3           = dbObj.Status.monochrome and "MONOCHROME" or ""
-    Status.Outlinemode    = ( flag1 .. flag2 .. ", " .. flag3 )
-    Status.point          = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.point)
-    Status.relativePoint  = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.relativePoint)
-    Status.JustifyH       = ( dbObj.Status.justifyH == 1 and "LEFT" ) or ( dbObj.Status.justifyH == 2 and "CENTER" )  or ( dbObj.Status.justifyH == 3 and "RIGHT" )
-    Status.X_Offset       = dbObj.Status.x_offset
-    Status.Y_Offset       = dbObj.Status.y_offset
+    local flag1          = dbObj.Status.thick and "THICK" or ""
+    local flag2          = dbObj.Status.outline and "OUTLINE" or ""
+    local flag3          = dbObj.Status.monochrome and "MONOCHROME" or ""
+    Status.Outlinemode   = (flag1 .. flag2 .. ", " .. flag3)
+    Status.point         = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.point)
+    Status.relativePoint = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.relativePoint)
+    Status.JustifyH      = (dbObj.Status.justifyH == 1 and "LEFT") or (dbObj.Status.justifyH == 2 and "CENTER") or (dbObj.Status.justifyH == 3 and "RIGHT")
+    Status.X_Offset      = dbObj.Status.x_offset
+    Status.Y_Offset      = dbObj.Status.y_offset
     --Advanced Font Settings
-    local Advanced = {}
+    local Advanced       = {}
     Advanced.shadowColor = dbObj.Advanced.shadowColor
     Advanced.x_offset    = dbObj.Advanced.x_offset
     Advanced.y_offset    = dbObj.Advanced.y_offset
-    --Callbacks 
+    --Callbacks
     local function UpdateFont(frame)
         --Name
         frame.name:ClearAllPoints()
@@ -75,9 +75,9 @@ function Fonts:OnEnable()
         local parent = (Name.frame == 3 and frame.raidmark) or (Name.frame == 2 and frame.roleIcon) or frame
         frame.name:SetWidth((frame:GetWidth()))
         frame.name:SetJustifyH(Name.JustifyH)
-        frame.name:SetPoint(Name.point, parent, Name.relativePoint, Name.X_Offset, Name.Y_Offset )
-        frame.name:SetShadowColor(Advanced.shadowColor.r,Advanced.shadowColor.g,Advanced.shadowColor.b,Advanced.shadowColor.a)
-        frame.name:SetShadowOffset(Advanced.x_offset,Advanced.y_offset)
+        frame.name:SetPoint(Name.point, parent, Name.relativePoint, Name.X_Offset, Name.Y_Offset)
+        frame.name:SetShadowColor(Advanced.shadowColor.r, Advanced.shadowColor.g, Advanced.shadowColor.b, Advanced.shadowColor.a)
+        frame.name:SetShadowOffset(Advanced.x_offset, Advanced.y_offset)
         --Status
         frame.statusText:ClearAllPoints()
         res = frame.statusText:SetFont(Status.Font, Status.FontSize, Status.Outlinemode)
@@ -87,29 +87,29 @@ function Fonts:OnEnable()
         end
         frame.statusText:SetWidth((frame:GetWidth()))
         frame.statusText:SetJustifyH(Status.JustifyH)
-        frame.statusText:SetPoint(Status.point, frame, Status.relativePoint, Status.X_Offset, Status.Y_Offset )
-        frame.statusText:SetVertexColor(Status.FontColor.r,Status.FontColor.g,Status.FontColor.b)
-        frame.statusText:SetShadowColor(Advanced.shadowColor.r,Advanced.shadowColor.g,Advanced.shadowColor.b,Advanced.shadowColor.a)
-        frame.statusText:SetShadowOffset(Advanced.x_offset,Advanced.y_offset)
+        frame.statusText:SetPoint(Status.point, frame, Status.relativePoint, Status.X_Offset, Status.Y_Offset)
+        frame.statusText:SetVertexColor(Status.FontColor.r, Status.FontColor.g, Status.FontColor.b)
+        frame.statusText:SetShadowColor(Advanced.shadowColor.r, Advanced.shadowColor.g, Advanced.shadowColor.b, Advanced.shadowColor.a)
+        frame.statusText:SetShadowOffset(Advanced.x_offset, Advanced.y_offset)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", UpdateFont)
     --
     local UpdateNameCallback
     if Name.Classcolored then
-        UpdateNameCallback = function(frame) 
-            local name = GetUnitName(frame.unit or "",true)
+        UpdateNameCallback = function(frame)
+            local name = GetUnitName(frame.unit or "", true)
             if not name then return end
             local _, englishClass = UnitClass(frame.unit)
-            local r,g,b = GetClassColor(englishClass)
-            frame.name:SetVertexColor(r,g,b)
-            frame.name:SetText(name:match("[^-]+")) --hides the units server. 
+            local r, g, b = GetClassColor(englishClass)
+            frame.name:SetVertexColor(r, g, b)
+            frame.name:SetText(name:match("[^-]+")) --hides the units server.
         end
     else
-        UpdateNameCallback = function(frame) 
-            local name = GetUnitName(frame.unit or "",true)
+        UpdateNameCallback = function(frame)
+            local name = GetUnitName(frame.unit or "", true)
             if not name then return end
-            frame.name:SetVertexColor(Name.FontColor.r,Name.FontColor.g,Name.FontColor.b)
-            frame.name:SetText(name:match("[^-]+")) --hides the units server. 
+            frame.name:SetVertexColor(Name.FontColor.r, Name.FontColor.g, Name.FontColor.b)
+            frame.name:SetText(name:match("[^-]+")) --hides the units server.
         end
     end
     self:HookFuncFiltered("CompactUnitFrame_UpdateName", UpdateNameCallback)

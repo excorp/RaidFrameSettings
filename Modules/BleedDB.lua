@@ -3,7 +3,7 @@ local _, addonTable = ...
 --[[
     credit for m+ season 3 bleeds collection to this redditor:
     https://www.reddit.com/r/CompetitiveWoW/comments/17j082i/dispels_for_dragonflight_season_3/
-]]--
+]]
 local Bleeds = {
     --Atal'Dazar
     [255814] = "Rending Maul",

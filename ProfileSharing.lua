@@ -2,18 +2,18 @@
 --[[
     the method to share and import profiles is based on:
     https://github.com/brittyazel/EnhancedRaidFrames/blob/main/EnhancedRaidFrames.lua
-]]--
+]]
 local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 
 function addon:ShareProfile()
     --AceSerialize
-	local serialized_profile = self:Serialize(self.db.profile) 
+    local serialized_profile = self:Serialize(self.db.profile)
     --LibDeflate
-	local compressed_profile = LibDeflate:CompressZlib(serialized_profile) 
-	local encoded_profile    = LibDeflate:EncodeForPrint(compressed_profile)
-	return encoded_profile
+    local compressed_profile = LibDeflate:CompressZlib(serialized_profile)
+    local encoded_profile    = LibDeflate:EncodeForPrint(compressed_profile)
+    return encoded_profile
 end
 
 function addon:ImportProfile(input)
@@ -39,9 +39,9 @@ function addon:ImportProfile(input)
     --deserialize the profile and overwirte the current values
     local valid, imported_Profile = self:Deserialize(uncompressed_profile)
     if valid and imported_Profile then
-		for i,v in pairs(imported_Profile) do
-			self.db.profile[i] = CopyTable(v)
-		end
+        for i, v in pairs(imported_Profile) do
+            self.db.profile[i] = CopyTable(v)
+        end
     else
         self:Print("Invalid profile. Abort")
     end

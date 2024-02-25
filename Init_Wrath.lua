@@ -10,8 +10,8 @@ addonTable.texturePaths = {
 addonTable.playerClass = select(2, UnitClass("player"))
 
 addonTable.playableHealerClasses = {
-    [1] = "PRIEST", 
-    [2] = "PALADIN", 
-    [3] = "SHAMAN", 
-    [4] = "DRUID", 
+    [1] = "PRIEST",
+    [2] = "PALADIN",
+    [3] = "SHAMAN",
+    [4] = "DRUID",
 }

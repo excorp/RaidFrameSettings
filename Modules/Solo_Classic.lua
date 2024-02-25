@@ -8,17 +8,17 @@ local enabled
 local org_GetDisplayedAllyFrames = GetDisplayedAllyFrames
 function GetDisplayedAllyFrames()
     local useCompact = GetCVarBool("useCompactPartyFrames")
-	if ( IsActiveBattlefieldArena() and not useCompact ) then
-		return "party"
-	elseif ( IsInGroup() and (IsInRaid() or useCompact) ) then
-		return "raid"
-	elseif ( IsInGroup() ) then
-		return "party"
-	elseif enabled then
-		return "raid"
+    if (IsActiveBattlefieldArena() and not useCompact) then
+        return "party"
+    elseif (IsInGroup() and (IsInRaid() or useCompact)) then
+        return "raid"
+    elseif (IsInGroup()) then
+        return "party"
+    elseif enabled then
+        return "raid"
     else
         return nil
-	end
+    end
     -- return org_GetDisplayedAllyFrames()
 end
 

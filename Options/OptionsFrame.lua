@@ -7,12 +7,12 @@ local frame = CreateFrame("Frame", "RaidFrameSettingsOptions", UIParent, "Portra
 
 local function addResizeButton()
     local resizeButton = CreateFrame("Button", addonName .. "OptionsResizeButton", frame)
-    resizeButton:SetPoint("BOTTOMRIGHT",-1,1)
+    resizeButton:SetPoint("BOTTOMRIGHT", -1, 1)
     resizeButton:SetSize(26, 26)
     resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
     resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-    resizeButton:SetScript("OnMouseDown", function(_, button) 
+    resizeButton:SetScript("OnMouseDown", function(_, button)
         if button == "LeftButton" then
             frame:StartSizing("BOTTOMRIGHT")
         end
@@ -35,8 +35,8 @@ local function createAceContainer()
 end
 
 frame:Hide()
-local r,g,b = PANEL_BACKGROUND_COLOR:GetRGB()
-frame.Bg:SetColorTexture(r,g,b,0.9)
+local r, g, b = PANEL_BACKGROUND_COLOR:GetRGB()
+frame.Bg:SetColorTexture(r, g, b, 0.9)
 frame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_REGEN_DISABLED" then
         frame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -50,16 +50,16 @@ tinsert(UISpecialFrames, frame:GetName())
 frame.title = _G["RaidFrameSettingsOptionsTitleText"]
 frame.title:SetText(addonName)
 frame:SetFrameStrata("DIALOG")
-frame:SetSize(950,500)
+frame:SetSize(950, 500)
 frame:SetPoint("CENTER", UIparent, "CENTER")
 frame:SetMovable(true)
 frame:SetResizable(true)
 frame:SetUserPlaced(true)
-frame:SetResizeBounds(800,200)
+frame:SetResizeBounds(800, 200)
 frame:SetClampedToScreen(true)
 frame:SetClampRectInsets(400, -400, 0, 180)
 frame:RegisterForDrag("LeftButton")
---classic PortraitFrameTemplate 
+--classic PortraitFrameTemplate
 if not frame.TitleContainer then
     frame.TitleContainer = CreateFrame("Frame", nil, frame)
     frame.TitleContainer:SetAllPoints(frame.TitleBg)
@@ -74,11 +74,11 @@ RaidFrameSettingsOptionsPortrait:SetTexture(addonTable.texturePaths.PortraitIcon
 addResizeButton()
 local container = createAceContainer()
 frame.container = container
-frame:HookScript("OnShow",function()
+frame:HookScript("OnShow", function()
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
-    ACD:Open("RaidFrameSettings_options",container)
+    ACD:Open("RaidFrameSettings_options", container)
 end)
-frame:HookScript("OnHide",function()
+frame:HookScript("OnHide", function()
     frame:UnregisterEvent("PLAYER_REGEN_DISABLED")
     container:ReleaseChildren()
 end)

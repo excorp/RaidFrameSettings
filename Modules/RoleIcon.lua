@@ -12,8 +12,8 @@ local SetPoint = SetPoint
 local SetScale = SetScale
 
 function RoleIcon:OnEnable()
-    local x,y,relativePoint
-    local x_offset,y_offset = RaidFrameSettings.db.profile.MinorModules.RoleIcon.x_offset,RaidFrameSettings.db.profile.MinorModules.RoleIcon.y_offset
+    local x, y, relativePoint
+    local x_offset, y_offset = RaidFrameSettings.db.profile.MinorModules.RoleIcon.x_offset, RaidFrameSettings.db.profile.MinorModules.RoleIcon.y_offset
     local position = RaidFrameSettings.db.profile.MinorModules.RoleIcon.position
     local scaleFactor = RaidFrameSettings.db.profile.MinorModules.RoleIcon.scaleFactor
     if position == 1 then

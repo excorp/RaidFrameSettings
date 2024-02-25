@@ -11,7 +11,7 @@ local Roster = {}
 local needsUpdate = true
 
 local function showSeparateGroups()
-    local showSeparateGroups 
+    local showSeparateGroups
     if addonTable.isClassic then
         showSeparateGroups = CompactRaidFrameManager_GetSetting("KeepGroupsTogether")
     else
@@ -22,12 +22,12 @@ end
 
 local function updateRoster()
     Roster = {}
-    local useRaid = ( IsInRaid() and not select(1,IsActiveBattlefieldArena()) ) or addonTable.isWrath --IsInRaid() returns true in arena even though we need party frame names
-    if useRaid then 
+    local useRaid = (IsInRaid() and not select(1, IsActiveBattlefieldArena())) or addonTable.isWrath  --IsInRaid() returns true in arena even though we need party frame names
+    if useRaid then
         if showSeparateGroups() then
-            for i=1, 8 do
-                for j=1, 5 do
-                    local frame = _G["CompactRaidGroup" ..i.. "Member" .. j .. "HealthBar"]
+            for i = 1, 8 do
+                for j = 1, 5 do
+                    local frame = _G["CompactRaidGroup" .. i .. "Member" .. j .. "HealthBar"]
                     if frame then
                         frame = frame:GetParent()
                         if frame.unit then
@@ -36,8 +36,8 @@ local function updateRoster()
                     end
                 end
             end
-            for i=1, 40 do
-                local frame = _G["CompactRaidFrame" ..i .. "HealthBar"]
+            for i = 1, 40 do
+                local frame = _G["CompactRaidFrame" .. i .. "HealthBar"]
                 if frame then
                     frame = frame:GetParent()
                     if frame.unit then
@@ -46,8 +46,8 @@ local function updateRoster()
                 end
             end
         else
-            for i=1, 80 do
-                local frame = _G["CompactRaidFrame" ..i .. "HealthBar"]
+            for i = 1, 80 do
+                local frame = _G["CompactRaidFrame" .. i .. "HealthBar"]
                 if frame then
                     frame = frame:GetParent()
                     if frame.unit then
@@ -57,21 +57,21 @@ local function updateRoster()
             end
         end
     else
-        for i=1, 5 do
-            local frame = _G["CompactPartyFrameMember" ..i .. "HealthBar"]
+        for i = 1, 5 do
+            local frame = _G["CompactPartyFrameMember" .. i .. "HealthBar"]
             if frame then
                 frame = frame:GetParent()
                 local unit = frame.unit or ""
                 Roster[unit] = frame
             end
-            local frame = _G["CompactPartyFramePet" ..i .. "HealthBar"]
+            local frame = _G["CompactPartyFramePet" .. i .. "HealthBar"]
             if frame then
                 frame = frame:GetParent()
                 if frame.unit then
                     Roster[frame.unit] = frame
                 end
             end
-            local frame = _G["CompactArenaFrameMember" ..i .. "HealthBar"]
+            local frame = _G["CompactArenaFrameMember" .. i .. "HealthBar"]
             if frame then
                 frame = frame:GetParent()
                 Roster[frame.unit] = frame
@@ -86,7 +86,7 @@ function addon:IterateRoster(callback)
     if needsUpdate then
         updateRoster()
     end
-    for unit,frame in next, Roster do
+    for unit, frame in next, Roster do
         callback(frame)
     end
 end

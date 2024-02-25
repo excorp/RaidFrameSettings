@@ -19,12 +19,12 @@ end
 
 
 function CustomScale:OnEnable()
-local partyScale = RaidFrameSettings.db.profile.MinorModules.CustomScale.Party
-local raidScale  = RaidFrameSettings.db.profile.MinorModules.CustomScale.Raid
-local arenaScale = RaidFrameSettings.db.profile.MinorModules.CustomScale.Arena
-setPartyScale(partyScale)
-setRaidScale(raidScale)
-setArenaScale(arenaScale)
+    local partyScale = RaidFrameSettings.db.profile.MinorModules.CustomScale.Party
+    local raidScale  = RaidFrameSettings.db.profile.MinorModules.CustomScale.Raid
+    local arenaScale = RaidFrameSettings.db.profile.MinorModules.CustomScale.Arena
+    setPartyScale(partyScale)
+    setRaidScale(raidScale)
+    setArenaScale(arenaScale)
 end
 
 function CustomScale:OnDisable()

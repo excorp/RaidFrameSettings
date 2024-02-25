@@ -70,10 +70,10 @@ function RaidFrameSettings:UpdateModule(module_name)
 end
 
 function RaidFrameSettings:ReloadConfig()
-    self:GetProfiles()
     self:Disable()
-    self:Enable()
+    self:GetProfiles()
     self:LoadUserInputEntrys()
+    self:Enable()
 end
 
 --Addon compartment 

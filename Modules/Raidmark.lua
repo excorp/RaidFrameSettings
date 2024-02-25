@@ -37,6 +37,9 @@ function RaidMark:OnEnable()
     raidmarkOpt.relativePoint = addon:ConvertDbNumberToPosition(raidmarkOpt.relativePoint)
 
     local function initRaidMark(frame, force)
+        if frame.maxDebuffs == 0 then
+            return
+        end
         if not frame.raidmark then
             frame.raidmark = frame:CreateTexture(nil, "OVERLAY")
             force = true

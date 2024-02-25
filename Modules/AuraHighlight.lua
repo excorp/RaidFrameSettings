@@ -203,7 +203,7 @@ function module:HookFrame(frame)
         CompactUnitFrame_UnregisterEvents removes the event handler with frame:SetScript("OnEvent", nil) and thus the hook.
         Interface/FrameXML/CompactUnitFrame.lua
     ]]
-                                         --
+    --
     self:RemoveHandler(frame, "OnEvent") --remove the registry key for frame["OnEvent"] so that it actually gets hooked again and not just stores a callback for an non existing hook
     self:HookScript(frame, "OnEvent", function(frame, event, unit, updateInfo)
         if event ~= "UNIT_AURA" then
@@ -275,7 +275,7 @@ function module:SetUpdateHealthColor()
                 module:Glow(frame, missingAuraColor)
             end
         else
-            if useClassColors then
+            if useClassColors and frame.maxDebuffs ~= 0 then
                 if not frame.unit then
                     return
                 end
@@ -358,11 +358,9 @@ function module:OnDisable()
         if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
             -- r,g,b = 0,1,0 -- this is default
         else
-            if frame.unit then
+            if frame.unit and frame.maxDebuffs ~= 0 then
                 local _, englishClass = UnitClass(frame.unit)
-                if englishClass then
-                    r, g, b = GetClassColor(englishClass)
-                end
+                r, g, b = GetClassColor(englishClass)
             end
         end
         frame.healthBar:SetStatusBarColor(r, g, b)

@@ -93,44 +93,52 @@ function HealthBars:OnEnable()
         updateTextures(frame)
     end)
     --colors
-    local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
-    local useClassColors = selected == 1 and true or false
-    local useOverrideColor = selected == 2 and true or false
-    local useCustomColor = selected == 3 and true or false
-    local updateHealthColor
-    if useClassColors then
-        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
-            C_CVar.SetCVar("raidFramesDisplayClassColor", "1")
+    local r, g, b = 0, 1, 0
+    local useClassColors
+
+    local updateHealthColor = function(frame)
+        if not frame or frame.maxDebuffs == 0 or frame.unit:match("na") then --this will exclude nameplates and arena
+            return
         end
-        updateHealthColor = function(frame)
-            if RaidFrameSettings.db.profile.Module.AuraHighlight then
-                return
-            end
-            if not frame or not frame.unit then
+        if RaidFrameSettings.db.profile.Module.AuraHighlight then
+            return
+        end
+
+        if useClassColors and frame.maxDebuffs ~= 0 then
+            if not frame.unit then
                 return
             end
             local _, englishClass = UnitClass(frame.unit)
-            if englishClass then
-                local r, g, b = GetClassColor(englishClass)
-                frame.healthBar:SetStatusBarColor(r, g, b)
+            r, g, b = GetClassColor(englishClass)
+        end
+        frame.healthBar:SetStatusBarColor(r, g, b)
+    end
+
+    if RaidFrameSettings.db.profile.Module.HealthBars then
+        local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
+        if selected == 1 then
+            useClassColors = true
+            if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
+                C_CVar.SetCVar("raidFramesDisplayClassColor", "1")
             end
-        end
-    elseif useOverrideColor then
-        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" then
-            C_CVar.SetCVar("raidFramesDisplayClassColor", "0")
-        end
-        updateHealthColor = function(frame)
-            frame.healthBar:SetStatusBarColor(0, 1, 0)
-        end
-    elseif useCustomColor then
-        local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
-        updateHealthColor = function(frame)
-            frame.healthBar:SetStatusBarColor(color.r, color.g, color.b)
-        end
-        if not RaidFrameSettings.db.profile.Module.AuraHighlight then
+        elseif selected == 2 then
+            -- r,g,b = 0,1,0 -- r,g,b default = 0,1,0
+            if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" then
+                C_CVar.SetCVar("raidFramesDisplayClassColor", "0")
+            end
+        elseif selected == 3 then
+            local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
+            r, g, b = color.r, color.g, color.b
             self:HookFuncFiltered("CompactUnitFrame_UpdateHealthColor", updateHealthColor)
         end
+    else
+        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
+            -- r,g,b = 0,1,0 -- r,g,b default = 0,1,0
+        else
+            useClassColors = true
+        end
     end
+
     if RaidFrameSettings.db.profile.Module.AuraHighlight then
         RaidFrameSettings:UpdateModule("AuraHighlight")
     end
@@ -152,14 +160,13 @@ function HealthBars:OnDisable()
         if frame.backdropInfo then
             frame:ClearBackdrop()
         end
-        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" then
+        local r, g, b = 0, 1, 0
+        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.maxDebuffs ~= 0 then
             if not frame.unit then return end
             local _, englishClass = UnitClass(frame.unit)
-            local r, g, b = GetClassColor(englishClass)
-            frame.healthBar:SetStatusBarColor(r, g, b)
-        else
-            frame.healthBar:SetStatusBarColor(0, 1, 0)
+            r, g, b = GetClassColor(englishClass)
         end
+        frame.healthBar:SetStatusBarColor(r, g, b)
     end
     RaidFrameSettings:IterateRoster(restoreStatusBars)
 end

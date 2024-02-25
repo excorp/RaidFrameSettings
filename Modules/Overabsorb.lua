@@ -20,6 +20,9 @@ local Show = Show
 function Overabsorb:OnEnable()
     local opt = RaidFrameSettings.db.profile.MinorModules.Overabsorb
     local function OnFrameSetup(frame)
+        if frame.maxDebuffs == 0 then
+            return
+        end
         local absorbOverlay = frame.totalAbsorbOverlay
         local healthBar = frame.healthBar
         absorbOverlay:SetParent(healthBar)
@@ -78,6 +81,9 @@ end
 function Overabsorb:OnDisable()
     self:DisableHooks()
     local restoreOverabsorbs = function(frame)
+        if frame.maxDebuffs == 0 then
+            return
+        end
         frame.overAbsorbGlow:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMRIGHT", -7, 0)
         frame.overAbsorbGlow:SetPoint("TOPLEFT", frame.healthBar, "TOPRIGHT", -7, 0)
         frame.overAbsorbGlow:SetAlpha(1)

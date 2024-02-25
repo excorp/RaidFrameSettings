@@ -82,7 +82,7 @@ local function updateAurasFull(frame)
             if not debuffName then
                 break
             end
-            local key = spellId .. "-" .. unitCaster
+            local key = spellId .. "-" .. (unitCaster or "")
             if debuffType and LCD:CanDispel(debuffType) then
                 auraMap[frame].debuffs[key] = debuffType
             end
@@ -95,7 +95,7 @@ local function updateAurasFull(frame)
             if not buffName then
                 break
             end
-            local key = spellId .. "-" .. unitCaster
+            local key = spellId .. "-" .. (unitCaster or "")
             if aura_missing_list[spellId] then
                 auraMap[frame].missing_list[key] = spellId
             end

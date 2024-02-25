@@ -50,18 +50,20 @@ function AuraFilter:OnEnable()
         filteredAuras[tonumber(spellId)] = value
     end
     self:SetSpellGetVisibilityInfo(true)
-    addon:IterateRoster(function(frame)
-        if frame.unit then
-            CompactUnitFrame_UpdateAuras(frame)
-        end
-    end)
+    if addon.db.profile.Module.Buffs then
+        addon:UpdateModule("Buffs")
+    end
+    if addon.db.profile.Module.Debuffs then
+        addon:UpdateModule("Debuffs")
+    end
 end
 
 function AuraFilter:OnDisable()
     self:SetSpellGetVisibilityInfo(false)
-    addon:IterateRoster(function(frame)
-        if frame.unit then
-            CompactUnitFrame_UpdateAuras(frame)
-        end
-    end)
+    if addon.db.profile.Module.Buffs then
+        addon:UpdateModule("Buffs")
+    end
+    if addon.db.profile.Module.Debuffs then
+        addon:UpdateModule("Debuffs")
+    end
 end

@@ -496,10 +496,6 @@ function Buffs:OnEnable()
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end
-
-        if frame.unit then
-            CompactUnitFrame_UpdateAuras(frame)
-        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -508,6 +504,12 @@ function Buffs:OnEnable()
     end
     addon:IterateRoster(function(frame)
         onFrameSetup(frame)
+        if frame.unit then
+            if frame:IsShown() then
+                frame:Hide()
+                frame:Show()
+            end
+        end
     end)
 end
 

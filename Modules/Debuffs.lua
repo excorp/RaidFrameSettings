@@ -609,11 +609,8 @@ function Debuffs:OnEnable()
     end
     addon:IterateRoster(function(frame)
         onFrameSetup(frame)
-        if frame.unit then
-            if frame:IsShown() then
-                frame:Hide()
-                frame:Show()
-            end
+        if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+            CompactUnitFrame_UpdateAuras(frame)
         end
     end)
 end
@@ -689,7 +686,7 @@ function Debuffs:OnDisable()
             end
         end
 
-        if frame.unit then
+        if frame.unit and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
     end

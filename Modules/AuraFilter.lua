@@ -52,9 +52,14 @@ function AuraFilter:OnEnable()
     self:SetSpellGetVisibilityInfo(true)
     if addon.db.profile.Module.Buffs then
         addon:UpdateModule("Buffs")
-    end
-    if addon.db.profile.Module.Debuffs then
+    elseif addon.db.profile.Module.Debuffs then
         addon:UpdateModule("Debuffs")
+    else
+        addon:IterateRoster(function(frame)
+            if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+                CompactUnitFrame_UpdateAuras(frame)
+            end
+        end)
     end
 end
 
@@ -62,8 +67,13 @@ function AuraFilter:OnDisable()
     self:SetSpellGetVisibilityInfo(false)
     if addon.db.profile.Module.Buffs then
         addon:UpdateModule("Buffs")
-    end
-    if addon.db.profile.Module.Debuffs then
+    elseif addon.db.profile.Module.Debuffs then
         addon:UpdateModule("Debuffs")
+    else
+        addon:IterateRoster(function(frame)
+            if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+                CompactUnitFrame_UpdateAuras(frame)
+            end
+        end)
     end
 end

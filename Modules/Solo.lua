@@ -7,6 +7,14 @@ Mixin(Solo, addonTable.hooks)
 local last = false
 function Solo:OnEnable()
     local function onUpdateVisibility()
+        if InCombatLockdown() then
+            self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+                self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+                onUpdateVisibility()
+            end)
+            return
+        end
+
         local solo = true
         if IsInGroup() then
             solo = false

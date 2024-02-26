@@ -96,21 +96,3 @@ hooksecurefunc("CompactUnitFrame_SetUnit", function(frame, unit)
     end
     needsUpdate = true
 end)
-
-function addon:GetFrame(unit)
-    if needsUpdate then
-        updateRoster()
-    end
-    for _, v in pairs(Roster) do
-        if v.unit == unit then
-            return v
-        end
-    end
-end
-
-local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:SetScript("OnEvent", function()
-    needsUpdate = true
-end)

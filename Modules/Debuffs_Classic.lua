@@ -36,6 +36,7 @@ local next = next
 local select = select
 
 local frame_registry = {}
+local roster_changed = true
 
 function Debuffs:OnEnable()
     local debuffColors = {
@@ -553,29 +554,45 @@ function Debuffs:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
-    for _, v in pairs(frame_registry) do
-        v.dirty = true
-    end
-    addon:IterateRoster(function(frame)
-        onFrameSetup(frame)
-        if frame.unit then
-            if frame.unit then
-                if frame:IsShown() then
-                    frame:Hide()
-                    frame:Show()
-                end
+    if roster_changed then
+        roster_changed = false
+        addon:IterateRoster(function(frame)
+            local fname = frame:GetName()
+            if not fname or fname:match("pet") then
+                return
             end
+            if not frame_registry[frame] then
+                frame_registry[frame] = {
+                    maxDebuffs        = frameOpt.maxdebuffs,
+                    placedAuraStart   = 0,
+                    auraGroupStart    = {},
+                    auraGroupEnd      = {},
+                    extraDebuffFrames = {},
+                    reanchor          = {},
+                    dirty             = true,
+                }
+            end
+        end)
+    end
+    for frame, v in pairs(frame_registry) do
+        v.dirty = true
+        onFrameSetup(frame)
+        if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+            CompactUnitFrame_UpdateAuras(frame)
         end
+    end
+
+    self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+        roster_changed = true
     end)
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Debuffs:OnDisable()
     self:DisableHooks()
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    roster_changed = true
     local restoreDebuffFrames = function(frame)
-        if not frame_registry[frame] then
-            return
-        end
         for _, debuffFrame in pairs(frame.debuffFrames) do
             debuffFrame:Hide()
         end
@@ -631,5 +648,7 @@ function Debuffs:OnDisable()
             CompactUnitFrame_UpdateAuras(frame)
         end
     end
-    addon:IterateRoster(restoreDebuffFrames)
+    for frame in pairs(frame_registry) do
+        restoreDebuffFrames(frame)
+    end
 end

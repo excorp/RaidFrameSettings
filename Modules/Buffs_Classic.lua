@@ -36,6 +36,7 @@ local next = next
 local select = select
 
 local frame_registry = {}
+local roster_changed = true
 
 function Buffs:OnEnable()
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
@@ -500,27 +501,45 @@ function Buffs:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
-    for _, v in pairs(frame_registry) do
-        v.dirty = true
-    end
-    addon:IterateRoster(function(frame)
-        onFrameSetup(frame)
-        if frame.unit then
-            if frame:IsShown() then
-                frame:Hide()
-                frame:Show()
+    if roster_changed then
+        roster_changed = false
+        addon:IterateRoster(function(frame)
+            local fname = frame:GetName()
+            if not fname or fname:match("pet") then
+                return
             end
+            if not frame_registry[frame] then
+                frame_registry[frame] = {
+                    maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
+                    placedAuraStart = 0,
+                    auraGroupStart  = {},
+                    auraGroupEnd    = {},
+                    extraBuffFrames = {},
+                    reanchor        = {},
+                    dirty           = true,
+                }
+            end
+        end)
+    end
+    for frame, v in pairs(frame_registry) do
+        v.dirty = true
+        onFrameSetup(frame)
+        if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+            CompactUnitFrame_UpdateAuras(frame)
         end
+    end
+
+    self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+        roster_changed = true
     end)
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Buffs:OnDisable()
     self:DisableHooks()
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    roster_changed = true
     local restoreBuffFrames = function(frame)
-        if not frame_registry[frame] then
-            return
-        end
         for _, buffFrame in pairs(frame.buffFrames) do
             buffFrame:Hide()
         end
@@ -569,5 +588,7 @@ function Buffs:OnDisable()
             CompactUnitFrame_UpdateAuras(frame)
         end
     end
-    addon:IterateRoster(restoreBuffFrames)
+    for frame in pairs(frame_registry) do
+        restoreBuffFrames(frame)
+    end
 end

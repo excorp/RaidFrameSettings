@@ -88,7 +88,6 @@ L["Textures"]                   = "텍스쳐"
 
 L["Font"]                       = "폰트"
 L["Font Color"]                 = "폰트 색상"
-L["Dead Color"]                 = "죽음 색상"
 L["Font Size"]                  = "폰트 크기"
 
 L["Outlinemode"]                = "외곽선 표시"
@@ -98,6 +97,7 @@ L["MONOCHROME"]                 = "모노크롬"
 
 L["Class Colored"]              = "직업 색상"
 L["Name color"]                 = "이름 색상"
+L["Dead color"]                 = "죽음 색상"
 L["Status color"]               = "상태 색상"
 L["Shadow Color"]               = "그림자 색상"
 L["Shadow x-offset"]            = "그림자 X 오프셋"

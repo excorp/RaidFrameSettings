@@ -89,7 +89,6 @@ L["Textures"]                   = "Textures"
 
 L["Font"]                       = "Font"
 L["Font Color"]                 = "Font Color"
-L["Dead Color"]                 = "Dead Color"
 L["Font Size"]                  = "Font Size"
 
 L["Outlinemode"]                = "Outlinemode"
@@ -99,6 +98,7 @@ L["MONOCHROME"]                 = "MONOCHROME"
 
 L["Class Colored"]              = "Class Colored"
 L["Name color"]                 = "Name color"
+L["Dead color"]                 = "Dead color"
 L["Status color"]               = "Status color"
 L["Shadow Color"]               = "Shadow Color"
 L["Shadow x-offset"]            = "Shadow x-offset"

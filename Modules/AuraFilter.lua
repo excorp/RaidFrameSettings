@@ -56,7 +56,7 @@ function AuraFilter:OnEnable()
         addon:UpdateModule("Debuffs")
     else
         addon:IterateRoster(function(frame)
-            if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+            if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
                 CompactUnitFrame_UpdateAuras(frame)
             end
         end)
@@ -71,7 +71,7 @@ function AuraFilter:OnDisable()
         addon:UpdateModule("Debuffs")
     else
         addon:IterateRoster(function(frame)
-            if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+            if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
                 CompactUnitFrame_UpdateAuras(frame)
             end
         end)

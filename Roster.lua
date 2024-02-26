@@ -85,7 +85,7 @@ function addon:IterateRoster(callback)
     if needsUpdate then
         updateRoster()
     end
-    for unit, frame in next, Roster do
+    for _, frame in next, Roster do
         callback(frame)
     end
 end

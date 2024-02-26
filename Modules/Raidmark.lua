@@ -3,8 +3,10 @@ local addon = addonTable.RaidFrameSettings
 local RaidMark = addon:NewModule("RaidMark")
 Mixin(RaidMark, addonTable.hooks)
 
+local frame_registry = {}
+
 function RaidMark:UpdateRaidMarker(frame)
-    if not frame.raidmark or not frame.unit or frame.unit:match("na") then
+    if not frame.raidmark or not frame.unit or not frame.unitExists or frame.unit:match("na") then
         return
     end
 
@@ -26,9 +28,9 @@ function RaidMark:UpdateRaidMarker(frame)
 end
 
 function RaidMark:UpdateAllRaidmark()
-    addon:IterateRoster(function(frame)
+    for frame in pairs(frame_registry) do
         RaidMark:UpdateRaidMarker(frame)
-    end)
+    end
 end
 
 function RaidMark:OnEnable()
@@ -38,8 +40,11 @@ function RaidMark:OnEnable()
 
     local function initRaidMark(frame, force)
         local fname = frame:GetName()
-        if not fname or fname:match("pet") then
+        if not fname or fname:match("Pet") then
             return
+        end
+        if not frame_registry[frame] then
+            frame_registry[frame] = true
         end
         if not frame.raidmark then
             frame.raidmark = frame:CreateTexture(nil, "OVERLAY")

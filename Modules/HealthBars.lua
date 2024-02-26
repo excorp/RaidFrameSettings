@@ -24,6 +24,7 @@ local SetBackdrop = SetBackdrop
 local ApplyBackdrop = ApplyBackdrop
 local SetBackdropBorderColor = SetBackdropBorderColor
 
+local frame_registry = {}
 
 function HealthBars:OnEnable()
     --textures
@@ -45,6 +46,9 @@ function HealthBars:OnEnable()
     --with powerbar
     if C_CVar.GetCVar("raidFramesDisplayPowerBars") == "1" then
         updateTextures = function(frame)
+            if not frame_registry[frame] then
+                frame_registry[frame] = true
+            end
             frame.healthBar:SetStatusBarTexture(statusBarTexture)
             frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
             frame.background:SetTexture(backgroundTexture)
@@ -62,6 +66,9 @@ function HealthBars:OnEnable()
         --without power bar
     else
         updateTextures = function(frame)
+            if not frame_registry[frame] then
+                frame_registry[frame] = true
+            end
             frame.healthBar:SetStatusBarTexture(statusBarTexture)
             frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
             frame.background:SetTexture(backgroundTexture)
@@ -98,17 +105,14 @@ function HealthBars:OnEnable()
 
     local updateHealthColor = function(frame)
         local fname = frame:GetName()
-        if not fname or fname:match("pet") then
+        if not fname or fname:match("Pet") then
             return
         end
         if RaidFrameSettings.db.profile.Module.AuraHighlight then
             return
         end
 
-        if useClassColors and frame.maxDebuffs ~= 0 then
-            if not frame.unit then
-                return
-            end
+        if useClassColors and frame.unit then
             local _, englishClass = UnitClass(frame.unit)
             r, g, b = GetClassColor(englishClass)
         end
@@ -162,12 +166,14 @@ function HealthBars:OnDisable()
             frame:ClearBackdrop()
         end
         local r, g, b = 0, 1, 0
-        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.maxDebuffs ~= 0 then
-            if not frame.unit then return end
+        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unit:match("pet") then
             local _, englishClass = UnitClass(frame.unit)
             r, g, b = GetClassColor(englishClass)
         end
         frame.healthBar:SetStatusBarColor(r, g, b)
     end
-    RaidFrameSettings:IterateRoster(restoreStatusBars)
+    for frame in pairs(frame_registry) do
+        restoreStatusBars(frame)
+        frame_registry[frame] = nil
+    end
 end

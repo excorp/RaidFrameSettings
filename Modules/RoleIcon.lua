@@ -37,6 +37,10 @@ function RoleIcon:OnEnable()
         if not frame.roleIcon then
             return
         end
+        local fname = frame:GetName()
+        if not fname or fname:match("Pet") then
+            return
+        end
         frame.roleIcon:ClearAllPoints()
         frame.roleIcon:SetPoint(relativePoint, frame, relativePoint, x + x_offset, y + y_offset)
         frame.roleIcon:SetScale(scaleFactor)

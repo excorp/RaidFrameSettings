@@ -17,12 +17,17 @@ local SetWidth = SetWidth
 local SetTexCoord = SetTexCoord
 local Show = Show
 
+local frame_registry = {}
+
 function Overabsorb:OnEnable()
     local opt = RaidFrameSettings.db.profile.MinorModules.Overabsorb
     local function OnFrameSetup(frame)
         local fname = frame:GetName()
-        if not fname or fname:match("pet") then
+        if not fname or fname:match("Pet") then
             return
+        end
+        if not frame_registry[frame] then
+            frame_registry[frame] = true
         end
         local absorbOverlay = frame.totalAbsorbOverlay
         local healthBar = frame.healthBar
@@ -82,13 +87,12 @@ end
 function Overabsorb:OnDisable()
     self:DisableHooks()
     local restoreOverabsorbs = function(frame)
-        local fname = frame:GetName()
-        if not fname or fname:match("pet") then
-            return
-        end
         frame.overAbsorbGlow:SetPoint("BOTTOMLEFT", frame.healthBar, "BOTTOMRIGHT", -7, 0)
         frame.overAbsorbGlow:SetPoint("TOPLEFT", frame.healthBar, "TOPRIGHT", -7, 0)
         frame.overAbsorbGlow:SetAlpha(1)
     end
-    RaidFrameSettings:IterateRoster(restoreOverabsorbs)
+    for frame in pairs(frame_registry) do
+        restoreOverabsorbs(frame)
+        frame_registry[frame] = nil
+    end
 end

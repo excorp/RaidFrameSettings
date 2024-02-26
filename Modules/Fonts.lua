@@ -23,6 +23,8 @@ local GetClassColor = GetClassColor
 
 local fontObj = CreateFont("RaidFrameSettingsFont")
 
+local frame_registry = {}
+
 function Fonts:OnEnable()
     local dbObj          = RaidFrameSettings.db.profile.Fonts
     --Name
@@ -65,6 +67,9 @@ function Fonts:OnEnable()
     Advanced.y_offset    = dbObj.Advanced.y_offset
     --Callbacks
     local function UpdateFont(frame)
+        if not frame_registry[frame] then
+            frame_registry[frame] = true
+        end
         --Name
         frame.name:ClearAllPoints()
         local res = frame.name:SetFont(Name.Font, Name.FontSize, Name.Outlinemode)
@@ -99,9 +104,14 @@ function Fonts:OnEnable()
         UpdateNameCallback = function(frame)
             local name = GetUnitName(frame.unit or "", true)
             if not name then return end
-            local _, englishClass = UnitClass(frame.unit)
-            local r, g, b = GetClassColor(englishClass)
-            frame.name:SetVertexColor(r, g, b)
+            local fname = frame:GetName()
+            if frame.unit and frame.unitExists and fname and not fname:match("Pet") then
+                local _, englishClass = UnitClass(frame.unit)
+                local r, g, b = GetClassColor(englishClass)
+                frame.name:SetVertexColor(r, g, b)
+            else
+                frame.name:SetVertexColor(Name.FontColor.r, Name.FontColor.g, Name.FontColor.b)
+            end
             frame.name:SetText(name:match("[^-]+")) --hides the units server.
         end
     else
@@ -158,5 +168,8 @@ function Fonts:OnDisable()
         frame.statusText:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -3, frameHeight / 3 - 2)
         frame.statusText:SetHeight(12 * componentScale)
     end
-    RaidFrameSettings:IterateRoster(restoreFonts)
+    for frame in pairs(frame_registry) do
+        restoreFonts(frame)
+        frame_registry[frame] = nil
+    end
 end

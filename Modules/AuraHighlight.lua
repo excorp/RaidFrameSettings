@@ -72,6 +72,9 @@ local function updateColor(frame)
 end
 
 local function updateAurasFull(frame)
+    if not frame.unit or not frame.unitExists or not frame:IsShown() or frame:IsForbidden() then
+        return
+    end
     auraMap[frame] = {}
     auraMap[frame].debuffs = {}
     auraMap[frame].missing_list = {}
@@ -264,7 +267,7 @@ function module:SetUpdateHealthColor()
 
     updateHealthColor = function(frame)
         local fname = frame:GetName()
-        if not fname or fname:match("pet") or frame.unit:match("na") then
+        if not fname or fname:match("Pet") or frame.unit:match("na") then
             return
         end
         blockColorUpdate[frame] = false
@@ -276,10 +279,7 @@ function module:SetUpdateHealthColor()
                 module:Glow(frame, missingAuraColor)
             end
         else
-            if useClassColors and frame.maxDebuffs ~= 0 then
-                if not frame.unit then
-                    return
-                end
+            if useClassColors and frame.unit and frame.unitExists then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end
@@ -359,7 +359,8 @@ function module:OnDisable()
         if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
             -- r,g,b = 0,1,0 -- this is default
         else
-            if frame.unit and frame.maxDebuffs ~= 0 then
+            local fname = frame:GetName()
+            if frame.unit and frame.unitExists and fname and not fname:match("Pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end

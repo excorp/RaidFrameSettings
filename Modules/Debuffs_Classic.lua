@@ -174,6 +174,10 @@ function Debuffs:OnEnable()
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
+        local parent = debuffFrame:GetParent()
+        if not parent or not frame_registry[parent] then
+            return
+        end
         local cooldown = debuffFrame.cooldown
         if not cooldown._rfs_cd_text then
             return
@@ -351,7 +355,7 @@ function Debuffs:OnEnable()
 
     local function onFrameSetup(frame)
         local fname = frame:GetName()
-        if not fname or fname:match("pet") then
+        if not fname or fname:match("Pet") then
             return
         end
 
@@ -558,7 +562,7 @@ function Debuffs:OnEnable()
         roster_changed = false
         addon:IterateRoster(function(frame)
             local fname = frame:GetName()
-            if not fname or fname:match("pet") then
+            if not fname or fname:match("Pet") then
                 return
             end
             if not frame_registry[frame] then
@@ -577,7 +581,7 @@ function Debuffs:OnEnable()
     for frame, v in pairs(frame_registry) do
         v.dirty = true
         onFrameSetup(frame)
-        if frame.unit and frame:IsShown() and not frame:IsForbidden() then
+        if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
     end
@@ -644,7 +648,7 @@ function Debuffs:OnDisable()
             end
         end
 
-        if frame.unit then
+        if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
     end

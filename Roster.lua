@@ -22,7 +22,7 @@ end
 
 local function updateRoster()
     Roster = {}
-    local useRaid = (IsInRaid() and not select(1, IsActiveBattlefieldArena())) or addonTable.isWrath  --IsInRaid() returns true in arena even though we need party frame names
+    local useRaid = (IsInRaid() and not select(1, IsActiveBattlefieldArena())) or addonTable.isWrath --IsInRaid() returns true in arena even though we need party frame names
     if useRaid then
         if showSeparateGroups() then
             for i = 1, 8 do
@@ -31,7 +31,7 @@ local function updateRoster()
                     if frame then
                         frame = frame:GetParent()
                         if frame.unit then
-                            Roster[frame.unit] = frame
+                            tinsert(Roster, frame)
                         end
                     end
                 end
@@ -41,7 +41,7 @@ local function updateRoster()
                 if frame then
                     frame = frame:GetParent()
                     if frame.unit then
-                        Roster[frame.unit] = frame
+                        tinsert(Roster, frame)
                     end
                 end
             end
@@ -51,7 +51,7 @@ local function updateRoster()
                 if frame then
                     frame = frame:GetParent()
                     if frame.unit then
-                        Roster[frame.unit] = frame
+                        tinsert(Roster, frame)
                     end
                 end
             end
@@ -61,20 +61,19 @@ local function updateRoster()
             local frame = _G["CompactPartyFrameMember" .. i .. "HealthBar"]
             if frame then
                 frame = frame:GetParent()
-                local unit = frame.unit or ""
-                Roster[unit] = frame
+                tinsert(Roster, frame)
             end
             local frame = _G["CompactPartyFramePet" .. i .. "HealthBar"]
             if frame then
                 frame = frame:GetParent()
                 if frame.unit then
-                    Roster[frame.unit] = frame
+                    tinsert(Roster, frame)
                 end
             end
             local frame = _G["CompactArenaFrameMember" .. i .. "HealthBar"]
             if frame then
                 frame = frame:GetParent()
-                Roster[frame.unit] = frame
+                tinsert(Roster, frame)
             end
         end
     end
@@ -95,7 +94,11 @@ function addon:GetFrame(unit)
     if needsUpdate then
         updateRoster()
     end
-    return Roster[unit]
+    for _, v in pairs(Roster) do
+        if v.unit == unit then
+            return v
+        end
+    end
 end
 
 local eventFrame = CreateFrame("Frame")

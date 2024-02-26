@@ -32,6 +32,7 @@ function Fonts:OnEnable()
     Name.Font            = Media:Fetch("font", dbObj.Name.font)
     Name.FontSize        = dbObj.Name.fontsize
     Name.FontColor       = dbObj.Name.fontcolor
+    Name.FontColorDead   = dbObj.Name.fontcolorDead
     Name.Classcolored    = dbObj.Name.useclasscolor
     --OUTLINEMODE
     local flag1          = dbObj.Name.thick and "THICK" or ""
@@ -71,7 +72,6 @@ function Fonts:OnEnable()
             frame_registry[frame] = true
         end
         --Name
-        frame.name:ClearAllPoints()
         local res = frame.name:SetFont(Name.Font, Name.FontSize, Name.Outlinemode)
         if not res then
             fontObj:SetFontObject("GameFontHighlightSmall")
@@ -80,7 +80,10 @@ function Fonts:OnEnable()
         local parent = (Name.frame == 3 and frame.raidmark) or (Name.frame == 2 and frame.roleIcon) or frame
         frame.name:SetWidth((frame:GetWidth()))
         frame.name:SetJustifyH(Name.JustifyH)
-        frame.name:SetPoint(Name.point, parent, Name.relativePoint, Name.X_Offset, Name.Y_Offset)
+        if frame.unit and not frame.unit:match("pet") then
+            frame.name:ClearAllPoints()
+            frame.name:SetPoint(Name.point, parent, Name.relativePoint, Name.X_Offset, Name.Y_Offset)
+        end
         frame.name:SetShadowColor(Advanced.shadowColor.r, Advanced.shadowColor.g, Advanced.shadowColor.b, Advanced.shadowColor.a)
         frame.name:SetShadowOffset(Advanced.x_offset, Advanced.y_offset)
         --Status
@@ -99,31 +102,32 @@ function Fonts:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", UpdateFont)
     --
-    local UpdateNameCallback
-    if Name.Classcolored then
-        UpdateNameCallback = function(frame)
-            local name = GetUnitName(frame.unit or "", true)
-            if not name then return end
-            local fname = frame:GetName()
-            if frame.unit and frame.unitExists and fname and not fname:match("Pet") then
+    local UpdateNameCallback = function(frame)
+        local name = GetUnitName(frame.unit or "", true)
+        if not name then return end
+        local r, g, b = Name.FontColor.r, Name.FontColor.g, Name.FontColor.b
+        if CompactUnitFrame_IsTapDenied(frame) or UnitIsDead(frame.unit) then
+            r, g, b = Name.FontColorDead.r, Name.FontColorDead.g, Name.FontColorDead.b
+        else
+            if Name.Classcolored and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
-                local r, g, b = GetClassColor(englishClass)
-                frame.name:SetVertexColor(r, g, b)
-            else
-                frame.name:SetVertexColor(Name.FontColor.r, Name.FontColor.g, Name.FontColor.b)
+                r, g, b = GetClassColor(englishClass)
             end
-            frame.name:SetText(name:match("[^-]+")) --hides the units server.
         end
-    else
-        UpdateNameCallback = function(frame)
-            local name = GetUnitName(frame.unit or "", true)
-            if not name then return end
-            frame.name:SetVertexColor(Name.FontColor.r, Name.FontColor.g, Name.FontColor.b)
-            frame.name:SetText(name:match("[^-]+")) --hides the units server.
-        end
+        frame.name:SetVertexColor(r, g, b)
+        frame.name:SetText(name:match("[^-]+")) --hides the units server.
     end
+
     self:HookFuncFiltered("CompactUnitFrame_UpdateName", UpdateNameCallback)
     RaidFrameSettings:IterateRoster(function(frame)
+        UpdateFont(frame)
+        UpdateNameCallback(frame)
+    end)
+
+    self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
+        if not unit or unit:match("nameplate") then
+            return
+        end
         UpdateFont(frame)
         UpdateNameCallback(frame)
     end)

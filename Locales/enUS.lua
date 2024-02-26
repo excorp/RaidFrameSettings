@@ -89,6 +89,7 @@ L["Textures"]                   = "Textures"
 
 L["Font"]                       = "Font"
 L["Font Color"]                 = "Font Color"
+L["Dead Color"]                 = "Dead Color"
 L["Font Size"]                  = "Font Size"
 
 L["Outlinemode"]                = "Outlinemode"

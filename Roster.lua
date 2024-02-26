@@ -90,6 +90,13 @@ function addon:IterateRoster(callback)
     end
 end
 
+hooksecurefunc("CompactUnitFrame_SetUnit", function(frame, unit)
+    if not unit or unit:match("nameplate") then
+        return
+    end
+    needsUpdate = true
+end)
+
 function addon:GetFrame(unit)
     if needsUpdate then
         updateRoster()

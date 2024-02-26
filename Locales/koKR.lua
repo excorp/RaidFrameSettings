@@ -88,6 +88,7 @@ L["Textures"]                   = "텍스쳐"
 
 L["Font"]                       = "폰트"
 L["Font Color"]                 = "폰트 색상"
+L["Dead Color"]                 = "죽음 색상"
 L["Font Size"]                  = "폰트 크기"
 
 L["Outlinemode"]                = "외곽선 표시"

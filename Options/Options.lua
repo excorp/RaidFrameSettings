@@ -544,7 +544,14 @@ options = {
                             get = "GetColor",
                             set = "SetColor",
                             width = 0.8,
-                            disabled = function() return RaidFrameSettings.db.profile.Fonts.Name.useclasscolor end,
+                        },
+                        fontcolorDead = {
+                            order = 6,
+                            type = "color",
+                            name = L["Dead color"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.8,
                         },
                         newline2 = {
                             order = 6.1,

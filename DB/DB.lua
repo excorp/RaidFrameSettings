@@ -43,11 +43,12 @@ local defaults                                    = {
         },
         Fonts = {
             ["**"] = {
-                font       = "Friz Quadrata TT",
-                fontcolor  = { r = 1, g = 1, b = 1, a = 1 },
-                outline    = true,
-                thick      = false,
-                monochrome = false,
+                font          = "Friz Quadrata TT",
+                fontcolor     = { r = 1, g = 1, b = 1, a = 1 },
+                fontcolorDead = { r = 0.5, g = 0.5, b = 0.5, a = 1 },
+                outline       = true,
+                thick         = false,
+                monochrome    = false,
             },
             Name = {
                 fontsize      = 12,

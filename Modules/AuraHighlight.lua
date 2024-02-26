@@ -228,6 +228,9 @@ end
 
 function module:SetUpdateHealthColor()
     local function hasMissingAura(frame)
+        if not frame.unit or not UnitIsConnected(frame.unit) or not UnitIsVisible(frame.unit) or UnitIsDeadOrGhost(frame.unit) then
+            return false
+        end
         if next(aura_missing_list) == nil then
             return false
         end
@@ -267,11 +270,8 @@ function module:SetUpdateHealthColor()
 
     updateHealthColor = function(frame)
         local fname = frame:GetName()
-        if not fname or fname:match("Pet") or frame.unit:match("na") then
-            return
-        end
         blockColorUpdate[frame] = false
-        if hasMissingAura(frame) then
+        if hasMissingAura(frame) and frame.unit and not frame.unit:match("pet") and not frame.unit:match("na") then
             if useHealthBarColor then
                 frame.healthBar:SetStatusBarColor(missingAuraColor.r, missingAuraColor.g, missingAuraColor.b)
             end
@@ -279,7 +279,8 @@ function module:SetUpdateHealthColor()
                 module:Glow(frame, missingAuraColor)
             end
         else
-            if useClassColors and frame.unit and frame.unitExists then
+            r, g, b = 0, 1, 0
+            if useClassColors and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end
@@ -359,8 +360,7 @@ function module:OnDisable()
         if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
             -- r,g,b = 0,1,0 -- this is default
         else
-            local fname = frame:GetName()
-            if frame.unit and frame.unitExists and fname and not fname:match("Pet") then
+            if frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end

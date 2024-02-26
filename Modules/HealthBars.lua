@@ -102,22 +102,25 @@ function HealthBars:OnEnable()
     --colors
     local r, g, b = 0, 1, 0
     local useClassColors
-
     local updateHealthColor = function(frame)
-        local fname = frame:GetName()
-        if not fname or fname:match("Pet") then
-            return
-        end
         if RaidFrameSettings.db.profile.Module.AuraHighlight then
             return
         end
-
-        if useClassColors and frame.unit then
+        r, g, b = 0, 1, 0
+        if useClassColors and frame.unit and not frame.unit:match("pet") then
             local _, englishClass = UnitClass(frame.unit)
             r, g, b = GetClassColor(englishClass)
         end
         frame.healthBar:SetStatusBarColor(r, g, b)
     end
+
+    self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
+        if not unit or unit:match("nameplate") then
+            return
+        end
+        updateTextures(frame)
+        updateHealthColor(frame)
+    end)
 
     if RaidFrameSettings.db.profile.Module.HealthBars then
         local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
@@ -155,6 +158,7 @@ end
 
 function HealthBars:OnDisable()
     self:DisableHooks()
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     local restoreStatusBars = function(frame)
         frame.healthBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
         frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
@@ -165,12 +169,14 @@ function HealthBars:OnDisable()
         if frame.backdropInfo then
             frame:ClearBackdrop()
         end
-        local r, g, b = 0, 1, 0
-        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unit:match("pet") then
-            local _, englishClass = UnitClass(frame.unit)
-            r, g, b = GetClassColor(englishClass)
+        if not RaidFrameSettings.db.profile.Module.AuraHighlight then
+            local r, g, b = 0, 1, 0
+            if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and not frame.unit:match("pet") then
+                local _, englishClass = UnitClass(frame.unit)
+                r, g, b = GetClassColor(englishClass)
+            end
+            frame.healthBar:SetStatusBarColor(r, g, b)
         end
-        frame.healthBar:SetStatusBarColor(r, g, b)
     end
     for frame in pairs(frame_registry) do
         restoreStatusBars(frame)

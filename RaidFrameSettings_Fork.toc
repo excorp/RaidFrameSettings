@@ -9,10 +9,10 @@
 ## X-Curse-Project-ID: 688930
 
 Init.lua
-locales.xml
 
 #Libs
 embeds.xml
+locales.xml
 
 #Config
 Core.lua

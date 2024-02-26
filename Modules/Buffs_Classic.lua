@@ -309,7 +309,8 @@ function Buffs:OnEnable()
     self:HookFunc("CompactUnitFrame_UpdateBuffs", onUpdateBuffs)
 
     local function onFrameSetup(frame)
-        if frame.maxBuffs == 0 then
+        local fname = frame:GetName()
+        if not fname or fname:match("pet") then
             return
         end
 

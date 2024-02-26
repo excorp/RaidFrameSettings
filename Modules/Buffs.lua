@@ -297,7 +297,8 @@ function Buffs:OnEnable()
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
 
     local function onFrameSetup(frame)
-        if frame.maxBuffs == 0 or not frame.buffs then
+        local fname = frame:GetName()
+        if not fname or fname:match("pet") then
             return
         end
 

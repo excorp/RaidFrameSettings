@@ -97,7 +97,8 @@ function HealthBars:OnEnable()
     local useClassColors
 
     local updateHealthColor = function(frame)
-        if not frame or frame.maxDebuffs == 0 or frame.unit:match("na") then --this will exclude nameplates and arena
+        local fname = frame:GetName()
+        if not fname or fname:match("pet") then
             return
         end
         if RaidFrameSettings.db.profile.Module.AuraHighlight then

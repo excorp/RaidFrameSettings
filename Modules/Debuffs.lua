@@ -358,7 +358,8 @@ function Debuffs:OnEnable()
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
 
     local function onFrameSetup(frame)
-        if frame.maxDebuffs == 0 or not frame.debuffs then
+        local fname = frame:GetName()
+        if not fname or fname:match("pet") then
             return
         end
 

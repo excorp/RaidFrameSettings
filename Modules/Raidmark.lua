@@ -37,7 +37,8 @@ function RaidMark:OnEnable()
     raidmarkOpt.relativePoint = addon:ConvertDbNumberToPosition(raidmarkOpt.relativePoint)
 
     local function initRaidMark(frame, force)
-        if frame.maxDebuffs == 0 then
+        local fname = frame:GetName()
+        if not fname or fname:match("pet") then
             return
         end
         if not frame.raidmark then

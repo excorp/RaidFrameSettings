@@ -106,8 +106,10 @@ function Fonts:OnEnable()
         local name = GetUnitName(frame.unit or "", true)
         if not name then return end
         local r, g, b = Name.FontColor.r, Name.FontColor.g, Name.FontColor.b
-        if CompactUnitFrame_IsTapDenied(frame) or UnitIsDead(frame.unit) then
+        if CompactUnitFrame_IsTapDenied(frame) or UnitIsDeadOrGhost(frame.unit) then
             r, g, b = Name.FontColorDead.r, Name.FontColorDead.g, Name.FontColorDead.b
+        elseif select(2, UnitDetailedThreatSituation("player", frame.displayedUnit)) ~= nil and not UnitIsFriend("player", frame.unit) then
+            r, g, b = Name.FontColorHostile.r, Name.FontColorHostile.g, Name.FontColorHostile.b
         else
             if Name.Classcolored and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
@@ -135,6 +137,7 @@ end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Fonts:OnDisable()
+    self:DisableHooks()
     local restoreFonts = function(frame)
         --Name
         fontObj:SetFontObject("GameFontHighlightSmall")

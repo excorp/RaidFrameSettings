@@ -43,6 +43,13 @@ function Overabsorb:OnEnable()
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", OnFrameSetup)
     local function UpdateHealPredictionCallback(frame)
+        local fname = frame:GetName()
+        if not fname or fname:match("Pet") then
+            return
+        end
+        if not frame_registry[frame] then
+            return
+        end
         local absorbBar = frame.totalAbsorb
         local absorbOverlay = frame.totalAbsorbOverlay
         local healthBar = frame.healthBar

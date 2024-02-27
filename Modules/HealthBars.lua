@@ -40,53 +40,34 @@ function HealthBars:OnEnable()
     local powerBarTexture   = Media:Fetch("statusbar", RaidFrameSettings.db.profile.HealthBars.Textures.powerbar)
     local backgroundColor   = RaidFrameSettings.db.profile.HealthBars.Colors.background
     local borderColor       = RaidFrameSettings.db.profile.HealthBars.Colors.border
+
+
     --callbacks
     --only apply the power bar texture if the power bar is shown
-    local updateTextures
+    local raidFramesDisplayPowerBars = C_CVar.GetCVar("raidFramesDisplayPowerBars") == "1" and true or false
     --with powerbar
-    if C_CVar.GetCVar("raidFramesDisplayPowerBars") == "1" then
-        updateTextures = function(frame)
-            if not frame_registry[frame] then
-                frame_registry[frame] = true
-            end
-            frame.healthBar:SetStatusBarTexture(statusBarTexture)
-            frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
-            frame.background:SetTexture(backgroundTexture)
-            frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b)
+    local updateTextures = function(frame)
+        if not frame_registry[frame] then
+            frame_registry[frame] = true
+        end
+        frame.healthBar:SetStatusBarTexture(statusBarTexture)
+        frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
+        frame.background:SetTexture(backgroundTexture)
+        frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b)
+        if raidFramesDisplayPowerBars then
             frame.powerBar:SetStatusBarTexture(powerBarTexture)
             frame.powerBar.background:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, 1)
             frame.powerBar.background:SetPoint("BOTTOMRIGHT", frame.background, "BOTTOMRIGHT", 0, 0)
-            if not frame.backdropInfo then
-                Mixin(frame, BackdropTemplateMixin)
-                frame:SetBackdrop(backdropInfo)
-            end
-            frame:ApplyBackdrop()
-            frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b)
         end
-        --without power bar
-    else
-        updateTextures = function(frame)
-            if not frame_registry[frame] then
-                frame_registry[frame] = true
-            end
-            frame.healthBar:SetStatusBarTexture(statusBarTexture)
-            frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
-            frame.background:SetTexture(backgroundTexture)
-            frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b)
-            if not frame.backdropInfo then
-                Mixin(frame, BackdropTemplateMixin)
-                frame:SetBackdrop(backdropInfo)
-            end
-            frame:ApplyBackdrop()
-            frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b)
+        if not frame.backdropInfo then
+            Mixin(frame, BackdropTemplateMixin)
+            frame:SetBackdrop(backdropInfo)
         end
+        frame:ApplyBackdrop()
+        frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", updateTextures)
     self:HookFunc("DefaultCompactMiniFrameSetup", function(frame)
-        local unit = frame.unit
-        if not unit or not unit:match("pet") then
-            return
-        end
         for _, border in pairs({
             "horizTopBorder",
             "horizBottomBorder",
@@ -100,14 +81,14 @@ function HealthBars:OnEnable()
         updateTextures(frame)
     end)
     --colors
-    local r, g, b = 0, 1, 0
+    local r, g, b
     local useClassColors
     local updateHealthColor = function(frame)
         if RaidFrameSettings.db.profile.Module.AuraHighlight then
             return
         end
         r, g, b = 0, 1, 0
-        if useClassColors and frame.unit and not frame.unit:match("pet") then
+        if useClassColors and frame.unit and frame.unitExists and not frame.unit:match("pet") then
             local _, englishClass = UnitClass(frame.unit)
             r, g, b = GetClassColor(englishClass)
         end
@@ -158,7 +139,6 @@ end
 
 function HealthBars:OnDisable()
     self:DisableHooks()
-    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     local restoreStatusBars = function(frame)
         frame.healthBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
         frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
@@ -169,13 +149,8 @@ function HealthBars:OnDisable()
         if frame.backdropInfo then
             frame:ClearBackdrop()
         end
-        if not RaidFrameSettings.db.profile.Module.AuraHighlight then
-            local r, g, b = 0, 1, 0
-            if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and not frame.unit:match("pet") then
-                local _, englishClass = UnitClass(frame.unit)
-                r, g, b = GetClassColor(englishClass)
-            end
-            frame.healthBar:SetStatusBarColor(r, g, b)
+        if not RaidFrameSettings.db.profile.Module.AuraHighlight and frame.unit and not frame:IsForbidden() then
+            CompactUnitFrame_UpdateHealthColor(frame)
         end
     end
     for frame in pairs(frame_registry) do

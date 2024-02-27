@@ -59,7 +59,7 @@ local function toDebuffColor(frame, dispelName)
 end
 
 local function updateColor(frame)
-    if not frame or frame.unit:match("na") then --this will exclude nameplates and arena
+    if not frame or frame.unit:match("na") or not frame:IsVisible() or frame:IsForbidden() then --this will exclude nameplates and arena
         return
     end
     for auraInstanceID, dispelName in next, auraMap[frame].debuffs do
@@ -72,7 +72,7 @@ local function updateColor(frame)
 end
 
 local function updateAurasFull(frame)
-    if not frame.unit or not frame.unitExists or not frame:IsShown() or frame:IsForbidden() then
+    if not frame.unit or not frame.unitExists then
         return
     end
     auraMap[frame] = {}
@@ -209,7 +209,7 @@ function module:HookFrame(frame)
     --
     self:RemoveHandler(frame, "OnEvent") --remove the registry key for frame["OnEvent"] so that it actually gets hooked again and not just stores a callback for an non existing hook
     self:HookScript(frame, "OnEvent", function(frame, event, unit, updateInfo)
-        if event ~= "UNIT_AURA" then
+        if event ~= "UNIT_AURA" or not RaidFrameSettings.db.profile.Module.AuraHighlight then
             return
         end
         if isClassic or updateInfo.isFullUpdate then
@@ -228,7 +228,7 @@ end
 
 function module:SetUpdateHealthColor()
     local function hasMissingAura(frame)
-        if not frame.unit or not UnitIsConnected(frame.unit) or not UnitIsVisible(frame.unit) or UnitIsDeadOrGhost(frame.unit) then
+        if not frame.unit or frame.unit:match("pet") or not UnitIsConnected(frame.unit) or not UnitIsVisible(frame.unit) or UnitIsDeadOrGhost(frame.unit) then
             return false
         end
         if next(aura_missing_list) == nil then
@@ -269,9 +269,11 @@ function module:SetUpdateHealthColor()
     end
 
     updateHealthColor = function(frame)
-        local fname = frame:GetName()
+        if not frame or frame.unit:match("na") or not frame:IsVisible() or frame:IsForbidden() then --this will exclude nameplates and arena
+            return
+        end
         blockColorUpdate[frame] = false
-        if hasMissingAura(frame) and frame.unit and not frame.unit:match("pet") and not frame.unit:match("na") then
+        if hasMissingAura(frame) then
             if useHealthBarColor then
                 frame.healthBar:SetStatusBarColor(missingAuraColor.r, missingAuraColor.g, missingAuraColor.b)
             end
@@ -326,13 +328,14 @@ function module:OnEnable()
     end
     self:GetDebuffColors()
     self:HookFunc("CompactUnitFrame_RegisterEvents", function(frame)
-        if frame.unit:match("na") then --this will exclude nameplates and arena
+        if frame.unit:match("pet") or frame.unit:match("na") then --this will exclude nameplates and arena
             return
         end
         if not UnitIsPlayer(frame.unit) then --exclude pet/vehicle frame
             return
         end
         self:HookFrame(frame)
+        updateAurasFull(frame)
     end)
     local onUpdateHealthColor = function(frame)
         if blockColorUpdate[frame] then
@@ -356,16 +359,9 @@ end
 function module:OnDisable()
     self:DisableHooks()
     RaidFrameSettings:IterateRoster(function(frame)
-        local r, g, b = 0, 1, 0
-        if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
-            -- r,g,b = 0,1,0 -- this is default
-        else
-            if frame.unit and frame.unitExists and not frame.unit:match("pet") then
-                local _, englishClass = UnitClass(frame.unit)
-                r, g, b = GetClassColor(englishClass)
-            end
+        if frame.unit and not frame:IsForbidden() then
+            CompactUnitFrame_UpdateHealthColor(frame)
         end
-        frame.healthBar:SetStatusBarColor(r, g, b)
         module:Glow(frame, false)
     end)
 end

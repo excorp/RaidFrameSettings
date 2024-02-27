@@ -11,6 +11,8 @@ local ClearAllPoints = ClearAllPoints
 local SetPoint = SetPoint
 local SetScale = SetScale
 
+local frame_registry = {}
+
 function RoleIcon:OnEnable()
     local x, y, relativePoint
     local x_offset, y_offset = RaidFrameSettings.db.profile.MinorModules.RoleIcon.x_offset, RaidFrameSettings.db.profile.MinorModules.RoleIcon.y_offset
@@ -41,6 +43,9 @@ function RoleIcon:OnEnable()
         if not fname or fname:match("Pet") then
             return
         end
+        if not frame_registry[frame] then
+            frame_registry[frame] = true
+        end
         frame.roleIcon:ClearAllPoints()
         frame.roleIcon:SetPoint(relativePoint, frame, relativePoint, x + x_offset, y + y_offset)
         frame.roleIcon:SetScale(scaleFactor)
@@ -59,5 +64,8 @@ function RoleIcon:OnDisable()
         end
         frame.roleIcon:SetScale(1)
     end
-    RaidFrameSettings:IterateRoster(restoreRoleIcon)
+    for frame in pairs(frame_registry) do
+        restoreRoleIcon(frame)
+        frame_registry[frame] = nil
+    end
 end

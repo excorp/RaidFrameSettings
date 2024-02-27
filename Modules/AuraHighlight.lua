@@ -359,8 +359,8 @@ end
 function module:OnDisable()
     self:DisableHooks()
     RaidFrameSettings:IterateRoster(function(frame)
-        if frame.unit and not frame:IsForbidden() then
-            CompactUnitFrame_UpdateHealthColor(frame)
+        if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
+            -- restore healthbar color
         end
         module:Glow(frame, false)
     end)

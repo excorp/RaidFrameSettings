@@ -147,9 +147,18 @@ function Fonts:OnDisable()
         frame.name:SetShadowOffset(fontObj:GetShadowOffset())
 
         frame.name:ClearAllPoints()
-        frame.name:SetPoint("TOPLEFT", frame.roleIcon, "TOPRIGHT", 0, -1);
-        frame.name:SetPoint("TOPRIGHT", -3, -3);
-        frame.name:SetJustifyH("LEFT");
+        local fname = frame:GetName()
+        if not fname:match("Pet") then
+            frame.name:SetPoint("TOPLEFT", frame.roleIcon, "TOPRIGHT", 0, -1);
+            frame.name:SetPoint("TOPRIGHT", -3, -3);
+            frame.name:SetJustifyH("LEFT");
+        else
+            frame.name:SetPoint("LEFT", 5, 1);
+            frame.name:SetPoint("RIGHT", -3, 1);
+            frame.name:SetHeight(12);
+            frame.name:SetJustifyH("LEFT");
+        end
+
         --Status
         fontObj:SetFontObject("GameFontDisable")
         frame.statusText:SetFont(fontObj:GetFont())

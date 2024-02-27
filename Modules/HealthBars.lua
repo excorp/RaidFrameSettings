@@ -149,8 +149,8 @@ function HealthBars:OnDisable()
         if frame.backdropInfo then
             frame:ClearBackdrop()
         end
-        if not RaidFrameSettings.db.profile.Module.AuraHighlight and frame.unit and not frame:IsForbidden() then
-            CompactUnitFrame_UpdateHealthColor(frame)
+        if not RaidFrameSettings.db.profile.Module.AuraHighlight and frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
+            -- restore healthbar color
         end
     end
     for frame in pairs(frame_registry) do

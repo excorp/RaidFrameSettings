@@ -182,11 +182,14 @@ function Buffs:OnEnable()
             end
         end
     end
-    self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
+    -- self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
     local onHideAllBuffs = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
+        end
+        for _, v in pairs(frame.buffFrames) do
+            v:Hide()
         end
 
         -- set placed aura / other aura
@@ -201,6 +204,7 @@ function Buffs:OnEnable()
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 local placed = userPlaced[aura.spellId]
                 CompactUnitFrame_UtilSetBuff(buffFrame, aura)
+                onSetBuff(buffFrame, aura)
                 return false
             end
             if auraGroupList[aura.spellId] then
@@ -227,13 +231,15 @@ function Buffs:OnEnable()
             for k, v in pairs(auralist) do
                 if groupNo == 0 then
                     -- default aura frame
-                    local buffFrame = frame.buffFrames[k] or frame_registry[frame].extraBuffFrames[k]
+                    local buffFrame = frame_registry[frame].extraBuffFrames[k]
                     CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
+                    onSetBuff(buffFrame, v.aura)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
+                    onSetBuff(buffFrame, v.aura)
                     if k >= auraGroup[groupNo].maxAuras then
                         break
                     end
@@ -265,7 +271,7 @@ function Buffs:OnEnable()
             end
         end
         for i = frameNum, math.max(frame_registry[frame].maxBuffs, frame.maxBuffs) do
-            local buffFrame = frame.buffFrames[i] or frame_registry[frame].extraBuffFrames[i]
+            local buffFrame = frame_registry[frame].extraBuffFrames[i]
             buffFrame:Hide()
             CooldownFrame_Clear(buffFrame.cooldown)
         end
@@ -324,8 +330,8 @@ function Buffs:OnEnable()
             frame_registry[frame].dirty = false
 
             local placedAuraStart = frame.maxBuffs + 1
-            for i = frame.maxBuffs + 1, frame_registry[frame].maxBuffs do
-                local buffFrame = frame.buffFrames[i] or frame_registry[frame].extraBuffFrames[i]
+            for i = 1, frame_registry[frame].maxBuffs do
+                local buffFrame = frame_registry[frame].extraBuffFrames[i]
                 if not buffFrame then
                     buffFrame = CreateFrame("Button", nil, nil, "CompactBuffTemplate")
                     buffFrame:SetParent(frame)
@@ -354,7 +360,7 @@ function Buffs:OnEnable()
             end
 
             for i = 1, frame_registry[frame].maxBuffs + maxUserPlaced + maxAuraGroup do
-                local buffFrame = frame_registry[frame].extraBuffFrames[i] or frame.buffFrames[i]
+                local buffFrame = frame_registry[frame].extraBuffFrames[i]
                 if frameOpt.framestrata ~= "Inherited" then
                     buffFrame:SetFrameStrata(frameOpt.framestrata)
                 end
@@ -442,29 +448,6 @@ function Buffs:OnEnable()
                 end
             end
 
-            for _, v in pairs(frame.buffFrames) do
-                if frameOpt.tooltip then
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", function(self)
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
-                        self:UpdateTooltip()
-                        local function RunOnUpdate()
-                            if (GameTooltip:IsOwned(self)) then
-                                self:UpdateTooltip()
-                            end
-                        end
-                        self:SetScript("OnUpdate", RunOnUpdate)
-                    end)
-                    v:SetScript("OnLeave", function(self)
-                        GameTooltip:Hide();
-                        self:SetScript("OnUpdate", nil)
-                    end)
-                else
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", nil)
-                    v:SetScript("OnLeave", nil)
-                end
-            end
             for _, v in pairs(frame_registry[frame].extraBuffFrames) do
                 if frameOpt.tooltip then
                     v:SetScript("OnUpdate", nil)
@@ -493,7 +476,7 @@ function Buffs:OnEnable()
         -- set anchor and resize
         local anchorSet, prevFrame
         for i = 1, frame_registry[frame].maxBuffs do
-            local buffFrame = frame.buffFrames[i] or frame_registry[frame].extraBuffFrames[i]
+            local buffFrame = frame_registry[frame].extraBuffFrames[i]
             if not anchorSet then
                 buffFrame:ClearAllPoints()
                 buffFrame:SetPoint(point, frame, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
@@ -579,65 +562,9 @@ function Buffs:OnDisable()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     roster_changed = true
     local restoreBuffFrames = function(frame)
-        for _, buffFrame in pairs(frame.buffFrames) do
-            buffFrame:SetScript("OnUpdate", nil)
-            buffFrame:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
-                self:UpdateTooltip()
-                local function RunOnUpdate()
-                    if (GameTooltip:IsOwned(self)) then
-                        self:UpdateTooltip()
-                    end
-                end
-                self:SetScript("OnUpdate", RunOnUpdate)
-            end)
-            buffFrame:SetScript("OnLeave", function()
-                GameTooltip:Hide();
-                self:SetScript("OnUpdate", nil)
-            end)
-            buffFrame:Hide()
-        end
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
             extraBuffFrame:Hide()
         end
-
-        local frameWidth = frame:GetWidth()
-        local frameHeight = frame:GetHeight()
-        local componentScale = min(frameWidth / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH)
-        local Display = math.min(15, 11 * componentScale)
-        local powerBarUsedHeight = frame.powerBar:IsShown() and frame.powerBar:GetHeight() or 0
-        local buffPos, buffRelativePoint, buffOffset = "BOTTOMRIGHT", "BOTTOMLEFT", CUF_AURA_BOTTOM_OFFSET + powerBarUsedHeight;
-        frame.buffFrames[1]:ClearAllPoints();
-        frame.buffFrames[1]:SetPoint(buffPos, frame, "BOTTOMRIGHT", -3, buffOffset);
-        for i = 1, #frame.buffFrames do
-            local buffFrame = frame.buffFrames[i]
-            buffFrame:SetFrameStrata(frame:GetFrameStrata())
-            buffFrame:SetSize(Display, Display)
-            buffFrame.icon:SetTexCoord(0, 1, 0, 1)
-            if (i > 1) then
-                buffFrame:ClearAllPoints();
-                buffFrame:SetPoint(buffPos, frame.buffFrames[i - 1], buffRelativePoint, 0, 0);
-            end
-            local cooldown = buffFrame.cooldown
-            cooldown:SetDrawSwipe(true)
-            cooldown:SetReverse(true)
-            cooldown:SetDrawEdge(false)
-            CDT:DisableCooldownText(cooldown)
-            local stackText = buffFrame.count
-            stackText:ClearAllPoints()
-            stackText:SetPoint("BOTTOMRIGHT", buffFrame, "BOTTOMRIGHT", 0, 0)
-            fontObj:SetFontObject("NumberFontNormalSmall")
-            stackText:SetFont(fontObj:GetFont())
-            stackText:SetTextColor(fontObj:GetTextColor())
-            stackText:SetShadowColor(fontObj:GetShadowColor())
-            stackText:SetShadowOffset(fontObj:GetShadowOffset())
-            stackText:SetParent(buffFrame)
-            if cooldown.OmniCC then
-                OmniCC.Cooldown.SetNoCooldownCount(cooldown, cooldown.OmniCC.noCooldownCount)
-                cooldown.OmniCC = nil
-            end
-        end
-
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end

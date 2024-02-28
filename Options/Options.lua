@@ -1260,7 +1260,7 @@ options = {
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
-                                                    glow = false,
+                                                    glow = RaidFrameSettings.db.profile.AuraFilter.Buffs[value] and RaidFrameSettings.db.profile.AuraFilter.Buffs[value].glow,
                                                 }
                                                 RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
                                                 RaidFrameSettings:UpdateModule("Buffs")
@@ -1638,7 +1638,7 @@ options = {
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
-                                                    glow = false,
+                                                    glow = RaidFrameSettings.db.profile.AuraFilter.Debuffs[value] and RaidFrameSettings.db.profile.AuraFilter.Debuffs[value].glow,
                                                 }
                                                 RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
                                                 RaidFrameSettings:UpdateModule("Debuffs")
@@ -3472,7 +3472,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     dbObj.auraList[value] = {
                         spellId = tonumber(value),
                         priority = 0,
-                        glow = false,
+                        glow = RaidFrameSettings.db.profile.AuraFilter[category][value] and self.db.profile.AuraFilter[category][value].glow,
                     }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     RaidFrameSettings:UpdateModule(category)

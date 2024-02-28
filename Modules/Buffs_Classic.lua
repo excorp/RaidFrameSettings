@@ -7,6 +7,7 @@ local addon = addonTable.RaidFrameSettings
 local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
+local Glow = addonTable.Glow
 local Media = LibStub("LibSharedMedia-3.0")
 
 local fontObj = CreateFont("RaidFrameSettingsFont")
@@ -38,8 +39,21 @@ local select = select
 local frame_registry = {}
 local roster_changed = true
 
+local glowOpt
+
+function Buffs:Glow(frame, onoff)
+    if onoff then
+        Glow:Start(glowOpt, frame)
+    else
+        Glow:Stop(glowOpt, frame)
+    end
+end
+
 function Buffs:OnEnable()
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
+
+    glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
+    glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
 
     local frameOpt = CopyTable(addon.db.profile.Buffs.BuffFramesDisplay)
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
@@ -148,7 +162,7 @@ function Buffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetBuff = function(buffFrame, unit, index, filter)
+    local onSetBuff = function(buffFrame, unit, index, filter, glow)
         if buffFrame:IsForbidden() or not buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -187,6 +201,8 @@ function Buffs:OnEnable()
                 buffFrame.count:SetParent(cooldown)
             end
         end
+
+        self:Glow(buffFrame, glow)
     end
     -- self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
@@ -215,18 +231,21 @@ function Buffs:OnEnable()
                 if userPlaced[spellId] then
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    local placed = userPlaced[spellId]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, index, filter)
-                    onSetBuff(buffFrame, frame.displayedUnit, index, filter)
+                    onSetBuff(buffFrame, frame.displayedUnit, index, filter, placed and placed.glow)
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
                     local auraList = auraGroup[groupNo].auraList
-                    local priority = auraList[spellId].priority > 0 and auraList[spellId].priority or filteredAuras[spellId] and filteredAuras[spellId].priority or 0
+                    local auraOpt = auraList[spellId]
+                    local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[spellId] and filteredAuras[spellId].priority or 0
                     if not sorted[groupNo] then sorted[groupNo] = {} end
-                    tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index })
+                    tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index, glow = auraOpt and auraOpt.glow })
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 elseif frameNum <= frame_registry[frame].maxBuffs then
-                    local priority = filteredAuras[spellId] and filteredAuras[spellId].priority or 0
-                    tinsert(sorted[0], { spellId = spellId, priority = priority, index = index })
+                    local filtered = filteredAuras[spellId]
+                    local priority = filtered and filtered.priority or 0
+                    tinsert(sorted[0], { spellId = spellId, priority = priority, index = index, glow = filtered and filtered.glow })
                     frameNum = frameNum + 1
                 end
             end
@@ -242,13 +261,13 @@ function Buffs:OnEnable()
                     -- default aura frame
                     local buffFrame = frame_registry[frame].extraBuffFrames[k]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, v.index, filter)
-                    onSetBuff(buffFrame, frame.displayedUnit, v.index, filter)
+                    onSetBuff(buffFrame, frame.displayedUnit, v.index, filter, v.glow)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, frame.displayedUnit, v.index, filter)
-                    onSetBuff(buffFrame, frame.displayedUnit, v.index, filter)
+                    onSetBuff(buffFrame, frame.displayedUnit, v.index, filter, v.glow)
                     -- grow direction == NONE
                     if k >= auraGroup[groupNo].maxAuras then
                         break
@@ -279,12 +298,14 @@ function Buffs:OnEnable()
             local buffName = UnitBuff(frame.displayedUnit, index, filter)
             if not buffName then
                 buffFrame:Hide()
+                self:Glow(buffFrame, false)
                 CooldownFrame_Clear(buffFrame.cooldown)
             end
         end
         for i = frameNum, math.max(frame_registry[frame].maxBuffs, frame.maxBuffs) do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
             buffFrame:Hide()
+            self:Glow(buffFrame, false)
             CooldownFrame_Clear(buffFrame.cooldown)
         end
         -- Modify the anchor of an auraGroup and hide left aura group
@@ -313,6 +334,7 @@ function Buffs:OnEnable()
                 local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 buffFrame:Hide()
+                self:Glow(buffFrame, false)
                 CooldownFrame_Clear(buffFrame.cooldown)
             end
         end
@@ -552,6 +574,7 @@ function Buffs:OnDisable()
     local restoreBuffFrames = function(frame)
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
             extraBuffFrame:Hide()
+            self:Glow(extraBuffFrame, false)
         end
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)

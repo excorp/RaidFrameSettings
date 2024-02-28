@@ -7,6 +7,7 @@ local addon = addonTable.RaidFrameSettings
 local Debuffs = addon:NewModule("Debuffs")
 Mixin(Debuffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
+local Glow = addonTable.Glow
 local Media = LibStub("LibSharedMedia-3.0")
 
 local fontObj = CreateFont("RaidFrameSettingsFont")
@@ -33,6 +34,14 @@ local next = next
 local frame_registry = {}
 local roster_changed = true
 
+function Debuffs:Glow(frame, onoff)
+    if onoff then
+        Glow:Start(glowOpt, frame)
+    else
+        Glow:Stop(glowOpt, frame)
+    end
+end
+
 function Debuffs:OnEnable()
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
@@ -44,6 +53,9 @@ function Debuffs:OnEnable()
     local Bleeds = addonTable.Bleeds
 
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
+
+    glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
+    glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
 
     local frameOpt = CopyTable(addon.db.profile.Debuffs.DebuffFramesDisplay)
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
@@ -164,7 +176,7 @@ function Debuffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetDebuff = function(debuffFrame, aura)
+    local onSetDebuff = function(debuffFrame, aura, glow)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -216,6 +228,8 @@ function Debuffs:OnEnable()
                 end
             end
         end
+
+        self:Glow(debuffFrame, glow)
     end
     -- self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDebuff)
 
@@ -263,21 +277,23 @@ function Debuffs:OnEnable()
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 local placed = userPlaced[aura.spellId]
                 CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
-                onSetDebuff(debuffFrame, aura)
+                onSetDebuff(debuffFrame, aura, placed and placed.glow)
                 return false
             end
             if auraGroupList[aura.spellId] then
                 local groupNo = auraGroupList[aura.spellId]
                 local auraList = auraGroup[groupNo].auraList
-                local priority = auraList[aura.spellId].priority > 0 and auraList[aura.spellId].priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
+                local auraOpt = auraList[aura.spellId]
+                local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
                 if not sorted[groupNo] then sorted[groupNo] = {} end
-                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura })
+                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, glow = auraOpt and auraOpt.glow })
                 groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 return false
             end
             if frameNum <= frame_registry[frame].maxDebuffs then
-                local priority = filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
-                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura })
+                local filtered = filteredAuras[aura.spellId]
+                local priority = filtered and filtered.priority or 0
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, glow = filtered and filtered.glow })
                 frameNum = frameNum + 1
             end
             return false
@@ -292,13 +308,13 @@ function Debuffs:OnEnable()
                     -- default aura frame
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
-                    onSetDebuff(debuffFrame, v.aura)
+                    onSetDebuff(debuffFrame, v.aura, v.glow)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
-                    onSetDebuff(debuffFrame, v.aura)
+                    onSetDebuff(debuffFrame, v.aura, v.glow)
                     if k >= auraGroup[groupNo].maxAuras then
                         break
                     end
@@ -326,12 +342,14 @@ function Debuffs:OnEnable()
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
             if not debuffFrame.auraInstanceID or not frame.debuffs[debuffFrame.auraInstanceID] then
                 debuffFrame:Hide()
+                self:Glow(debuffFrame, false)
                 CooldownFrame_Clear(debuffFrame.cooldown)
             end
         end
         for i = frameNum, math.max(frame_registry[frame].maxDebuffs, frame.maxDebuffs) do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
             debuffFrame:Hide()
+            self:Glow(debuffFrame, false)
             CooldownFrame_Clear(debuffFrame.cooldown)
         end
         -- Modify the anchor of an auraGroup
@@ -360,6 +378,7 @@ function Debuffs:OnEnable()
                 local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 debuffFrame:Hide()
+                self:Glow(debuffFrame, false)
                 CooldownFrame_Clear(debuffFrame.cooldown)
             end
         end
@@ -634,6 +653,7 @@ function Debuffs:OnDisable()
     local restoreDebuffFrames = function(frame)
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
             extraDebuffFrame:Hide()
+            self:Glow(extraDebuffFrame, false)
         end
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)

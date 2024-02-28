@@ -24,6 +24,7 @@ Options\OptionsFrame.lua
 Utils\GroupType.lua
 Utils\ProfileSwitcher.lua
 Utils\CooldownText.lua
+Utils\Glow.lua
 Utils\Helper.lua
 Utils\HookRegistry.lua
 

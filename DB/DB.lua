@@ -256,6 +256,21 @@ local defaults                                    = {
                 Poison  = { r = 0.0, g = 0.6, b = 0.0 },
                 Bleed   = { r = 0.8, g = 0.0, b = 0.0 },
             },
+            Glow = {
+                type      = 3,
+                use_color = false,
+                color     = { r = 1, g = 1, b = 1, a = 1 },
+                lines     = 8,
+                frequency = 0.25,
+                length    = 10,
+                thickness = 1,
+                duration  = 1,
+                scale     = 1,
+                XOffset   = 0,
+                YOffset   = 0,
+                startAnim = false,
+                border    = false,
+            },
             CustomScale = {
                 Party = 1,
                 Raid  = 1,
@@ -338,20 +353,6 @@ function RaidFrameSettings:SetStatus(info, value)
     self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]] = value
     --will reload the config each time the settings have been adjusted
     local module_name = info[#info - 2] == "MinorModules" and info[#info - 1] or info[#info - 2]
-    self:UpdateModule(module_name)
-end
-
---color
-function RaidFrameSettings:GetColor(info)
-    return self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].r, self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].g, self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].b, self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].a
-end
-
-function RaidFrameSettings:SetColor(info, r, g, b, a)
-    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].r = r
-    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].g = g
-    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].b = b
-    self.db.profile[info[#info - 2]][info[#info - 1]][info[#info]].a = a
-    local module_name = info[#info - 2] == "MinorModules" and info[#info - 1] or info[#info - 2]
     if module_name == "DebuffColors" then
         if self.db.profile.Module.Debuffs then
             self:UpdateModule("Debuffs")
@@ -359,9 +360,26 @@ function RaidFrameSettings:SetColor(info, r, g, b, a)
         if self.db.profile.Module.AuraHighlight then
             self:UpdateModule("AuraHighlight")
         end
+    elseif module_name == "Glow" then
+        if self.db.profile.Module.Buffs then
+            self:UpdateModule("Buffs")
+        end
+        if self.db.profile.Module.Debuffs then
+            self:UpdateModule("Debuffs")
+        end
     else
         self:UpdateModule(module_name)
     end
+end
+
+--color
+function RaidFrameSettings:GetColor(info)
+    local rgba = self:GetStatus(info)
+    return rgba.r, rgba.g, rgba.b, rgba.a
+end
+
+function RaidFrameSettings:SetColor(info, r, g, b, a)
+    self:SetStatus(info, { r = r, g = g, b = b, a = a })
 end
 
 function RaidFrameSettings:GetGlobal(info)

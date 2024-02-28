@@ -4,6 +4,7 @@ local RaidFrameSettings = addonTable.RaidFrameSettings
 
 local module = RaidFrameSettings:NewModule("AuraHighlight")
 Mixin(module, addonTable.hooks)
+local Glow = addonTable.Glow
 local LCD --LibCanDispel or custom defined in OnEnable
 local LCG --libCustomGlow
 
@@ -39,6 +40,8 @@ local useHealthBarColor
 local useHealthBarGlow
 
 local glowOpt = {
+    type      = "Pixel",
+    use_color = true,
     lines     = nil,
     frequency = nil,
     length    = nil,
@@ -151,48 +154,29 @@ local function updateAurasIncremental(frame, updateInfo)
 end
 
 function module:Glow(frame, rgb)
-    if not LCG then
-        LCG = LibStub("LibCustomGlow-1.0")
-    end
-    if not frame then
-        return
-    end
-    if not frame._rfs_glow_frame then
-        frame._rfs_glow_frame = CreateFrame("Frame", nil, frame)
-        frame._rfs_glow_frame:SetAllPoints(frame)
-        frame._rfs_glow_frame:SetSize(frame:GetSize())
-    end
     local glow_frame = frame._rfs_glow_frame
-
     if not rgb then
-        -- glow off
-        if glow_frame.started then
-            LCG.PixelGlow_Stop(frame._rfs_glow_frame)
+        -- off
+        if glow_frame and glow_frame.started then
+            Glow:Stop(glowOpt, frame)
             glow_frame.started = false
         end
         return
     end
 
-    -- glow on
     local scale = frame:GetParent():GetScale() or 1
-    if glow_frame.started then
+    if glow_frame and glow_frame.started then
         if glow_frame.color.r == rgb.r and glow_frame.color.g == rgb.g and glow_frame.color.b == rgb.b and glow_frame.scale == scale then
             return
         end
-        LCG.PixelGlow_Stop(frame._rfs_glow_frame)
-        glow_frame.started = false
+        -- off
+        Glow:Stop(glowOpt, frame)
     end
-    LCG.PixelGlow_Start(
-        glow_frame,
-        { rgb.r, rgb.g, rgb.b, 1 },
-        glowOpt.lines,
-        glowOpt.frequency,
-        glowOpt.length,
-        glowOpt.thickness and glowOpt.thickness * scale,
-        glowOpt.XOffset,
-        glowOpt.YOffset,
-        glowOpt.border and true or false
-    )
+    -- on
+    glowOpt.color = rgb
+    glowOpt.thickness = glowOpt.thickness and glowOpt.thickness * scale
+    Glow:Start(glowOpt, frame)
+    glow_frame = frame._rfs_glow_frame
     glow_frame.started = true
     glow_frame.color = rgb
     glow_frame.scale = scale
@@ -361,6 +345,12 @@ function module:OnDisable()
     RaidFrameSettings:IterateRoster(function(frame)
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
+            local r, g, b = 0, 1, 0
+            if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unitExists and not frame.unit:match("pet") then
+                local _, englishClass = UnitClass(frame.unit)
+                r, g, b = GetClassColor(englishClass)
+            end
+            frame.healthBar:SetStatusBarColor(r, g, b)
         end
         module:Glow(frame, false)
     end)

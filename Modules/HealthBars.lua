@@ -151,6 +151,12 @@ function HealthBars:OnDisable()
         end
         if not RaidFrameSettings.db.profile.Module.AuraHighlight and frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
+            local r, g, b = 0, 1, 0
+            if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unitExists and not frame.unit:match("pet") then
+                local _, englishClass = UnitClass(frame.unit)
+                r, g, b = GetClassColor(englishClass)
+            end
+            frame.healthBar:SetStatusBarColor(r, g, b)
         end
     end
     for frame in pairs(frame_registry) do

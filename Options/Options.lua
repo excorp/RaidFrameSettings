@@ -828,6 +828,7 @@ options = {
                                     other = false,
                                     hideInCombat = false,
                                     priority = 0,
+                                    glow = false,
                                 }
                                 RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
                                 RaidFrameSettings:UpdateModule("Buffs")
@@ -864,6 +865,7 @@ options = {
                                     other = false,
                                     hideInCombat = false,
                                     priority = 0,
+                                    glow = false,
                                 }
                                 RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
                                 RaidFrameSettings:UpdateModule("Debuffs")
@@ -1258,6 +1260,7 @@ options = {
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                    glow = false,
                                                 }
                                                 RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
                                                 RaidFrameSettings:UpdateModule("Buffs")
@@ -1635,6 +1638,7 @@ options = {
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
+                                                    glow = false,
                                                 }
                                                 RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
                                                 RaidFrameSettings:UpdateModule("Debuffs")
@@ -1860,7 +1864,7 @@ options = {
                 },
                 RaidMark = {
                     hidden = RaidMark_disabled,
-                    order = 1.1,
+                    order = 2,
                     name = L["Raid Mark"],
                     type = "group",
                     inline = true,
@@ -1959,7 +1963,7 @@ options = {
                 },
                 RangeAlpha = {
                     hidden = Range_disabled,
-                    order = 2,
+                    order = 3,
                     name = L["Range Alpha"],
                     type = "group",
                     inline = true,
@@ -1994,7 +1998,7 @@ options = {
                 },
                 DebuffColors = {
                     hidden = function() return not RaidFrameSettings.db.profile.Module.Debuffs and not RaidFrameSettings.db.profile.Module.AuraHighlight end,
-                    order = 2,
+                    order = 4,
                     name = L["Debuff colors"],
                     type = "group",
                     inline = true,
@@ -2063,9 +2067,223 @@ options = {
                         },
                     },
                 },
+                Glow = {
+                    hidden = function() return not RaidFrameSettings.db.profile.Module.Buffs and not RaidFrameSettings.db.profile.Module.Debuffs end,
+                    order = 5,
+                    name = L["Glow"],
+                    type = "group",
+                    inline = true,
+                    args = {
+                        type = {
+                            order = 1,
+                            name = L["Glow Type"],
+                            type = "select",
+                            values = { L["Action Button"], L["Pixel"], L["Autocast"], L["Proc"] },
+                            sorting = { 1, 2, 3, 4 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 1,
+                        },
+                        use_color = {
+                            order = 2,
+                            name = L["Use Custom Color"],
+                            type = "toggle",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        color = {
+                            order = 3,
+                            type = "color",
+                            name = L["Glow Color"],
+                            get = "GetColor",
+                            set = "SetColor",
+                            width = 0.5,
+                        },
+                        -- Pixel, Autocast
+                        lines = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return not (type == 2 or type == 3)
+                            end,
+                            order = 4,
+                            name = L["Lines"],
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 1,
+                            -- max = 1,
+                            softMin = 1,
+                            softMax = 30,
+                            step = 1,
+                            width = 1,
+                        },
+                        -- Pixel, Autocast
+                        frequency = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return not (type == 2 or type == 3)
+                            end,
+                            order = 5,
+                            name = L["Frequency"],
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            -- min = 1,
+                            -- max = 1,
+                            softMin = -2,
+                            softMax = 2,
+                            step = 0.05,
+                            width = 1,
+                        },
+                        -- Pixel
+                        length = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type ~= 2
+                            end,
+                            order = 6,
+                            name = L["Length"],
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 1,
+                            -- max = 1,
+                            softMin = 1,
+                            softMax = 20,
+                            step = 0.05,
+                            width = 1,
+                        },
+                        -- Pixel
+                        thickness = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type ~= 2
+                            end,
+                            order = 7,
+                            name = L["Thickness"],
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 0.05,
+                            -- max = 1,
+                            softMin = 0.05,
+                            softMax = 20,
+                            step = 0.05,
+                            width = 1,
+                        },
+                        -- Proc
+                        duration = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type ~= 4
+                            end,
+                            order = 8,
+                            name = L["Duration"],
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 0.01,
+                            -- max = 1,
+                            softMin = 0.01,
+                            softMax = 3,
+                            step = 0.01,
+                            width = 1,
+                        },
+                        -- Autocast
+                        scale = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type ~= 3
+                            end,
+                            order = 9,
+                            name = L["Scale"],
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 0.05,
+                            -- max = 1,
+                            softMin = 0.05,
+                            softMax = 10,
+                            step = 0.05,
+                            width = 1,
+                            isPercent = true,
+                        },
+                        -- Pixel, Autocast, Proc
+                        XOffset = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type == 1
+                            end,
+                            order = 10,
+                            name = L["x - offset"], -- X 오프셋
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            -- min = 1,
+                            -- max = 1,
+                            softMin = -100,
+                            softMax = 100,
+                            step = 1,
+                            width = 1,
+                        },
+                        -- Pixel, Autocast, Proc
+                        YOffset = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type == 1
+                            end,
+                            order = 11,
+                            name = L["y - offset"], -- y 오프셋
+                            desc = "",
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            -- min = 1,
+                            -- max = 1,
+                            softMin = -100,
+                            softMax = 100,
+                            step = 1,
+                            width = 1,
+                        },
+                        -- Proc
+                        startAnim = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type ~= 4
+                            end,
+                            order = 12,
+                            name = L["Start Animation"],
+                            type = "toggle",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 1,
+                        },
+                        -- Pixel
+                        border = {
+                            hidden = function()
+                                local type = RaidFrameSettings.db.profile.MinorModules.Glow.type
+                                return type ~= 2
+                            end,
+                            order = 13,
+                            name = L["Border"],
+                            type = "toggle",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.5,
+                        },
+                    },
+                },
                 CustomScale = {
                     hidden = isClassic or CustomScale_disabled,
-                    order = 6,
+                    order = 7,
                     name = L["Custom Scale"],
                     type = "group",
                     inline = true,
@@ -2113,7 +2331,7 @@ options = {
                 },
                 Overabsorb = {
                     hidden = isClassic or Overabsorb_disabled,
-                    order = 7,
+                    order = 8,
                     name = L["Overabsorb"],
                     type = "group",
                     inline = true,
@@ -2143,7 +2361,7 @@ options = {
                 },
                 TimerTextLimit = {
                     hidden = Buffs_disabled and Debuffs_disabled,
-                    order = 7,
+                    order = 9,
                     name = L["TimerText Format Limit (by seconds)"],
                     type = "group",
                     inline = true,
@@ -2409,6 +2627,20 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                     RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.4,
+            },
+            glow = {
+                hidden = function()
+                    return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
+                end,
+                order = 5.1,
+                name = L["Glow"],
+                type = "toggle",
+                get = function() return dbObj.glow end,
+                set = function(_, value)
+                    dbObj.glow = value
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                width = 0.5,
             },
             remove = {
                 order = 6,
@@ -2781,6 +3013,17 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 step = 1,
                 width = 0.8,
             },
+            glow = {
+                order = 12,
+                name = L["Glow"],
+                type = "toggle",
+                get = function() return dbObj.glow end,
+                set = function(_, value)
+                    dbObj.glow = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
+            },
         },
     }
     auraPositionOptions[spellId] = aura_entry
@@ -2833,8 +3076,20 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 end,
                 width = 0.4,
             },
-            remove = {
+            glow = {
                 order = 3,
+                name = L["Glow"],
+                type = "toggle",
+                get = function() return dbObj[spellId].glow end,
+                set = function(_, value)
+                    dbObj[spellId].glow = value
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
+            },
+            remove = {
+                order = 4,
                 name = L["remove"],
                 type = "execute",
                 func = function()
@@ -3217,6 +3472,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     dbObj.auraList[value] = {
                         spellId = tonumber(value),
                         priority = 0,
+                        glow = false,
                     }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     RaidFrameSettings:UpdateModule(category)

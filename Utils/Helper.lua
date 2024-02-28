@@ -2,7 +2,7 @@ local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 
 --[[
- 
+
 ]]
 function addon:ConvertDbNumberToOutlinemode(number)
     local outlinemodes = {
@@ -97,11 +97,21 @@ function addon:GetAuraGrowthOrientationPoints(number, gap, baseline)
         relativePoint = "TOP" .. baseline
         offsetX = 0
         offsetY = gap
-    elseif number == 4  or number == 6 then
+    elseif number == 4 or number == 6 then
         point = "TOP" .. baseline
         relativePoint = "BOTTOM" .. baseline
         offsetX = 0
         offsetY = -gap
     end
     return point, relativePoint, offsetX, offsetY
+end
+
+function addon:ConvertDbNumberToGlowType(number)
+    local types = {
+        [1] = "buttonOverlay",
+        [2] = "Pixel",
+        [3] = "ACShine",
+        [4] = "Proc",
+    }
+    return types[number] or ""
 end

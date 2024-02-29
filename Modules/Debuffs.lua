@@ -610,6 +610,11 @@ function Debuffs:OnEnable()
                 resizeDebuffFrame(debuffFrame)
             end
         end
+        if frame.PrivateAuraAnchors then
+            for _, privateAuraAnchor in ipairs(frame.PrivateAuraAnchors) do
+                privateAuraAnchor:SetSize(boss_width, boss_height)
+            end
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 

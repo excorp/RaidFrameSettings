@@ -509,8 +509,8 @@ function Buffs:OnEnable()
                         end
                         self:SetScript("OnUpdate", RunOnUpdate)
                     end)
-                    v:SetScript("OnLeave", function()
-                        GameTooltip:Hide();
+                    v:SetScript("OnLeave", function(self)
+                        GameTooltip:Hide()
                         self:SetScript("OnUpdate", nil)
                     end)
                 else

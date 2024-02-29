@@ -176,7 +176,7 @@ function Debuffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetDebuff = function(debuffFrame, aura, glow)
+    local onSetDebuff = function(debuffFrame, aura, opt)
         if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -229,7 +229,8 @@ function Debuffs:OnEnable()
             end
         end
 
-        self:Glow(debuffFrame, glow)
+        self:Glow(debuffFrame, opt.glow)
+        debuffFrame:SetAlpha(opt.alpha or 1)
     end
     -- self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDebuff)
 
@@ -277,7 +278,7 @@ function Debuffs:OnEnable()
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                 local placed = userPlaced[aura.spellId]
                 CompactUnitFrame_UtilSetDebuff(debuffFrame, aura)
-                onSetDebuff(debuffFrame, aura, placed and placed.glow)
+                onSetDebuff(debuffFrame, aura, placed)
                 return false
             end
             if auraGroupList[aura.spellId] then
@@ -286,14 +287,14 @@ function Debuffs:OnEnable()
                 local auraOpt = auraList[aura.spellId]
                 local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
                 if not sorted[groupNo] then sorted[groupNo] = {} end
-                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, glow = auraOpt and auraOpt.glow })
+                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
                 groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 return false
             end
             if frameNum <= frame_registry[frame].maxDebuffs then
                 local filtered = filteredAuras[aura.spellId]
                 local priority = filtered and filtered.priority or 0
-                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, glow = filtered and filtered.glow })
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
                 frameNum = frameNum + 1
             end
             return false
@@ -308,13 +309,13 @@ function Debuffs:OnEnable()
                     -- default aura frame
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
-                    onSetDebuff(debuffFrame, v.aura, v.glow)
+                    onSetDebuff(debuffFrame, v.aura, v.opt)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     CompactUnitFrame_UtilSetDebuff(debuffFrame, v.aura)
-                    onSetDebuff(debuffFrame, v.aura, v.glow)
+                    onSetDebuff(debuffFrame, v.aura, v.opt)
                     if k >= auraGroup[groupNo].maxAuras then
                         break
                     end

@@ -184,7 +184,7 @@ function Buffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetBuff = function(buffFrame, aura, glow)
+    local onSetBuff = function(buffFrame, aura, opt)
         if buffFrame:IsForbidden() or not buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -222,7 +222,8 @@ function Buffs:OnEnable()
             end
         end
 
-        self:Glow(buffFrame, glow)
+        self:Glow(buffFrame, opt.glow)
+        buffFrame:SetAlpha(opt.alpha or 1)
     end
     -- self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
@@ -246,7 +247,7 @@ function Buffs:OnEnable()
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 local placed = userPlaced[aura.spellId]
                 CompactUnitFrame_UtilSetBuff(buffFrame, aura)
-                onSetBuff(buffFrame, aura, placed and placed.glow)
+                onSetBuff(buffFrame, aura, placed)
                 return false
             end
             if auraGroupList[aura.spellId] then
@@ -255,14 +256,14 @@ function Buffs:OnEnable()
                 local auraOpt = auraList[aura.spellId]
                 local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
                 if not sorted[groupNo] then sorted[groupNo] = {} end
-                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, glow = auraOpt and auraOpt.glow })
+                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
                 groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 return false
             end
             if frameNum <= frame_registry[frame].maxBuffs then
                 local filtered = filteredAuras[aura.spellId]
                 local priority = filtered and filtered.priority or 0
-                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, glow = filtered and filtered.glow })
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
                 frameNum = frameNum + 1
             end
             return false
@@ -277,13 +278,13 @@ function Buffs:OnEnable()
                     -- default aura frame
                     local buffFrame = frame_registry[frame].extraBuffFrames[k]
                     CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
-                    onSetBuff(buffFrame, v.aura, v.glow)
+                    onSetBuff(buffFrame, v.aura, v.opt)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
-                    onSetBuff(buffFrame, v.aura, v.glow)
+                    onSetBuff(buffFrame, v.aura, v.opt)
                     if k >= auraGroup[groupNo].maxAuras then
                         break
                     end

@@ -175,7 +175,7 @@ options = {
     args = {
         Version = {
             order = 0,
-            name = "@project-version@",
+            name = "v2.22.2-mod7",
             type = "group",
             disabled = true,
             args = {},
@@ -829,6 +829,7 @@ options = {
                                     hideInCombat = false,
                                     priority = 0,
                                     glow = false,
+                                    alpha = 1,
                                 }
                                 RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
                                 RaidFrameSettings:UpdateModule("Buffs")
@@ -866,6 +867,7 @@ options = {
                                     hideInCombat = false,
                                     priority = 0,
                                     glow = false,
+                                    alpha = 1,
                                 }
                                 RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
                                 RaidFrameSettings:UpdateModule("Debuffs")
@@ -1247,6 +1249,7 @@ options = {
                                             pattern = "^%d+$",
                                             usage = L["please enter a number"],
                                             set = function(_, value)
+                                                local filter = RaidFrameSettings.db.profile.AuraFilter.Buffs[value]
                                                 RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
                                                     ["spellId"] = tonumber(value),
                                                     point = 1,
@@ -1260,7 +1263,8 @@ options = {
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
-                                                    glow = RaidFrameSettings.db.profile.AuraFilter.Buffs[value] and RaidFrameSettings.db.profile.AuraFilter.Buffs[value].glow,
+                                                    glow = filter and filter.glow,
+                                                    alpha = filter and filter.alpha or 1,
                                                 }
                                                 RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
                                                 RaidFrameSettings:UpdateModule("Buffs")
@@ -1625,6 +1629,7 @@ options = {
                                             pattern = "^%d+$",
                                             usage = L["please enter a number"],
                                             set = function(_, value)
+                                                local filter = RaidFrameSettings.db.profile.AuraFilter.Debuffs[value]
                                                 RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
                                                     ["spellId"] = tonumber(value),
                                                     point = 1,
@@ -1638,7 +1643,8 @@ options = {
                                                     setSize = false,
                                                     width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
                                                     height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
-                                                    glow = RaidFrameSettings.db.profile.AuraFilter.Debuffs[value] and RaidFrameSettings.db.profile.AuraFilter.Debuffs[value].glow,
+                                                    glow = filter and filter.glow,
+                                                    alpha = filter and filter.alpha or 1,
                                                 }
                                                 RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
                                                 RaidFrameSettings:UpdateModule("Debuffs")
@@ -2681,6 +2687,24 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 end,
                 width = 0.5,
             },
+            alpha = {
+                hidden = function()
+                    return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
+                end,
+                order = 5.2,
+                name = L["alpha"],
+                type = "range",
+                get = function() return dbObj.alpha or 1 end,
+                set = function(_, value)
+                    dbObj.alpha = value
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                min = 0,
+                max = 1,
+                step = 0.01,
+                isPercent = true,
+                width = 0.8,
+            },
             remove = {
                 order = 6,
                 name = L["remove"],
@@ -3063,6 +3087,21 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 end,
                 width = 0.5,
             },
+            alpha = {
+                order = 13,
+                name = L["alpha"],
+                type = "range",
+                get = function() return dbObj.alpha or 1 end,
+                set = function(_, value)
+                    dbObj.alpha = value
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                min = 0,
+                max = 1,
+                step = 0.01,
+                isPercent = true,
+                width = 0.8
+            },
         },
     }
     auraPositionOptions[spellId] = aura_entry
@@ -3126,6 +3165,21 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
+            },
+            alpha = {
+                order = 3.1,
+                name = L["alpha"],
+                type = "range",
+                get = function() return dbObj[spellId].alpha or 1 end,
+                set = function(_, value)
+                    dbObj[spellId].alpha = value
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                min = 0,
+                max = 1,
+                step = 0.01,
+                isPercent = true,
+                width = 0.8
             },
             remove = {
                 order = 4,
@@ -3508,10 +3562,12 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 pattern = "^%d+$",
                 usage = L["please enter a number"],
                 set = function(_, value)
+                    local filter = RaidFrameSettings.db.profile.AuraFilter[category][value] and self.db.profile.AuraFilter[category][value]
                     dbObj.auraList[value] = {
                         spellId = tonumber(value),
                         priority = 0,
-                        glow = RaidFrameSettings.db.profile.AuraFilter[category][value] and self.db.profile.AuraFilter[category][value].glow,
+                        glow = filter and filter.glow,
+                        alpha = filter and filter.alpha or 1,
                     }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     RaidFrameSettings:UpdateModule(category)

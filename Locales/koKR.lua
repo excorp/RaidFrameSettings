@@ -286,3 +286,13 @@ L["Length"]                   = "길이"
 L["Thickness"]                = "굵기"
 L["Scale"]                    = "비율"
 L["Start Animation"]          = "시작 애니메이션"
+
+
+-- minimap icon
+L["Minimap Icon"]                      = "미니맵 아이콘"
+L["Displays the icon in the minimap."] = "미니맵에 아이콘을 표시 합니다."
+
+
+L["You can also open the options window with the /rfs command.\n\n"] = "설정창은 /rfs 명령으로도 열수 있습니다.\n\n"
+L["left button - Toggles the options window."]                       = "왼쪽 버튼 - 옵션창 보임/숨김."
+L["right button - Hides the minimap icon."]                          = "오른쪽 버튼 - 미니맵 아이콘 숨김."

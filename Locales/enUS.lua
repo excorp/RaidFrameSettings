@@ -289,3 +289,13 @@ L["Length"]                   = "Length"
 L["Thickness"]                = "Thickness"
 L["Scale"]                    = "Scale"
 L["Start Animation"]          = "Start Animation"
+
+
+-- minimap icon
+L["Minimap Icon"]                      = "Minimap Icon"
+L["Displays the icon in the minimap."] = "Displays the icon in the minimap."
+
+
+L["You can also open the options window with the /rfs command.\n\n"] = "You can also open the options window with the /rfs command.\n\n"
+L["left button - Toggles the options window."]                       = "left button - Toggles the options window."
+L["right button - Hides the minimap icon."]                          = "right button - Hides the minimap icon."

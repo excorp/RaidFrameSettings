@@ -1811,6 +1811,24 @@ options = {
             name = L["Module Settings"],
             type = "group",
             args = {
+                Minimap = {
+                    order = 0,
+                    type = "toggle",
+                    name = L["Minimap Icon"],
+                    desc = L["Displays the icon in the minimap."],
+                    get = function()
+                        return not RaidFrameSettings.db.profile.MinorModules.minimapIcon.hide
+                    end,
+                    set = function(info, value)
+                        RaidFrameSettings.db.profile.MinorModules.minimapIcon.hide = not value
+                        RaidFrameSettings:ShowMinimapIcon(value)
+                    end,
+                },
+                newline = {
+                    order = 0.1,
+                    type = "description",
+                    name = "\n",
+                },
                 RoleIcon = {
                     hidden = isVanilla or RoleIcon_disabled,
                     order = 1,
@@ -2547,7 +2565,28 @@ function RaidFrameSettings:GetProfiles()
 end
 
 function RaidFrameSettings:GetOptionsTable()
-    return options
+    local blizoptions = {
+        name = L["Raid Frame Settings"],
+        handler = RaidFrameSettings,
+        type = "group",
+        args = {
+            Version = {
+                order = 1,
+                name = L["You can also open the options window with the /rfs command.\n\n"],
+                type = "description",
+            },
+            remove = {
+                order = 2,
+                name = L["Raid Frame Settings"],
+                type = "execute",
+                func = function()
+                    local frame = RaidFrameSettings:GetOptionsFrame()
+                    frame:Show()
+                end,
+            },
+        }
+    }
+    return options, blizoptions
 end
 
 function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)

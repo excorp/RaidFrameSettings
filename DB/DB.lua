@@ -20,7 +20,7 @@ local function findFont(font)
     return nil
 end
 
-local defaults                                    = {
+local defaults = {
     profile = {
         Module = {
             ["*"]         = true,
@@ -223,6 +223,9 @@ local defaults                                    = {
             },
         },
         MinorModules = {
+            minimapIcon = {
+                hide = false,
+            },
             RoleIcon = {
                 position    = 1,
                 x_offset    = 0,
@@ -303,6 +306,7 @@ local defaults                                    = {
     },
 }
 
+
 local fontstring, font, fontheight
 fontstring, font                                  = findFont("GameFontHighlightSmall")
 fontheight                                        = font and font[2] or 10
@@ -367,6 +371,8 @@ function RaidFrameSettings:SetStatus(info, value)
         if self.db.profile.Module.Debuffs then
             self:UpdateModule("Debuffs")
         end
+    elseif module_name == "minimapIcon" then
+        self:ShowMinimapIcon(value)
     else
         self:UpdateModule(module_name)
     end

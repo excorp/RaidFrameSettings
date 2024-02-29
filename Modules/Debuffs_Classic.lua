@@ -115,7 +115,7 @@ function Debuffs:OnEnable()
     local maxAuraGroup = 0
     local auraGroup = {}
     local auraGroupList = {}
-    for k, auraInfo in pairs(addon.db.profile.Buffs.AuraGroup) do
+    for k, auraInfo in pairs(addon.db.profile.Debuffs.AuraGroup) do
         auraGroup[k] = CopyTable(auraInfo)
         auraGroup[k].point = addon:ConvertDbNumberToPosition(auraInfo.point)
         auraGroup[k].relativePoint = addon:ConvertDbNumberToPosition(auraInfo.relativePoint)
@@ -250,7 +250,7 @@ function Debuffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        for _, v in pairs(frame.buffFrames) do
+        for _, v in pairs(frame.debuffFrames) do
             v:Hide()
         end
 

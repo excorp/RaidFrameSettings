@@ -163,7 +163,7 @@ function Debuffs:OnEnable()
         resizeDebuffFrame = function(debuffFrame)
             debuffFrame:SetSize(width, height)
             debuffFrame.icon:SetTexCoord(left, right, top, bottom)
-            debuffFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
+            debuffFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
             debuffFrame.border:SetTexCoord(0, 1, 0, 1)
             if not isWrath then
                 debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09)

@@ -1,5 +1,9 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Fork", "koKR")
+local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Excorp_Fork", "koKR")
 if not L then return end
+
+L["RaidFrameSettings"]                    = "RaidFrameSettings 변하지롱 수정판"
+L["Options will show after combat ends."] = "옵션창은 전투 종료후 표시 됩니다."
+
 
 L["Raid Frame Settings"] = "레이드 프레임 셋팅"
 L["Enabled Modules"]     = "모듈 활성화"

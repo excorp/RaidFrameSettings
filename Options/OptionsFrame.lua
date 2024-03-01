@@ -3,6 +3,7 @@ local RaidFrameSettings = addonTable.RaidFrameSettings
 
 local AceGUI = LibStub("AceGUI-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
+local L = LibStub('AceLocale-3.0'):GetLocale(addonName)
 local frame = CreateFrame("Frame", "RaidFrameSettingsOptions", UIParent, "PortraitFrameTemplate")
 
 local function addResizeButton()
@@ -48,7 +49,7 @@ frame:SetScript("OnEvent", function(self, event)
 end)
 tinsert(UISpecialFrames, frame:GetName())
 frame.title = _G["RaidFrameSettingsOptionsTitleText"]
-frame.title:SetText(addonName)
+frame.title:SetText(L["RaidFrameSettings"])
 frame:SetFrameStrata("DIALOG")
 frame:SetSize(950, 500)
 frame:SetPoint("CENTER", UIparent, "CENTER")

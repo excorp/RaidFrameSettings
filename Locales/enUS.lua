@@ -1,5 +1,9 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Fork", "enUS", true) -- , true)
+local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Excorp_Fork", "enUS", true) -- , true)
 if not L then return end
+
+L["RaidFrameSettings"]                    = "RaidFrameSettings"
+L["Options will show after combat ends."] = "Options will show after combat ends."
+
 
 L["Raid Frame Settings"] = "Raid Frame Settings"
 L["Enabled Modules"]     = "Enabled Modules"

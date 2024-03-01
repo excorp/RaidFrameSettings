@@ -30,40 +30,35 @@ function RaidFrameSettings:OnInitialize()
     --register options as option table to create a gui based on it
     AC:RegisterOptionsTable("RaidFrameSettings_options", options)
     AC:RegisterOptionsTable("RaidFrameSettings_blizoptions", blizoptions)
-    ACD:AddToBlizOptions("RaidFrameSettings_blizoptions", "RaidFrameSettings")
+    ACD:AddToBlizOptions("RaidFrameSettings_blizoptions", L["RaidFrameSettings"])
 
     self:RegisterChatCommand("rfs", "SlashCommand")
     self:RegisterChatCommand("raidframesettings", "SlashCommand")
     self:RegisterEvent("PLAYER_LOGIN", "LoadGroupBasedProfile")
 
     -- minimap icon
-    local minimapIconConf = LDB:NewDataObject("RaidFrameSettings_Fork", {
+    local minimapIconConf = LDB:NewDataObject("RaidFrameSettings_Excorp_Fork", {
         type = "launcher",
-        icon = "Interface\\AddOns\\RaidFrameSettings_Fork\\Textures\\Icon\\Icon.tga",
+        icon = "Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\Icon\\Icon.tga",
         OnClick = function(self, button)
             if button == "LeftButton" then
-                local frame = RaidFrameSettings:GetOptionsFrame()
-                if frame:IsShown() then
-                    frame:Hide()
-                else
-                    frame:Show()
-                end
+                RaidFrameSettings:SlashCommand()
             elseif button == "RightButton" then
                 RaidFrameSettings:ShowMinimapIcon(false)
             end
         end,
         OnTooltipShow = function(tooltip)
-            tooltip:SetText("RaidFrameSettings")
+            tooltip:SetText(L["RaidFrameSettings"])
             tooltip:AddLine(L["left button - Toggles the options window."], 1, 1, 1)
             tooltip:AddLine(L["right button - Hides the minimap icon."], 1, 1, 1)
         end,
     })
-    LDBIcon:Register("RaidFrameSettings_Fork", minimapIconConf, self.db.profile.MinorModules.minimapIcon)
+    LDBIcon:Register("RaidFrameSettings_Excorp_Fork", minimapIconConf, self.db.profile.MinorModules.minimapIcon)
 end
 
 function RaidFrameSettings:SlashCommand()
     if InCombatLockdown() then
-        self:Print("Options will show after combat ends.")
+        self:Print(L["Options will show after combat ends."])
         self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
             self:UnregisterEvent("PLAYER_REGEN_ENABLED")
             local frame = RaidFrameSettings:GetOptionsFrame()
@@ -115,9 +110,9 @@ function RaidFrameSettings:ShowMinimapIcon(show)
         RaidFrameSettings.db.profile.MinorModules.minimapIcon.hide = not show
     end
     if RaidFrameSettings.db.profile.MinorModules.minimapIcon.hide then
-        LDBIcon:Hide("RaidFrameSettings_Fork")
+        LDBIcon:Hide("RaidFrameSettings_Excorp_Fork")
     else
-        LDBIcon:Show("RaidFrameSettings_Fork")
+        LDBIcon:Show("RaidFrameSettings_Excorp_Fork")
     end
 end
 

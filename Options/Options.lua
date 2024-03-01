@@ -2586,8 +2586,7 @@ function RaidFrameSettings:GetOptionsTable()
                 name = L["Raid Frame Settings"],
                 type = "execute",
                 func = function()
-                    local frame = RaidFrameSettings:GetOptionsFrame()
-                    frame:Show()
+                    RaidFrameSettings:SlashCommand()
                 end,
             },
         }

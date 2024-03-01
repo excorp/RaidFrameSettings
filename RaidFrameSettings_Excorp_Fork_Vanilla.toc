@@ -1,6 +1,9 @@
 ## Interface: 11501
 ## Version: @project-version@
-## Title: RaidFrameSettings_Fork
+## Title: RaidFrameSettings Excorp Fork
+## Title-koKR: RaidFrameSettings 변하지롱 수정판
+## Notes: An efficient AddOn that extends the default World of Warcraft Raid Frames.
+## Notes-koKR: 기본 레이드 프레임을 강화시켜주는 효율적인 애드온 입니다
 ## Author: Slothpala
 ## SavedVariables: RaidFrameSettingsDB, RaidFrameSettingsDBPP, RaidFrameSettingsDBRP
 ## OptionalDeps: Ace3, LibDeflate, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibDDI-1.0, AceGUI-3.0_SFX-Widgets, LibCanDispel-1.0

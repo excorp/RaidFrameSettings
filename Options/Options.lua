@@ -2650,13 +2650,38 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                     dbObj.hideInCombat = value
                     RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
-                width = 0.8,
+                width = 0.6,
+            },
+            remove = {
+                order = 5,
+                name = L["remove"],
+                type = "execute",
+                func = function()
+                    self.db.profile.AuraFilter[category][spellId] = nil
+                    auraFilterOptions[spellId] = nil
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                width = 0.5,
+            },
+            newline6 = {
+                hidden = function() return dbObj.frame == 1 end,
+                order = 6,
+                type = "description",
+                name = "",
+            },
+            newline7 = {
+                hidden = function() return dbObj.frame == 1 end,
+                order = 7,
+                type = "description",
+                name = "",
+                width = 1.5,
             },
             priority = {
                 hidden = function()
                     return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
                 end,
-                order = 5,
+                order = 8,
                 name = L["Priority"],
                 type = "input",
                 pattern = "^%d+$",
@@ -2673,25 +2698,11 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 end,
                 width = 0.4,
             },
-            glow = {
-                hidden = function()
-                    return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
-                end,
-                order = 5.1,
-                name = L["Glow"],
-                type = "toggle",
-                get = function() return dbObj.glow end,
-                set = function(_, value)
-                    dbObj.glow = value
-                    RaidFrameSettings:UpdateModule("AuraFilter")
-                end,
-                width = 0.5,
-            },
             alpha = {
                 hidden = function()
                     return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
                 end,
-                order = 5.2,
+                order = 9,
                 name = L["alpha"],
                 type = "range",
                 get = function() return dbObj.alpha or 1 end,
@@ -2705,14 +2716,16 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 isPercent = true,
                 width = 0.8,
             },
-            remove = {
-                order = 6,
-                name = L["remove"],
-                type = "execute",
-                func = function()
-                    self.db.profile.AuraFilter[category][spellId] = nil
-                    auraFilterOptions[spellId] = nil
-                    RaidFrameSettings:LoadUserInputEntrys()
+            glow = {
+                hidden = function()
+                    return not dbObj.show or not RaidFrameSettings.db.profile.Module[category]
+                end,
+                order = 10,
+                name = L["Glow"],
+                type = "toggle",
+                get = function() return dbObj.glow end,
+                set = function(_, value)
+                    dbObj.glow = value
                     RaidFrameSettings:UpdateModule("AuraFilter")
                 end,
                 width = 0.5,
@@ -2854,7 +2867,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.5,
             },
             point = {
-                order = 3,
+                order = 2,
                 name = L["Anchor"],
                 type = "select",
                 values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
@@ -2869,7 +2882,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.6,
             },
             relativePoint = {
-                order = 4,
+                order = 3,
                 name = L["to Frames"],
                 type = "select",
                 values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
@@ -2884,7 +2897,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.6,
             },
             frame = {
-                order = 4.1,
+                order = 4,
                 name = L["to Attach Frame"],
                 type = "select",
                 values = { L["Unit Frame"], L["Placed"], L["Group"] },
@@ -2912,7 +2925,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             frameNo = {
                 hidden = function() return dbObj.frame == 1 end,
-                order = 4.2,
+                order = 5,
                 name = L["FrameNo"],
                 type = "input",
                 pattern = "^%d+$",
@@ -2937,7 +2950,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             frameSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 end,
-                order = 4.3,
+                order = 6,
                 name = L["Frame Select"],
                 type = "select",
                 values = { L["Last"], L["First"], L["Select"] },
@@ -2953,7 +2966,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
             },
             frameManualSelect = {
                 hidden = function() return dbObj.frame ~= 3 or dbObj.frameNo == 0 or dbObj.frameSelect ~= 3 end,
-                order = 4.4,
+                order = 7,
                 name = L["Frame No"],
                 type = "input",
                 pattern = "^%d+$",
@@ -2972,14 +2985,21 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 end,
                 width = 0.4,
             },
-            newline0 = {
+            newline8 = {
                 hidden = function() return dbObj.frame == 1 end,
-                order = 4.5,
+                order = 8,
                 type = "description",
                 name = "",
             },
+            newline9 = {
+                hidden = function() return dbObj.frame == 1 end,
+                order = 9,
+                type = "description",
+                name = "",
+                width = 0.5,
+            },
             xOffset = {
-                order = 5,
+                order = 10,
                 name = L["x - offset"],
                 type = "range",
                 get = function()
@@ -2995,7 +3015,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.8,
             },
             yOffset = {
-                order = 6,
+                order = 11,
                 name = L["y - offset"],
                 type = "range",
                 get = function()
@@ -3011,7 +3031,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.8,
             },
             remove = {
-                order = 7,
+                order = 12,
                 name = L["remove"],
                 type = "execute",
                 func = function()
@@ -3023,13 +3043,19 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 end,
                 width = 0.5,
             },
-            newline = {
-                order = 8,
+            newline13 = {
+                order = 13,
                 type = "description",
                 name = "",
             },
+            newline14 = {
+                order = 14,
+                type = "description",
+                name = "",
+                width = 0.5,
+            },
             setSize = {
-                order = 9,
+                order = 15,
                 type = "toggle",
                 name = L["Set Size"],
                 desc = "",
@@ -3043,7 +3069,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.5,
             },
             width = {
-                order = 10,
+                order = 16,
                 hidden = function() return not dbObj.setSize end,
                 name = L["Icon Width"],
                 type = "range",
@@ -3060,7 +3086,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.8,
             },
             height = {
-                order = 11,
+                order = 17,
                 hidden = function() return not dbObj.setSize end,
                 name = L["Icon Height"],
                 type = "range",
@@ -3076,19 +3102,8 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 step = 1,
                 width = 0.8,
             },
-            glow = {
-                order = 12,
-                name = L["Glow"],
-                type = "toggle",
-                get = function() return dbObj.glow end,
-                set = function(_, value)
-                    dbObj.glow = value
-                    RaidFrameSettings:UpdateModule(category)
-                end,
-                width = 0.5,
-            },
             alpha = {
-                order = 13,
+                order = 18,
                 name = L["alpha"],
                 type = "range",
                 get = function() return dbObj.alpha or 1 end,
@@ -3101,6 +3116,17 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 step = 0.01,
                 isPercent = true,
                 width = 0.8
+            },
+            glow = {
+                order = 19,
+                name = L["Glow"],
+                type = "toggle",
+                get = function() return dbObj.glow end,
+                set = function(_, value)
+                    dbObj.glow = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
             },
         },
     }
@@ -3154,19 +3180,8 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 end,
                 width = 0.4,
             },
-            glow = {
-                order = 3,
-                name = L["Glow"],
-                type = "toggle",
-                get = function() return dbObj[spellId].glow end,
-                set = function(_, value)
-                    dbObj[spellId].glow = value
-                    RaidFrameSettings:UpdateModule(category)
-                end,
-                width = 0.5,
-            },
             alpha = {
-                order = 3.1,
+                order = 3,
                 name = L["alpha"],
                 type = "range",
                 get = function() return dbObj[spellId].alpha or 1 end,
@@ -3180,8 +3195,19 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 isPercent = true,
                 width = 0.8
             },
-            remove = {
+            glow = {
                 order = 4,
+                name = L["Glow"],
+                type = "toggle",
+                get = function() return dbObj[spellId].glow end,
+                set = function(_, value)
+                    dbObj[spellId].glow = value
+                    RaidFrameSettings:UpdateModule(category)
+                end,
+                width = 0.5,
+            },
+            remove = {
+                order = 5,
                 name = L["remove"],
                 type = "execute",
                 func = function()

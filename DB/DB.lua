@@ -137,9 +137,6 @@ local defaults = {
             Increase = {
                 --[[spellID = name                ]] --
             },
-            AuraFilter = {
-
-            },
         },
         Buffs = {
             BuffFramesDisplay = {
@@ -197,9 +194,6 @@ local defaults = {
             },
             Increase = {
                 --[[spellID = name                ]] --
-            },
-            AuraFilter = {
-
             },
         },
         AuraHighlight = {

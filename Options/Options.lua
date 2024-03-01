@@ -832,6 +832,7 @@ options = {
                                     alpha = 1,
                                 }
                                 RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
+                                RaidFrameSettings:LoadUserInputEntrys()
                                 RaidFrameSettings:UpdateModule("Buffs")
                             end,
                         },
@@ -2563,7 +2564,7 @@ end
 function RaidFrameSettings:compareSpell(a, b)
     local aname = GetSpellInfo(a) or L["|cffff0000aura not found|r"]
     local bname = GetSpellInfo(b) or L["|cffff0000aura not found|r"]
-    return aname < bname
+    return aname == bname and a < b or aname < bname
 end
 
 function RaidFrameSettings:GetProfiles()
@@ -3160,7 +3161,6 @@ function RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, category)
                 get = function() return dbObj[spellId].glow end,
                 set = function(_, value)
                     dbObj[spellId].glow = value
-                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
@@ -3311,6 +3311,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     end
                     dbObj.frame = value
                     dbObj.frameNo = 0
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.8,
@@ -3352,6 +3353,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 end,
                 set = function(_, value)
                     dbObj.frameSelect = value
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.5,
@@ -3373,6 +3375,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     local maxAuras = dbGroup.unlimitAura ~= false and self:count(dbGroup.auraList) or dbGroup.maxAuras or 1
                     if maxAuras < 1 then maxAuras = 1 end
                     dbObj.frameManualSelect = frameNoNo < 1 and 1 or frameNoNo > maxAuras and maxAuras or frameNoNo
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end,
                 width = 0.4,
@@ -3569,6 +3572,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                         alpha = filter and filter.alpha or 1,
                     }
                     RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
+                    RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end
             },

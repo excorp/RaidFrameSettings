@@ -324,7 +324,7 @@ defaults.profile.Debuffs.StacksDisplay.fontsize   = fontheight
 function RaidFrameSettings:LoadDataBase()
     self.db = LibStub("AceDB-3.0"):New("RaidFrameSettingsDB", defaults, true)
     --db callbacks
-    self.db.RegisterCallback(self, "OnNewProfile", "ReloadConfig")
+    -- self.db.RegisterCallback(self, "OnNewProfile", "ReloadConfig") -- Creating a new profile fires the changed event.
     self.db.RegisterCallback(self, "OnProfileDeleted", "ReloadConfig")
     self.db.RegisterCallback(self, "OnProfileChanged", "ReloadConfig")
     self.db.RegisterCallback(self, "OnProfileCopied", "ReloadConfig")

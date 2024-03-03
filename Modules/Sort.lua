@@ -536,14 +536,16 @@ function Sort:TrySort()
         local prev
         for k, v in pairs(unit_priority) do
             local frame = self:getFrameUnit(v.token)
-            for _, p in pairs(frame_pos.party[k]) do
-                if not first then
-                    first = frame
-                    frame:SetPoint(unpack(p))
-                else
-                    frame:SetPoint(p[1], prev, p[3], p[4], p[5])
+            if frame and frame_pos.party[k] then
+                for _, p in pairs(frame_pos.party[k]) do
+                    if not first then
+                        first = frame
+                        frame:SetPoint(unpack(p))
+                    else
+                        frame:SetPoint(p[1], prev, p[3], p[4], p[5])
+                    end
+                    prev = frame
                 end
-                prev = frame
             end
         end
         -- Adjust the position of the first pet frame

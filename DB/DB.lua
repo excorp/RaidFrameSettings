@@ -216,6 +216,141 @@ local defaults = {
                 },
             },
         },
+        Sort = {
+            party = {
+                priority = {
+                    player = true,
+                    role = {
+                        priority = 3,
+                        reverse  = false,
+                    },
+                    position = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                    name = {
+                        priority = 2,
+                        reverse = false,
+                    },
+                    token = {
+                        priority = 1,
+                        reverse = false,
+                    },
+                    user = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                    class = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                },
+                player = {
+                    position = 1,
+                },
+                role = {
+                    MAINTANK   = 5,
+                    MAINASSIST = 4,
+                    TANK       = 3,
+                    HEALER     = 2,
+                    DAMAGER    = 1,
+                    NONE       = 0,
+                },
+                position = {
+                    MELEE  = 2,
+                    RANGED = 1,
+                },
+                class = {
+                    WARRIOR     = 13,
+                    PALADIN     = 12,
+                    HUNTER      = 11,
+                    ROGUE       = 10,
+                    PRIEST      = 9,
+                    DEATHKNIGHT = 8,
+                    SHAMAN      = 7,
+                    MAGE        = 6,
+                    WARLOCK     = 5,
+                    MONK        = 4,
+                    DRUID       = 3,
+                    DEMONHUNTER = 2,
+                    EVOKER      = 1,
+                },
+                user = {
+                    --[[
+                    ["변하지롱"] = {
+                        priority = 123,
+                        fullname = true,
+                        spec     = true,
+                        rolepos  = true,
+                        class    = true,
+                        name     = true,
+                    }
+                    ]]
+                },
+            },
+            raid = {
+                priority = {
+                    player = false,
+                    role = {
+                        priority = 0,
+                        reverse  = false,
+                    },
+                    position = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                    name = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                    token = {
+                        priority = 1,
+                        reverse = false,
+                    },
+                    user = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                    class = {
+                        priority = 0,
+                        reverse = false,
+                    },
+                },
+                player = {
+                    position = 1,
+                },
+                role = {
+                    MAINTANK   = 5,
+                    MAINASSIST = 4,
+                    TANK       = 3,
+                    HEALER     = 2,
+                    DAMAGER    = 1,
+                    NONE       = 0,
+                },
+                position = {
+                    MELEE  = 2,
+                    RANGED = 1,
+                },
+                class = {
+                    WARRIOR     = 13,
+                    PALADIN     = 12,
+                    HUNTER      = 11,
+                    ROGUE       = 10,
+                    PRIEST      = 9,
+                    DEATHKNIGHT = 8,
+                    SHAMAN      = 7,
+                    MAGE        = 6,
+                    WARLOCK     = 5,
+                    MONK        = 4,
+                    DRUID       = 3,
+                    DEMONHUNTER = 2,
+                    EVOKER      = 1,
+                },
+                user = {
+
+                },
+            },
+        },
         MinorModules = {
             minimapIcon = {
                 hide = false,
@@ -380,6 +515,40 @@ end
 
 function RaidFrameSettings:SetColor(info, r, g, b, a)
     self:SetStatus(info, { r = r, g = g, b = b, a = a })
+end
+
+--status2
+function RaidFrameSettings:GetStatusObj(info)
+    local db = self.db.profile
+    for i = 1, #info - 1 do
+        local k = info[i]
+        if db and db[k] then
+            db = db[k]
+        end
+    end
+    return db
+end
+
+function RaidFrameSettings:GetStatus2(info)
+    local db = self:GetStatusObj(info)
+    return db and db[info[#info]]
+end
+
+function RaidFrameSettings:GetStatus2ntos(info)
+    return tostring(self:GetStatus2(info))
+end
+
+function RaidFrameSettings:SetStatus2(info, value)
+    local db = self:GetStatusObj(info)
+    if db then
+        db[info[#info]] = value
+    end
+    local module_name = info[1]
+    self:UpdateModule(module_name)
+end
+
+function RaidFrameSettings:SetStatus2ston(info, value)
+    self:SetStatus2(info, tonumber(value))
 end
 
 function RaidFrameSettings:GetGlobal(info)

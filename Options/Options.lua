@@ -20,6 +20,7 @@ local Debuffs_disabled                        = function() return not RaidFrameS
 local AuraHighlight_disabled                  = function() return not RaidFrameSettings.db.profile.Module.AuraHighlight end
 local CustomScale_disabled                    = function() return not RaidFrameSettings.db.profile.Module.CustomScale end
 local Overabsorb_disabled                     = function() return not RaidFrameSettings.db.profile.Module.Overabsorb end
+local Sort_disabled                           = function() return not RaidFrameSettings.db.profile.Module.Sort end
 
 --LibDDI-1.0
 local statusbars                              = LibStub("LibSharedMedia-3.0"):List("statusbar")
@@ -166,6 +167,238 @@ local function getDebuffDurationOptions()
 end
 
 local profiles = {}
+
+local sort_preset = {
+    party = {
+        [2] = {
+            priority = {
+                player = true,
+                role = {
+                    priority = 0,
+                    reverse  = false,
+                },
+                position = {
+                    priority = 0,
+                    reverse = false,
+                },
+                name = {
+                    priority = 0,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
+                },
+                user = {
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+            player = {
+                position = 1,
+            },
+        },
+        [3] = {
+            priority = {
+                player = false,
+                role = {
+                    priority = 3,
+                    reverse  = false,
+                },
+                position = {
+                    priority = 0,
+                    reverse = false,
+                },
+                name = {
+                    priority = 2,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
+                },
+                user = {
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+            role = {
+                MAINTANK   = 6,
+                MAINASSIST = 5,
+                TANK       = 4,
+                HEALER     = 3,
+                DAMAGER    = 2,
+                NONE       = 1,
+            },
+        },
+        [4] = {
+            priority = {
+                player = false,
+                role = {
+                    priority = 0,
+                    reverse  = false,
+                },
+                position = {
+                    priority = 0,
+                    reverse = false,
+                },
+                name = {
+                    priority = 2,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
+                },
+                user = {
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+        },
+    },
+    raid = {
+        [2] = {
+            priority = {
+                player = false,
+                role = {
+                    priority = 0,
+                    reverse  = false,
+                },
+                position = {
+                    priority = 0,
+                    reverse = false,
+                },
+                name = {
+                    priority = 0,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
+                },
+                user = {
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+            player = {
+                position = 1,
+            },
+        },
+        [3] = {
+            priority = {
+                player = false,
+                role = {
+                    priority = 3,
+                    reverse  = false,
+                },
+                position = {
+                    priority = 0,
+                    reverse = false,
+                },
+                name = {
+                    priority = 2,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
+                },
+                user = {
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+            role = {
+                MAINTANK   = 6,
+                MAINASSIST = 5,
+                TANK       = 4,
+                HEALER     = 3,
+                DAMAGER    = 2,
+                NONE       = 1,
+            },
+        },
+        [4] = {
+            priority = {
+                player = false,
+                role = {
+                    priority = 0,
+                    reverse  = false,
+                },
+                position = {
+                    priority = 0,
+                    reverse = false,
+                },
+                name = {
+                    priority = 2,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
+                },
+                user = {
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+        },
+    },
+}
+
+local function table_compare_left(left, right)
+    for k, v in pairs(left) do
+        if type(v) == "table" then
+            if not table_compare_left(v, right[k]) then
+                return false
+            end
+        else
+            if v ~= right[k] then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+local function table_overwrite(src, dst)
+    for k, v in pairs(src) do
+        if type(v) == "table" then
+            if dst[k] == nil or type(dst[k]) ~= "table" then
+                dst[k] = {}
+            end
+            table_overwrite(v, dst[k])
+        else
+            dst[k] = v
+        end
+    end
+end
+
 local options
 options = {
     name = L["Raid Frame Settings"],
@@ -287,6 +520,14 @@ options = {
                             type = "toggle",
                             name = L["Solo"],
                             desc = L["Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r"],
+                            get = "GetModuleStatus",
+                            set = "SetModuleStatus",
+                        },
+                        Sort = {
+                            order = 11,
+                            type = "toggle",
+                            name = L["Sort"],
+                            desc = L["Sort the order of group members.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -1813,6 +2054,1005 @@ options = {
                 },
             },
         },
+        Sort = {
+            order = 6.1,
+            name = L["Sort"],
+            type = "group",
+            hidden = Sort_disabled,
+            childGroups = "tab",
+            args = {
+                party = {
+                    order = 1,
+                    name = L["Party"],
+                    type = "group",
+                    childGroups = "tab",
+                    args = {
+                        priority = {
+                            order = 1,
+                            name = L["Sort Order"],
+                            type = "group",
+                            args = {
+                                player = {
+                                    order = 1,
+                                    name = L["Use the player order"],
+                                    type = "toggle",
+                                    get = function(info)
+                                        RaidFrameSettings:SetOrder(info, 3)
+                                        RaidFrameSettings:SetOrder({ "Sort", "party", "role", "TANK" }, 1)
+                                        RaidFrameSettings:SetOrder({ "Sort", "party", "position", "MELEE" }, 1)
+                                        RaidFrameSettings:SetOrder({ "Sort", "party", "class", "WARRIOR" }, 1)
+                                        return RaidFrameSettings:GetStatus2(info)
+                                    end,
+                                    set = "SetStatus2",
+                                },
+                                preset = {
+                                    order = 2,
+                                    name = L["Preset"],
+                                    type = "select",
+                                    values = { L["User Settings"], L["Party"], L["Role"], L["Name"] },
+                                    sorting = { 1, 2, 3, 4 },
+                                    get = function(info)
+                                        for k, v in pairs(sort_preset.party) do
+                                            if table_compare_left(v, RaidFrameSettings.db.profile.Sort.party) then
+                                                return k
+                                            end
+                                        end
+                                        return 1
+                                    end,
+                                    set = function(info, value)
+                                        if value > 1 then
+                                            table_overwrite(sort_preset.party[tonumber(value)], RaidFrameSettings.db.profile.Sort.party)
+                                            RaidFrameSettings:SetOrder(info, 3)
+                                        end
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("Sort")
+                                    end,
+                                },
+                                role = {
+                                    order = 3,
+                                    name = L["Role"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Role"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                position = {
+                                    order = 3,
+                                    name = L["Position"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Position"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                name = {
+                                    order = 3,
+                                    name = L["Name"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Name"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                token = {
+                                    order = 3,
+                                    name = L["Unit"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Unit"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                user = {
+                                    order = 3,
+                                    name = L["Customize"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Customize"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                class = {
+                                    order = 3,
+                                    name = L["Class"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Class"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        player = {
+                            disabled = function()
+                                return not RaidFrameSettings.db.profile.Sort.party.priority.player
+                            end,
+                            order = 2,
+                            name = L["Player"],
+                            type = "group",
+                            args = {
+                                position = {
+                                    order = 1,
+                                    name = L["Order in party (1-5)"],
+                                    type = "input",
+                                    pattern = "^[1-5]$",
+                                    usage = L["please enter a number"],
+                                    get = "GetStatus2ntos",
+                                    set = "SetStatus2ston",
+                                },
+                            },
+                        },
+                        role = {
+                            order = 3,
+                            name = L["Role"],
+                            type = "group",
+                            args = {
+                                MAINTANK = {
+                                    hidden = true,
+                                    order = 1,
+                                    name = L["MAINTANK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                MAINASSIST = {
+                                    hidden = true,
+                                    order = 2,
+                                    name = L["MAINASSIST"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                TANK = {
+                                    order = 3,
+                                    name = L["TANK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                HEALER = {
+                                    order = 4,
+                                    name = L["HEALER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DAMAGER = {
+                                    order = 5,
+                                    name = L["DAMAGER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                NONE = {
+                                    order = 6,
+                                    name = L["NONE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                            },
+                        },
+                        position = {
+                            order = 4,
+                            name = L["Position"],
+                            type = "group",
+                            args = {
+                                MELEE = {
+                                    order = 1,
+                                    name = L["MELEE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                RANGED = {
+                                    order = 2,
+                                    name = L["RANGED"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                            },
+                        },
+                        class = {
+                            order = 5,
+                            name = L["Class"],
+                            type = "group",
+                            args = {
+                                WARRIOR = {
+                                    order = 1,
+                                    name = L["WARRIOR"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                PALADIN = {
+                                    order = 2,
+                                    name = L["PALADIN"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                HUNTER = {
+                                    order = 2,
+                                    name = L["HUNTER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                ROGUE = {
+                                    order = 2,
+                                    name = L["ROGUE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                PRIEST = {
+                                    order = 2,
+                                    name = L["PRIEST"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DEATHKNIGHT = {
+                                    order = 2,
+                                    name = L["DEATHKNIGHT"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                SHAMAN = {
+                                    order = 2,
+                                    name = L["SHAMAN"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                MAGE = {
+                                    order = 2,
+                                    name = L["MAGE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                WARLOCK = {
+                                    order = 2,
+                                    name = L["WARLOCK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                MONK = {
+                                    order = 2,
+                                    name = L["MONK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DRUID = {
+                                    order = 2,
+                                    name = L["DRUID"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DEMONHUNTER = {
+                                    order = 2,
+                                    name = L["DEMONHUNTER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                EVOKER = {
+                                    order = 2,
+                                    name = L["EVOKER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                            },
+                        },
+                        user = {
+                            order = 6,
+                            name = L["Customize"],
+                            type = "group",
+                            args = {
+                                add = {
+                                    order = 1,
+                                    name = L["Keyword"],
+                                    desc = L["Sort_customize_desc"],
+                                    type = "input",
+                                    width = "full",
+                                    usage = "",
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Sort.party.user[value] = {
+                                            priority = 0,
+                                            fullname = true,
+                                            spec     = true,
+                                            rolepos  = true,
+                                            class    = true,
+                                            name     = true,
+                                        }
+                                        RaidFrameSettings:CreateSortUserEntry(value, "party")
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("Sort")
+                                    end,
+                                },
+                                userDefined = {
+                                    order = 2,
+                                    name = L["User Defined:"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                raid = {
+                    order = 2,
+                    name = L["Raid"],
+                    type = "group",
+                    childGroups = "tab",
+                    args = {
+                        priority = {
+                            order = 1,
+                            name = L["Sort Order"],
+                            type = "group",
+                            args = {
+                                player = {
+                                    order = 1,
+                                    name = L["Use the player order"],
+                                    type = "toggle",
+                                    get = function(info)
+                                        RaidFrameSettings:SetOrder(info, 3)
+                                        RaidFrameSettings:SetOrder({ "Sort", "raid", "role", "TANK" }, 1)
+                                        RaidFrameSettings:SetOrder({ "Sort", "raid", "position", "MELEE" }, 1)
+                                        RaidFrameSettings:SetOrder({ "Sort", "raid", "class", "WARRIOR" }, 1)
+                                        return RaidFrameSettings:GetStatus2(info)
+                                    end,
+                                    set = "SetStatus2",
+                                },
+                                preset = {
+                                    order = 2,
+                                    name = L["Preset"],
+                                    type = "select",
+                                    values = { L["User Settings"], L["Party"], L["Role"], L["Name"] },
+                                    sorting = { 1, 2, 3, 4 },
+                                    get = function(info)
+                                        for k, v in pairs(sort_preset.raid) do
+                                            if table_compare_left(v, RaidFrameSettings.db.profile.Sort.raid) then
+                                                return k
+                                            end
+                                        end
+                                        return 1
+                                    end,
+                                    set = function(info, value)
+                                        if value > 1 then
+                                            table_overwrite(sort_preset.raid[tonumber(value)], RaidFrameSettings.db.profile.Sort.raid)
+                                            RaidFrameSettings:SetOrder(info, 3)
+                                        end
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("Sort")
+                                    end,
+                                },
+                                role = {
+                                    order = 3,
+                                    name = L["Role"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Role"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                position = {
+                                    order = 3,
+                                    name = L["Position"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Position"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                name = {
+                                    order = 3,
+                                    name = L["Name"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Name"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                token = {
+                                    order = 3,
+                                    name = L["Unit"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Unit"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                user = {
+                                    order = 3,
+                                    name = L["Customize"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Customize"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                                class = {
+                                    order = 3,
+                                    name = L["Class"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        priority = {
+                                            order = 1,
+                                            name = L["Class"] .. " " .. L["Priority"],
+                                            type = "input",
+                                            get = "GetStatus2ntos",
+                                            set = function(info, value)
+                                                RaidFrameSettings:SetStatus2ston(info, value)
+                                                info[#info] = nil
+                                                RaidFrameSettings:SetOrder(info, 3)
+                                            end,
+                                        },
+                                        reverse = {
+                                            order = 2,
+                                            name = L["Rerverse"],
+                                            type = "toggle",
+                                            get = "GetStatus2",
+                                            set = "SetStatus2",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        player = {
+                            disabled = function()
+                                return not RaidFrameSettings.db.profile.Sort.raid.priority.player
+                            end,
+                            order = 2,
+                            name = L["Player"],
+                            type = "group",
+                            args = {
+                                position = {
+                                    order = 1,
+                                    name = L["Order in party (1-5)"],
+                                    type = "input",
+                                    pattern = "^[1-5]$",
+                                    usage = L["please enter a number"],
+                                    get = "GetStatus2ntos",
+                                    set = "SetStatus2ston",
+                                },
+                            },
+                        },
+                        role = {
+                            order = 3,
+                            name = L["Role"],
+                            type = "group",
+                            args = {
+                                MAINTANK = {
+                                    order = 1,
+                                    name = L["MAINTANK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                MAINASSIST = {
+                                    order = 2,
+                                    name = L["MAINASSIST"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                TANK = {
+                                    order = 3,
+                                    name = L["TANK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                HEALER = {
+                                    order = 4,
+                                    name = L["HEALER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DAMAGER = {
+                                    order = 5,
+                                    name = L["DAMAGER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                NONE = {
+                                    order = 6,
+                                    name = L["NONE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                            },
+                        },
+                        position = {
+                            order = 4,
+                            name = L["Position"],
+                            type = "group",
+                            args = {
+                                MELEE = {
+                                    order = 1,
+                                    name = L["MELEE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                RANGED = {
+                                    order = 2,
+                                    name = L["RANGED"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                            },
+                        },
+                        class = {
+                            order = 5,
+                            name = L["Class"],
+                            type = "group",
+                            args = {
+                                WARRIOR = {
+                                    order = 1,
+                                    name = L["WARRIOR"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                PALADIN = {
+                                    order = 2,
+                                    name = L["PALADIN"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                HUNTER = {
+                                    order = 2,
+                                    name = L["HUNTER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                ROGUE = {
+                                    order = 2,
+                                    name = L["ROGUE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                PRIEST = {
+                                    order = 2,
+                                    name = L["PRIEST"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DEATHKNIGHT = {
+                                    order = 2,
+                                    name = L["DEATHKNIGHT"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                SHAMAN = {
+                                    order = 2,
+                                    name = L["SHAMAN"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                MAGE = {
+                                    order = 2,
+                                    name = L["MAGE"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                WARLOCK = {
+                                    order = 2,
+                                    name = L["WARLOCK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                MONK = {
+                                    order = 2,
+                                    name = L["MONK"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DRUID = {
+                                    order = 2,
+                                    name = L["DRUID"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                DEMONHUNTER = {
+                                    order = 2,
+                                    name = L["DEMONHUNTER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                                EVOKER = {
+                                    order = 2,
+                                    name = L["EVOKER"],
+                                    type = "input",
+                                    get = "GetStatus2ntos",
+                                    set = function(info, value)
+                                        RaidFrameSettings:SetStatus2ston(info, value)
+                                        RaidFrameSettings:SetOrder(info, 1)
+                                    end,
+                                },
+                            },
+                        },
+                        user = {
+                            order = 6,
+                            name = L["Customize"],
+                            type = "group",
+                            args = {
+                                add = {
+                                    order = 1,
+                                    name = L["Keyword"],
+                                    desc = L["Sort_customize_desc"],
+                                    type = "input",
+                                    width = "full",
+                                    usage = "",
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Sort.raid.user[value] = {
+                                            priority = 0,
+                                            fullname = true,
+                                            spec     = true,
+                                            rolepos  = true,
+                                            class    = true,
+                                            name     = true,
+                                        }
+                                        RaidFrameSettings:CreateSortUserEntry(value, "raid")
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("Sort")
+                                    end,
+                                },
+                                userDefined = {
+                                    order = 2,
+                                    name = L["User Defined:"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
         MinorModules = {
             order = 7,
             name = L["Module Settings"],
@@ -2773,6 +4013,109 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
     increaseOptions[spellId] = increase_entry
 end
 
+function RaidFrameSettings:CreateSortUserEntry(keyword, category)
+    local dbObj = self.db.profile.Sort[category].user[keyword]
+    local sortOptions = options.args.Sort.args[category].args.user.args.userDefined.args
+    local maxEntry = self:count(sortOptions)
+    local userDefined_entry = {
+        order = maxEntry + 1,
+        name = "",
+        type = "group",
+        inline = true,
+        args = {
+            keyword = {
+                order = 1,
+                name = keyword,
+                type = "description",
+                width = 0.5,
+            },
+            priority = {
+                order = 2,
+                name = L["Priority"],
+                type = "input",
+                get = function()
+                    DevTool:AddData(dbOjb)
+                    return tostring(dbObj.priority)
+                end,
+                set = function(_, value)
+                    dbObj.priority = tonumber(value)
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.5,
+            },
+            fullname = {
+                order = 3,
+                name = L["Fullname"],
+                type = "toggle",
+                get = function() return dbObj.fullname end,
+                set = function(_, value)
+                    dbObj.fullname = value
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.5,
+            },
+            spec = {
+                order = 4,
+                name = L["Spec"],
+                type = "toggle",
+                get = function() return dbObj.spec end,
+                set = function(_, value)
+                    dbObj.spec = value
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.5,
+            },
+            rolepos = {
+                order = 5,
+                name = L["Role & Position"],
+                type = "toggle",
+                get = function() return dbObj.rolepos end,
+                set = function(_, value)
+                    dbObj.rolepos = value
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.7,
+            },
+            class = {
+                order = 6,
+                name = L["Class"],
+                type = "toggle",
+                get = function() return dbObj.class end,
+                set = function(_, value)
+                    dbObj.class = value
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.5,
+            },
+            name = {
+                order = 7,
+                name = L["Name(part)"],
+                type = "toggle",
+                get = function() return dbObj.name end,
+                set = function(_, value)
+                    dbObj.name = value
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.5,
+            },
+            remove = {
+                order = 8,
+                name = L["remove"],
+                type = "execute",
+                func = function()
+                    self.db.profile.Sort[category].user[keyword] = nil
+                    sortOptions[keyword] = nil
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule("Sort")
+                end,
+                width = 0.5,
+            },
+        },
+    }
+    sortOptions[keyword] = userDefined_entry
+end
+
 local function getParent(category, frame, frameNo)
     if frame == 1 then
         return 1, 0
@@ -3616,6 +4959,36 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
     groupOptions["group" .. groupNo] = auragroup_entry
 end
 
+function RaidFrameSettings:SetOrder(info, start)
+    local db, opt = self.db.profile, options.args
+    for i = 1, #info - 1 do
+        local k = info[i]
+        db = db[k]
+        opt = i < #info - 1 and opt[k].args or opt[k]
+    end
+    local max = 0
+    for k, v in pairs(db) do
+        if type(v) == "table" then
+            if v.priority and max < v.priority then
+                max = v.priority
+            end
+        else
+            if type(v) == "number" and max < v then
+                max = v
+            end
+        end
+    end
+    for k, v in pairs(db) do
+        if opt.args[k] and opt.args[k].order >= start then
+            if type(v) == "table" then
+                opt.args[k].order = max - v.priority + 1 + start
+            else
+                opt.args[k].order = max - v + 1 + start
+            end
+        end
+    end
+end
+
 function RaidFrameSettings:LoadUserInputEntrys()
     for _, category in pairs({
         "Buffs",
@@ -3736,6 +5109,23 @@ function RaidFrameSettings:LoadUserInputEntrys()
             for _, v in pairs(sorted) do
                 self:CreateAuraGroupEntry(tostring(v.spellId), groupNo, category)
             end
+        end
+    end
+
+    --sort
+    for _, category in pairs({ "party", "raid" }) do
+        options.args.Sort.args[category].args.user.args.userDefined.args = {}
+        local sorted = {}
+        for keyword, v in pairs(self.db.profile.Sort[category].user) do
+            local t = CopyTable(v)
+            v.keyword = keyword
+            tinsert(sorted, v)
+        end
+        table.sort(sorted, function(a, b)
+            return a.priority > b.priority
+        end)
+        for _, v in pairs(sorted) do
+            self:CreateSortUserEntry(v.keyword, category)
         end
     end
 end

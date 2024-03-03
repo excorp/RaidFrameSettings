@@ -300,3 +300,54 @@ L["Displays the icon in the minimap."] = "미니맵에 아이콘을 표시 합�
 L["You can also open the options window with the /rfs command.\n\n"] = "설정창은 /rfs 명령으로도 열수 있습니다.\n\n"
 L["left button - Toggles the options window."]                       = "왼쪽 버튼 - 옵션창 보임/숨김."
 L["right button - Hides the minimap icon."]                          = "오른쪽 버튼 - 미니맵 아이콘 숨김."
+
+
+L["Sort"]                                                                      = "정렬"
+L["Sort the order of group members.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"] = "그룹 맴버의 순서를 정렬 합니다. \n|cffF4A460CPU 영향: |r|cff00ff00낮음|r"
+
+
+L["Role"]                 = "역활"
+L["User Settings"]        = "사용자 설정"
+L["Rerverse"]             = "반대로"
+L["Unit"]                 = "유닛"
+L["Customize"]            = "사용자 정의"
+L["Class"]                = "클래스"
+L["Player"]               = "플레이어"
+L["Order in party (1-5)"] = "파티내 순서 (1~5)"
+L["Keyword"]              = "키워드"
+L["User Defined:"]        = "사용자 정의:"
+L["Sort Order"]           = "소팅 순서"
+L["Use the player order"] = "플레이어 순서 사용"
+L["Preset"]               = "사전 설정"
+
+L["MAINTANK"]             = "메인탱"
+L["MAINASSIST"]           = "서브탱"
+L["TANK"]                 = "탱"
+L["HEALER"]               = "힐"
+L["DAMAGER"]              = "딜"
+L["NONE"]                 = "없음"
+
+L["MELEE"]                = "근거리"
+L["RANGED"]               = "원거리"
+
+L["WARRIOR"]              = "전사"
+L["PALADIN"]              = "성기사"
+L["HUNTER"]               = "사냥꾼"
+L["ROGUE"]                = "도적"
+L["PRIEST"]               = "사제"
+L["DEATHKNIGHT"]          = "죽음의기사"
+L["SHAMAN"]               = "주술사"
+L["MAGE"]                 = "마법사"
+L["WARLOCK"]              = "흑마법사"
+L["MONK"]                 = "수도사"
+L["DRUID"]                = "드루이드"
+L["DEMONHUNTER"]          = "악마사냥꾼"
+L["EVOKER"]               = "기원사"
+
+L["Fullname"]             = "이름(전체)"
+L["Spec"]                 = "전문화"
+L["Role & Position"]      = "역활&포지션"
+L["Name(part)"]           = "이름(일부)"
+
+
+L["Sort_customize_desc"] = "키워드는 이름,전문화,역활&포지션,클래스등에 포함된 문자열 입니다. 예를 들어 \"도적\"을 입력했을때 이름에 들어가 있거나, 클래스가 일치하는경우 중요도 값이 적용 됩니다. \"냉법\"을 입력했을때 이름에 들어가 있거나, 전문화가 일치할경우 중요도 값이 적용됩니다."

@@ -12,4 +12,5 @@
   <Script file="Modules\BleedDB.lua"/>
   <Script file="Modules\AuraHighlight.lua"/>
   <Script file="Modules\Solo.lua"/>
+  <Script file="Modules\Sort.lua"/>
 </Ui>

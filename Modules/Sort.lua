@@ -199,8 +199,22 @@ local user_conf = {
             position = "RANGED"
         },
     },
+    position = {
+        WARRIOR     = "MELEE",
+        HUNTER      = "RANGED", -- Survival=MELEE
+        PALADIN     = "MELEE",
+        ROGUE       = "MELEE",
+        PRIEST      = "RANGED",
+        DEATHKNIGHT = "MELEE",
+        SHAMAN      = "RANGED", -- Enhancement=MELEE
+        MAGE        = "RANGED",
+        WARLOCK     = "RANGED",
+        MONK        = "MELEE",
+        DRUID       = "RANGED", -- Guardian,Feral=MELEE
+        DEMONHUNTER = "MELEE",
+        EVOKER      = "RANGED",
+    },
 }
-
 
 local function ClassSpecRolePositionForUnit(unit)
     local name, realm = UnitName(unit)
@@ -212,7 +226,8 @@ local function ClassSpecRolePositionForUnit(unit)
         return englishClass, unit_spec[name].specId, unit_spec[name].role, unit_spec[name].position
     else
         local role = UnitGroupRolesAssigned(unit) --  TANK, HEALER, DAMAGER, NONE
-        return englishClass, 0, role, ""
+        local position = user_conf.position[englishClass] or ""
+        return englishClass, 0, role, position
     end
 end
 

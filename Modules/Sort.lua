@@ -644,7 +644,14 @@ function Sort:OnEnable()
     Sort:TrySort()
 
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        -- RequestUpdateContainers()
+        Sort:TrySort()
+    end)
+    self:RegisterEvent("UNIT_PET", function(event, unit)
+        if _G.CompactRaidFrameContainer.displayPets then
+            if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
+                Sort:TrySort()
+            end
+        end
     end)
     self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
         Sort:TrySort()

@@ -26,6 +26,7 @@ local defaults = {
             ["*"]         = true,
             CustomScale   = false,
             AuraHighlight = false,
+            Sort          = false,
         },
         HealthBars = {
             Textures = {

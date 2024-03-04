@@ -2076,13 +2076,7 @@ options = {
                                     order = 1,
                                     name = L["Use the player order"],
                                     type = "toggle",
-                                    get = function(info)
-                                        RaidFrameSettings:SetOrder(info, 3)
-                                        RaidFrameSettings:SetOrder({ "Sort", "party", "role", "TANK" }, 1)
-                                        RaidFrameSettings:SetOrder({ "Sort", "party", "position", "MELEE" }, 1)
-                                        RaidFrameSettings:SetOrder({ "Sort", "party", "class", "WARRIOR" }, 1)
-                                        return RaidFrameSettings:GetStatus2(info)
-                                    end,
+                                    get = "GetStatus2",
                                     set = "SetStatus2",
                                 },
                                 preset = {
@@ -5127,5 +5121,9 @@ function RaidFrameSettings:LoadUserInputEntrys()
         for _, v in pairs(sorted) do
             self:CreateSortUserEntry(v.keyword, category)
         end
+        self:SetOrder({ "Sort", category, "priority", "player" }, 3)
+        self:SetOrder({ "Sort", category, "role", "TANK" }, 1)
+        self:SetOrder({ "Sort", category, "position", "MELEE" }, 1)
+        self:SetOrder({ "Sort", category, "class", "WARRIOR" }, 1)
     end
 end

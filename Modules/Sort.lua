@@ -565,7 +565,7 @@ function Sort:TrySort(reanchorOnly)
             local frame = _G["CompactPartyFramePet" .. i]
             if frame.unit and frame.unitExists then
                 local point, pframe = frame:GetPoint(1)
-                if pframe:GetName():match("CompactPartyFrameMember") then
+                if pframe and pframe:GetName():match("CompactPartyFrameMember") then
                     for j = 1, frame:GetNumPoints() do
                         local org = { frame:GetPoint(1) }
                         local parent = prev
@@ -696,11 +696,36 @@ function Sort:OnDisable()
 
     -- restore anchor
     self:clearPoints()
+    local first, prev
     for i, ps in pairs(frame_pos.party) do
         local frame = _G["CompactPartyFrameMember" .. i]
         if frame and ps then
+            if not first then
+                first = frame
+            end
             for _, p in pairs(ps) do
                 frame:SetPoint(unpack(p))
+            end
+            if frame:IsShown() then
+                prev = frame
+            end
+        end
+    end
+    -- Adjust the position of the first pet frame
+    for i = 1, 5 do
+        local frame = _G["CompactPartyFramePet" .. i]
+        if frame.unit and frame.unitExists then
+            local point, pframe = frame:GetPoint(1)
+            if pframe and pframe:GetName():match("CompactPartyFrameMember") then
+                for j = 1, frame:GetNumPoints() do
+                    local org = { frame:GetPoint(1) }
+                    local parent = prev
+                    if point == "TOPLEFT" then
+                        parent = first
+                    end
+                    frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                end
+                break
             end
         end
     end

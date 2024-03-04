@@ -1244,6 +1244,16 @@ options = {
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
+                                        frame = {
+                                            order = 5.1,
+                                            name = L["to Attach Frame"],
+                                            type = "select",
+                                            values = { L["Unit Frame"], L["HealthBar"], L["PowerBar"] },
+                                            sorting = { 1, 2, 3 },
+                                            get = "GetStatus",
+                                            set = "SetStatus",
+                                            width = 0.8,
+                                        },
                                         orientation = {
                                             order = 6,
                                             name = L["Directions for growth"],
@@ -1644,6 +1654,16 @@ options = {
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
                                             set = "SetStatus",
+                                        },
+                                        frame = {
+                                            order = 5.1,
+                                            name = L["to Attach Frame"],
+                                            type = "select",
+                                            values = { L["Unit Frame"], L["HealthBar"], L["PowerBar"] },
+                                            sorting = { 1, 2, 3 },
+                                            get = "GetStatus",
+                                            set = "SetStatus",
+                                            width = 0.8,
                                         },
                                         orientation = {
                                             order = 6,
@@ -4261,8 +4281,8 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 order = 4,
                 name = L["to Attach Frame"],
                 type = "select",
-                values = { L["Unit Frame"], L["Placed"], L["Group"] },
-                sorting = { 1, 2, 3 },
+                values = { L["Unit Frame"], L["Placed"], L["Group"], L["HealthBar"], L["PowerBar"] },
+                sorting = { 1, 4, 5, 2, 3 },
                 get = function()
                     local optObj = auraPositionOptions[spellId].args
                     if dbObj.frame == 2 then
@@ -4285,7 +4305,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.8,
             },
             frameNo = {
-                hidden = function() return dbObj.frame == 1 end,
+                hidden = function() return not (dbObj.frame == 2 or dbObj.frame == 3) end,
                 order = 5,
                 name = L["FrameNo"],
                 type = "input",
@@ -4347,13 +4367,13 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 width = 0.4,
             },
             newline8 = {
-                hidden = function() return dbObj.frame == 1 end,
+                hidden = function() return dbObj.frame == 1 or dbObj.frame == 4 or dbObj.frame == 5 end,
                 order = 8,
                 type = "description",
                 name = "",
             },
             newline9 = {
-                hidden = function() return dbObj.frame == 1 end,
+                hidden = function() return dbObj.frame == 1 or dbObj.frame == 4 or dbObj.frame == 5 end,
                 order = 9,
                 type = "description",
                 name = "",
@@ -4679,8 +4699,8 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 order = 3.1,
                 name = L["to Attach Frame"],
                 type = "select",
-                values = { L["Unit Frame"], L["Placed"], L["Group"] },
-                sorting = { 1, 2, 3 },
+                values = { L["Unit Frame"], L["Placed"], L["Group"], L["HealthBar"], L["PowerBar"] },
+                sorting = { 1, 4, 5, 2, 3 },
                 get = function()
                     local optObj = groupOptions["group" .. groupNo].args
                     if dbObj.frame == 2 then
@@ -4704,7 +4724,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 width = 0.8,
             },
             frameNo = {
-                hidden = function() return dbObj.frame == 1 end,
+                hidden = function() return not (dbObj.frame == 2 or dbObj.frame == 3) end,
                 order = 3.2,
                 name = L["FrameNo"],
                 type = "input",
@@ -4768,7 +4788,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 width = 0.4,
             },
             newline0 = {
-                hidden = function() return dbObj.frame == 1 end,
+                hidden = function() return dbObj.frame == 1 or dbObj.frame == 4 or dbObj.frame == 5 end,
                 order = 3.5,
                 type = "description",
                 name = "",

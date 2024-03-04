@@ -355,3 +355,7 @@ L["Sort_customize_desc"] = "키워드는 이름,전문화,역활&포지션,클�
 
 L["Apply to petframe"] = "펫프레임에 적용"
 L["Apply the this module to the pet frame."] = "이 모듈을 펫프레임에 적용 합니다."
+
+
+L["HealthBar"] = "체력바"
+L["PowerBar"]  = "파워바"

@@ -549,8 +549,9 @@ function Buffs:OnEnable()
         for i = 1, frame_registry[frame].maxBuffs do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
             if not anchorSet then
+                local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
                 buffFrame:ClearAllPoints()
-                buffFrame:SetPoint(point, frame, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
+                buffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
                 anchorSet = true
             else
                 buffFrame:ClearAllPoints()

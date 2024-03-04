@@ -358,3 +358,7 @@ L["Sort_customize_desc"] = "Keywords are strings contained in the name, speciali
 
 L["Apply to petframe"] = "Apply to petframe"
 L["Apply the this module to the pet frame."] = "Apply the this module to the pet frame."
+
+
+L["HealthBar"] = "HealthBar"
+L["PowerBar"]  = "PowerBar"

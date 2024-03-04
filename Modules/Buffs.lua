@@ -621,10 +621,12 @@ function Buffs:OnEnable()
     for frame, v in pairs(frame_registry) do
         v.dirty = true
         onFrameSetup(frame)
-        if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-            CompactUnitFrame_UpdateAuras(frame)
+        if frame.unit then
             if not unitFrame[frame.unit] then unitFrame[frame.unit] = {} end
             unitFrame[frame.unit][frame] = true
+            if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
+                CompactUnitFrame_UpdateAuras(frame)
+            end
         end
     end
 

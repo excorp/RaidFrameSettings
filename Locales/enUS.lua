@@ -354,3 +354,7 @@ L["Name(part)"]           = "Name(part)"
 
 
 L["Sort_customize_desc"] = "Keywords are strings contained in the name, specialization, role & position, class, etc. For example, if you type \"도적\" and it is in the name, or if the class matches, the importance value is applied. If you type \"냉법\" and it is in the name, or the specialization matches, the importance value is applied."
+
+
+L["Apply to petframe"] = "Apply to petframe"
+L["Apply the this module to the pet frame."] = "Apply the this module to the pet frame."

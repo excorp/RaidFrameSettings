@@ -82,6 +82,7 @@ local defaults = {
             Debuffs = {},
         },
         Debuffs = {
+            petframe = false,
             DebuffFramesDisplay = {
                 width = 20,
                 height = 20,
@@ -140,6 +141,7 @@ local defaults = {
             },
         },
         Buffs = {
+            petframe = false,
             BuffFramesDisplay = {
                 width = 14,
                 height = 14,

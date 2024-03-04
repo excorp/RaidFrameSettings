@@ -1150,6 +1150,18 @@ options = {
                             type = "group",
                             childGroups = "tab",
                             args = {
+                                petframe = {
+                                    order = 0,
+                                    type = "toggle",
+                                    name = L["Apply to petframe"],
+                                    desc = L["Apply the this module to the pet frame."],
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Buffs.petframe
+                                    end,
+                                    set = function(info, value)
+                                        RaidFrameSettings.db.profile.Buffs.petframe = value
+                                    end,
+                                },
                                 BuffFramesDisplay = {
                                     order = 1,
                                     name = L["Buff Frames"],
@@ -1540,6 +1552,18 @@ options = {
                             type = "group",
                             childGroups = "tab",
                             args = {
+                                petframe = {
+                                    order = 0,
+                                    type = "toggle",
+                                    name = L["Apply to petframe"],
+                                    desc = L["Apply the this module to the pet frame."],
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Debuffs.petframe
+                                    end,
+                                    set = function(info, value)
+                                        RaidFrameSettings.db.profile.Debuffs.petframe = value
+                                    end,
+                                },
                                 DebuffFramesDisplay = {
                                     order = 1,
                                     name = L["Debuff Frames"],

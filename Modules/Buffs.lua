@@ -33,8 +33,8 @@ local SetDrawEdge = SetDrawEdge
 local next = next
 
 local frame_registry = {}
+local unitFrame = {}
 local roster_changed = true
-
 local glowOpt
 
 --[[
@@ -63,6 +63,21 @@ glowOpt = {
 }
 ]]
 
+local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+    frame.buffs:Clear()
+
+    local batchCount = nil
+    local usePackedAura = true
+    local function HandleAura(aura)
+        local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+
+        if type == AuraUtil.AuraUpdateChangedType.Buff then
+            frame.buffs[aura.auraInstanceID] = aura
+        end
+    end
+    AuraUtil.ForEachAura(frame.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), batchCount, HandleAura, usePackedAura)
+end
+
 function Buffs:Glow(frame, onoff)
     if onoff then
         Glow:Start(glowOpt, frame)
@@ -78,6 +93,7 @@ function Buffs:OnEnable()
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
 
     local frameOpt = CopyTable(addon.db.profile.Buffs.BuffFramesDisplay)
+    frameOpt.petframe = addon.db.profile.Buffs.petframe
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     --Timer
@@ -231,8 +247,10 @@ function Buffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        for _, v in pairs(frame.buffFrames) do
-            v:Hide()
+        if frame.buffFrames then
+            for _, v in pairs(frame.buffFrames) do
+                v:Hide()
+            end
         end
 
         -- set placed aura / other aura
@@ -241,33 +259,35 @@ function Buffs:OnEnable()
         local sorted = {
             [0] = {},
         }
-        frame.buffs:Iterate(function(auraInstanceID, aura)
-            if userPlaced[aura.spellId] then
-                local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
-                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                local placed = userPlaced[aura.spellId]
-                CompactUnitFrame_UtilSetBuff(buffFrame, aura)
-                onSetBuff(buffFrame, aura, placed)
+        for _, buffs in pairs({ frame.buffs, frame_registry[frame].buffs }) do
+            buffs:Iterate(function(auraInstanceID, aura)
+                if userPlaced[aura.spellId] then
+                    local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    local placed = userPlaced[aura.spellId]
+                    CompactUnitFrame_UtilSetBuff(buffFrame, aura)
+                    onSetBuff(buffFrame, aura, placed)
+                    return false
+                end
+                if auraGroupList[aura.spellId] then
+                    local groupNo = auraGroupList[aura.spellId]
+                    local auraList = auraGroup[groupNo].auraList
+                    local auraOpt = auraList[aura.spellId]
+                    local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
+                    if not sorted[groupNo] then sorted[groupNo] = {} end
+                    tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
+                    return false
+                end
+                if frameNum <= frame_registry[frame].maxBuffs then
+                    local filtered = filteredAuras[aura.spellId]
+                    local priority = filtered and filtered.priority or 0
+                    tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
+                    frameNum = frameNum + 1
+                end
                 return false
-            end
-            if auraGroupList[aura.spellId] then
-                local groupNo = auraGroupList[aura.spellId]
-                local auraList = auraGroup[groupNo].auraList
-                local auraOpt = auraList[aura.spellId]
-                local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
-                if not sorted[groupNo] then sorted[groupNo] = {} end
-                tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
-                groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
-                return false
-            end
-            if frameNum <= frame_registry[frame].maxBuffs then
-                local filtered = filteredAuras[aura.spellId]
-                local priority = filtered and filtered.priority or 0
-                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
-                frameNum = frameNum + 1
-            end
-            return false
-        end)
+            end)
+        end
         -- set buffs after sorting to priority.
         for _, v in pairs(sorted) do
             table.sort(v, comparePriority)
@@ -356,9 +376,11 @@ function Buffs:OnEnable()
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
 
     local function onFrameSetup(frame)
-        local fname = frame:GetName()
-        if not fname or fname:match("Pet") then
-            return
+        if not frameOpt.petframe then
+            local fname = frame:GetName()
+            if not fname or fname:match("Pet") then
+                return
+            end
         end
 
         if not frame_registry[frame] then
@@ -369,6 +391,7 @@ function Buffs:OnEnable()
                 auraGroupEnd    = {},
                 extraBuffFrames = {},
                 reanchor        = {},
+                buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
                 dirty           = true,
             }
         end
@@ -574,9 +597,11 @@ function Buffs:OnEnable()
     if roster_changed then
         roster_changed = false
         addon:IterateRoster(function(frame)
-            local fname = frame:GetName()
-            if not fname or fname:match("Pet") then
-                return
+            if not frameOpt.petframe then
+                local fname = frame:GetName()
+                if not fname or fname:match("Pet") then
+                    return
+                end
             end
             if not frame_registry[frame] then
                 frame_registry[frame] = {
@@ -586,6 +611,7 @@ function Buffs:OnEnable()
                     auraGroupEnd    = {},
                     extraBuffFrames = {},
                     reanchor        = {},
+                    buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
                     dirty           = true,
                 }
             end
@@ -596,18 +622,100 @@ function Buffs:OnEnable()
         onFrameSetup(frame)
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
+            if not unitFrame[frame.unit] then unitFrame[frame.unit] = {} end
+            unitFrame[frame.unit][frame] = true
         end
     end
 
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
     end)
+
+    if frameOpt.petframe then
+        self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
+            if not unit or not unit:match("pet") then
+                return
+            end
+            if not unitFrame[frame.unit] then unitFrame[frame.unit] = {} end
+            unitFrame[frame.unit][frame] = true
+            for srcframe in pairs(unitFrame[unit]) do
+                if srcframe.unit ~= unit then
+                    unitFrame[unit][srcframe] = nil
+                end
+            end
+        end)
+
+        self:RegisterEvent("UNIT_AURA", function(event, unit, unitAuraUpdateInfo)
+            if not unit:match("pet") then
+                return
+            end
+            if not unitFrame[unit] then
+                return
+            end
+            for srcframe in pairs(unitFrame[unit]) do
+                local frame = frame_registry[srcframe]
+                if frame then
+                    local buffsChanged = false
+
+                    local displayOnlyDispellableDebuffs = false
+                    local ignoreBuffs = false
+                    local ignoreDebuffs = true
+                    local ignoreDispelDebuffs = true
+
+                    frame.unit = srcframe.unit
+                    frame.displayedUnit = srcframe.displayedUnit
+
+                    if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or frame.debuffs == nil then
+                        CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                        buffsChanged = true
+                    else
+                        if unitAuraUpdateInfo.addedAuras ~= nil then
+                            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                                local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                                if type == AuraUtil.AuraUpdateChangedType.Buff then
+                                    frame.buffs[aura.auraInstanceID] = aura
+                                    buffsChanged = true
+                                end
+                            end
+                        end
+
+                        if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
+                            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                                if frame.buffs[auraInstanceID] ~= nil then
+                                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
+                                    if newAura ~= nil then
+                                        newAura.isBuff = true
+                                    end
+                                    frame.buffs[auraInstanceID] = newAura
+                                    buffsChanged = true
+                                end
+                            end
+                        end
+
+                        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+                            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                                if frame.buffs[auraInstanceID] ~= nil then
+                                    frame.buffs[auraInstanceID] = nil
+                                    buffsChanged = true
+                                end
+                            end
+                        end
+                    end
+
+                    if buffsChanged then
+                        onHideAllBuffs(srcframe)
+                    end
+                end
+            end
+        end)
+    end
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
 function Buffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    self:UnregisterEvent("UNIT_AURA")
     roster_changed = true
     local restoreBuffFrames = function(frame)
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do

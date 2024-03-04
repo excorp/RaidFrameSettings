@@ -11,7 +11,11 @@ local sortOpt
 
 local enabled
 local defaultRealm
-local needToSort = true
+local needToSort = 0
+local isScheduled
+local scheduler
+local unit_priority = {}
+local unit_frame = {}
 local unit_spec = {}
 
 
@@ -231,17 +235,6 @@ local function ClassSpecRolePositionForUnit(unit)
     end
 end
 
-LS:Register(addon, function(specId, role, position, sender, channel) -- specId=Number, role=HEALER/TANK/DAMAGER, position=RANGED/MELEE
-    -- print(format("User %s has a spec id of %d and a role of %s. They are positioned in the %s group.", sender, specId, role, position))
-    unit_spec[sender] = {
-        specId = specId,
-        role = role,
-        position = position,
-    }
-    Sort:TrySort()
-end)
-LS:RequestSpecialization()
-
 
 local frame_pos = {
     party = {},
@@ -270,7 +263,7 @@ local function RequestUpdateContainers()
 end
 
 local function RequestSort()
-    Sort:TrySort()
+    Sort:TrySort(true)
 end
 
 local function OnLayoutsApplied()
@@ -313,11 +306,15 @@ local function OnCvarUpdate(_, _, name)
     end
 end
 
-function Sort:clearPoints()
+local function groupFunc(callback)
     if group_type == "party" then
         for i = 1, 5 do
             local frame = _G["CompactPartyFrameMember" .. i]
-            frame:ClearAllPoints()
+            if frame then
+                if callback(frame) then
+                    return
+                end
+            end
         end
     elseif group_type == "raid" then
         if group_separated then
@@ -325,7 +322,9 @@ function Sort:clearPoints()
                 for j = 1, 5 do
                     local frame = _G["CompactRaidGroup" .. i .. "Member" .. j]
                     if frame then
-                        frame:ClearAllPoints()
+                        if callback(frame) then
+                            return
+                        end
                     end
                 end
             end
@@ -333,40 +332,33 @@ function Sort:clearPoints()
             for i = 1, 40 do
                 local frame = _G["CompactRaidFrame" .. i]
                 if frame then
-                    frame:ClearAllPoints()
+                    if callback(frame) then
+                        return
+                    end
                 end
             end
         end
     end
 end
 
+function Sort:clearPoints()
+    groupFunc(function(frame)
+        frame:ClearAllPoints()
+    end)
+end
+
 function Sort:getFrameUnit(unit)
-    if group_type == "party" then
-        for i = 1, 5 do
-            local frame = _G["CompactPartyFrameMember" .. i]
-            if frame and frame.unit == unit then
-                return frame
-            end
-        end
-    elseif group_type == "raid" then
-        if group_separated then
-            for i = 1, 8 do
-                for j = 1, 5 do
-                    local frame = _G["CompactRaidGroup" .. i .. "Member" .. j]
-                    if frame and frame.unit == unit then
-                        return frame
-                    end
-                end
-            end
-        else
-            for i = 1, 40 do
-                local frame = _G["CompactRaidFrame" .. i]
-                if frame and frame.unit == unit then
-                    return frame
-                end
-            end
-        end
+    local frame = unit_frame[unit]
+    if frame and frame.unit == unit then
+        return frame
     end
+    groupFunc(function(frame)
+        if frame and frame.unit == unit then
+            unit_frame[unit] = frame
+            return true
+        end
+    end)
+    return unit_frame[unit]
 end
 
 function Sort:getFramePoint()
@@ -408,19 +400,22 @@ function Sort:getFramePoint()
             end
         else
             -- TODO: Not currently supported.
-            -- frame:ClearAllPoints()
         end
     end
 end
 
-function Sort:TrySort()
+function Sort:TrySort(reanchorOnly)
     if not enabled then
+        return
+    end
+
+    if isScheduled then
         return
     end
 
     -- If in combat, have it called after the combat ends.
     if InCombatLockdown() then
-        needToSort = true
+        needToSort = reanchorOnly and 2 or 1
         return
     end
 
@@ -429,118 +424,120 @@ function Sort:TrySort()
         return
     end
 
-    local priority = sortOpt[group_type]
-    local priority_sorted = {}
-    for k, v in pairs(priority.priority) do
-        if type(v) == "table" then
-            v.key = k
-            tinsert(priority_sorted, v)
-        end
-    end
-    table.sort(priority_sorted, function(a, b)
-        return a.priority > b.priority
-    end)
-
     -- Get group members and sort
-    local unit_priority = {}
-    local member = {}
-    if IsInRaid() then
-        for i = 1, GetNumGroupMembers() do
-            tinsert(member, "raid" .. i)
-        end
-    else
-        tinsert(member, "player")
-        for i = 1, 4 do
-            tinsert(member, "party" .. i)
-        end
-    end
-    for _, unit in pairs(member) do
-        if UnitExists(unit) then
-            local class, specId, role, position = ClassSpecRolePositionForUnit(unit)
-            local name, realm = UnitName(unit)
-            if not realm then
-                realm = defaultRealm
-            end
-            local fullname = (name or "알수없음") .. "-" .. realm
-            local user = {
-                priority = 0,
-                position = 0,
-            }
-            for needle, v in pairs(priority.user) do
-                local rnp = user_conf.rolePositionShortCut[needle]
-                if v.fullname and (name == needle or fullname == needle) then
-                    user = v
-                elseif v.spec and (user_conf.specShortCut[needle] and specId ~= 0 and ((type(user_conf.specShortCut[needle]) == "table" and user_conf.specShortCut[needle][specId]) or specId == user_conf.specShortCut[needle])) then
-                    user = v
-                elseif v.rolepos and (rnp and role == rnp.role and (position == rnp.position or rnp.position == nil)) then
-                    user = v
-                elseif v.class and (user_conf.classShortCut[needle] and class == user_conf.classShortCut[needle]) then
-                    user = v
-                elseif v.name then
-                    if string.find(fullname, needle) then
-                        user = v
-                    end
-                end
-            end
-            tinsert(unit_priority, {
-                token = unit,
-                class = priority.class[class] or 0,
-                role = priority.role[role] or 0,
-                position = priority.position[position] or 0,
-                user = user.priority,
-                user_position = UnitIsUnit(unit, "player") and priority.player and priority.player.position or user.position or 0,
-                name = fullname,
-            })
-        end
-    end
-    table.sort(unit_priority, function(a, b)
-        for _, v in pairs(priority_sorted) do
-            if a[v.key] ~= b[v.key] then
-                if group_type == "raid" and v.key == "token" then
-                    local id1 = tonumber(string.sub(a[v.key], 5))
-                    local id2 = tonumber(string.sub(b[v.key], 5))
-                    if not id1 or not id2 then
-                        return id1
-                    end
-                    if v.reverse then
-                        return id1 > id2
-                    else
-                        return id1 < id2
-                    end
-                end
-                if v.key == "token" or v.key == "name" then
-                    if v.reverse then
-                        return a[v.key] > b[v.key]
-                    else
-                        return a[v.key] < b[v.key]
-                    end
-                end
-                if v.reverse then
-                    return a[v.key] < b[v.key]
-                else
-                    return a[v.key] > b[v.key]
-                end
+    if not reanchorOnly then
+        local priority = sortOpt[group_type]
+        local priority_sorted = {}
+        for k, v in pairs(priority.priority) do
+            if type(v) == "table" then
+                v.key = k
+                tinsert(priority_sorted, v)
             end
         end
-        return a.token < b.token
-    end)
+        table.sort(priority_sorted, function(a, b)
+            return a.priority > b.priority
+        end)
 
-    -- Change the location of a user with a location set
-    if priority.priority.player then
-        local positioned = {}
-        for k, v in pairs(unit_priority) do
-            if v.user_position > 0 then
-                tinsert(positioned, k)
+        unit_priority = {}
+        local member = {}
+        if IsInRaid() then
+            for i = 1, GetNumGroupMembers() do
+                tinsert(member, "raid" .. i)
+            end
+        else
+            tinsert(member, "player")
+            for i = 1, 4 do
+                tinsert(member, "party" .. i)
             end
         end
-        local insert = {}
-        for i = #positioned, 1, -1 do
-            local idx = positioned[i]
-            table.insert(insert, unit_priority[idx])
-            table.remove(unit_priority, idx)
+        for _, unit in pairs(member) do
+            if UnitExists(unit) then
+                local class, specId, role, position = ClassSpecRolePositionForUnit(unit)
+                local name, realm = UnitName(unit)
+                if not realm then
+                    realm = defaultRealm
+                end
+                local fullname = (name or "알수없음") .. "-" .. realm
+                local user = {
+                    priority = 0,
+                    position = 0,
+                }
+                for needle, v in pairs(priority.user) do
+                    local rnp = user_conf.rolePositionShortCut[needle]
+                    if v.fullname and (name == needle or fullname == needle) then
+                        user = v
+                    elseif v.spec and (user_conf.specShortCut[needle] and specId ~= 0 and ((type(user_conf.specShortCut[needle]) == "table" and user_conf.specShortCut[needle][specId]) or specId == user_conf.specShortCut[needle])) then
+                        user = v
+                    elseif v.rolepos and (rnp and role == rnp.role and (position == rnp.position or rnp.position == nil)) then
+                        user = v
+                    elseif v.class and (user_conf.classShortCut[needle] and class == user_conf.classShortCut[needle]) then
+                        user = v
+                    elseif v.name then
+                        if string.find(fullname, needle) then
+                            user = v
+                        end
+                    end
+                end
+                tinsert(unit_priority, {
+                    token = unit,
+                    class = priority.class[class] or 0,
+                    role = priority.role[role] or 0,
+                    position = priority.position[position] or 0,
+                    user = user.priority,
+                    user_position = UnitIsUnit(unit, "player") and priority.player and priority.player.position or user.position or 0,
+                    name = fullname,
+                })
+            end
         end
-        for _, v in pairs(insert) do
-            table.insert(unit_priority, v.user_position, v)
+        table.sort(unit_priority, function(a, b)
+            for _, v in pairs(priority_sorted) do
+                if a[v.key] ~= b[v.key] then
+                    if group_type == "raid" and v.key == "token" then
+                        local id1 = tonumber(string.sub(a[v.key], 5))
+                        local id2 = tonumber(string.sub(b[v.key], 5))
+                        if not id1 or not id2 then
+                            return id1
+                        end
+                        if v.reverse then
+                            return id1 > id2
+                        else
+                            return id1 < id2
+                        end
+                    end
+                    if v.key == "token" or v.key == "name" then
+                        if v.reverse then
+                            return a[v.key] > b[v.key]
+                        else
+                            return a[v.key] < b[v.key]
+                        end
+                    end
+                    if v.reverse then
+                        return a[v.key] < b[v.key]
+                    else
+                        return a[v.key] > b[v.key]
+                    end
+                end
+            end
+            return a.token < b.token
+        end)
+
+        -- Change the location of a user with a location set
+        if priority.priority.player then
+            local positioned = {}
+            for k, v in pairs(unit_priority) do
+                if v.user_position > 0 then
+                    tinsert(positioned, k)
+                end
+            end
+            local insert = {}
+            for i = #positioned, 1, -1 do
+                local idx = positioned[i]
+                table.insert(insert, unit_priority[idx])
+                table.remove(unit_priority, idx)
+            end
+            for _, v in pairs(insert) do
+                table.insert(unit_priority, v.user_position, v)
+            end
         end
     end
 
@@ -615,6 +612,8 @@ function Sort:TrySort()
             -- TODO: This type is not currently supported
         end
     end
+
+    needToSort = 0
 end
 
 function Sort:OnEnable()
@@ -624,43 +623,55 @@ function Sort:OnEnable()
 
     defaultRealm = GetRealmName() or ""
 
-    Sort:getFramePoint()
+    self:getFramePoint()
+    self:TrySort()
+
+    LS:Register(addon, function(specId, role, position, sender, channel) -- specId=Number, role=HEALER/TANK/DAMAGER, position=RANGED/MELEE
+        -- print(format("User %s has a spec id of %d and a role of %s. They are positioned in the %s group.", sender, specId, role, position))
+        unit_spec[sender] = {
+            specId = specId,
+            role = role,
+            position = position,
+        }
+        Sort:TrySort()
+    end)
+    isScheduled = true
+    if scheduler and not scheduler:IsCancelled() then
+        scheduler:Cancel()
+    end
+    scheduler = C_Timer.NewTimer(1, function()
+        isScheduled = false
+        Sort:TrySort()
+    end)
+    LS:RequestSpecialization()
 
     if isRetail then
         OnEditModeExited_id = EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExited)
         self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsApplied)
     end
-
     self:RegisterEvent("CVAR_UPDATE", OnCvarUpdate)
-
     if CompactRaidGroup_OnLoad then
         hooksecurefunc("CompactRaidGroup_OnLoad", OnRaidGroupLoaded)
     end
-
     if CompactRaidFrameContainer_OnSizeChanged then
         hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
     end
-
-    Sort:TrySort()
-
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         Sort:TrySort()
     end)
     self:RegisterEvent("UNIT_PET", function(event, unit)
         if _G.CompactRaidFrameContainer.displayPets then
             if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
-                Sort:TrySort()
+                Sort:TrySort(true)
             end
         end
     end)
     self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
         Sort:TrySort()
     end)
-
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if needToSort then
-            needToSort = false
-            Sort:TrySort()
+            Sort:TrySort(needToSort == 2)
         end
     end)
 end
@@ -668,6 +679,13 @@ end
 function Sort:OnDisable()
     enabled = false
     self:DisableHooks()
+
+    LS:Unregister(addon)
+
+    if scheduler and not scheduler:IsCancelled() then
+        scheduler:Cancel()
+    end
+
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     if isRetail then
         EventRegistry:UnregisterCallback("EditMode.Exit", OnEditModeExited_id)
@@ -676,8 +694,8 @@ function Sort:OnDisable()
     self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
     self:UnregisterEvent("CVAR_UPDATE")
 
+    -- restore anchor
     self:clearPoints()
-
     for i, ps in pairs(frame_pos.party) do
         local frame = _G["CompactPartyFrameMember" .. i]
         if frame and ps then
@@ -696,4 +714,9 @@ function Sort:OnDisable()
             end
         end
     end
+    frame_pos = {
+        party = {},
+        raidgroup = {},
+        raid = {},
+    }
 end

@@ -257,6 +257,10 @@ local cvarsPatternsToRunSort = {
     "pvpFrames.*"
 }
 
+local secureframe
+local memberHeader
+local petHeader
+
 local function RequestUpdateContainers()
     Sort:getFramePoint()
     Sort:TrySort()
@@ -404,6 +408,21 @@ function Sort:getFramePoint()
     end
 end
 
+local function secureframeSetFrame(no, frame, p)
+    -- frame:SetProtected()
+    secureframe:SetFrameRef("frame" .. no, frame)
+    if p then
+        if p[2] then
+            p[2]:SetProtected()
+        end
+        secureframe:SetAttributeNoHandler("frame" .. no .. "p1", p[1])
+        secureframe:SetFrameRef("frame" .. no .. "p2", p[2])
+        secureframe:SetAttributeNoHandler("frame" .. no .. "p3", p[3])
+        secureframe:SetAttributeNoHandler("frame" .. no .. "p4", p[4])
+        secureframe:SetAttributeNoHandler("frame" .. no .. "p5", p[5])
+    end
+end
+
 function Sort:TrySort(reanchorOnly)
     if not enabled then
         return
@@ -543,6 +562,7 @@ function Sort:TrySort(reanchorOnly)
 
     -- Repositioning
     self:clearPoints()
+    local count = 0
     if group_type == "party" then
         local first
         local prev
@@ -550,22 +570,34 @@ function Sort:TrySort(reanchorOnly)
             local frame = self:getFrameUnit(v.token)
             if frame and frame_pos.party[k] then
                 for _, p in pairs(frame_pos.party[k]) do
+                    count = count + 1
                     if not first then
                         first = frame
                         frame:SetPoint(unpack(p))
+                        secureframeSetFrame(count, frame, p)
                     else
                         frame:SetPoint(p[1], prev, p[3], p[4], p[5])
+                        secureframeSetFrame(count, frame, { p[1], prev, p[3], p[4], p[5] })
                     end
                     prev = frame
                 end
             end
         end
+        _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+        _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+
         -- Adjust the position of the first pet frame
+        secureframe:SetAttributeNoHandler("petframeStart", count + 1)
+        for i = 1, 5 do
+            local frame = _G["CompactPartyFramePet" .. i]
+            count = count + 1
+            secureframeSetFrame(count, frame)
+        end
         for i = 1, 5 do
             local frame = _G["CompactPartyFramePet" .. i]
             if frame.unit and frame.unitExists then
                 local point, pframe = frame:GetPoint(1)
-                if pframe and pframe:GetName():match("CompactPartyFrameMember") then
+                if pframe and not pframe:GetName():match("Pet") then
                     for j = 1, frame:GetNumPoints() do
                         local org = { frame:GetPoint(1) }
                         local parent = prev
@@ -596,11 +628,14 @@ function Sort:TrySort(reanchorOnly)
                     local frame = self:getFrameUnit(v.token)
                     if frame and frame_pos.raidgroup[subgroup][groupidx[subgroup]] then
                         for _, p in pairs(frame_pos.raidgroup[subgroup][groupidx[subgroup]]) do
+                            count = count + 1
                             if not first[subgroup] then
                                 first[subgroup] = frame
                                 frame:SetPoint(unpack(p))
+                                secureframeSetFrame(count, frame, p)
                             else
                                 frame:SetPoint(p[1], prev[subgroup], p[3], p[4], p[5])
+                                secureframeSetFrame(count, frame, { p[1], prev[subgroup], p[3], p[4], p[5] })
                             end
                             prev[subgroup] = frame
                         end
@@ -608,12 +643,77 @@ function Sort:TrySort(reanchorOnly)
                     end
                 end
             end
+            secureframe:SetAttributeNoHandler("petframeStart", count + 1)
         else
             -- TODO: This type is not currently supported
         end
     end
 
+    secureframe:SetAttributeNoHandler("frameCount", count)
+
     needToSort = 0
+end
+
+local function InjectSecureHelpers(secureFrame)
+    if not secureFrame.Execute then
+        function secureFrame:Execute(body)
+            return SecureHandlerExecute(self, body)
+        end
+    end
+
+    if not secureFrame.WrapScript then
+        function secureFrame:WrapScript(frame, script, preBody, postBody)
+            return SecureHandlerWrapScript(frame, script, self, preBody, postBody)
+        end
+    end
+
+    if not secureFrame.SetFrameRef then
+        function secureFrame:SetFrameRef(label, refFrame)
+            return SecureHandlerSetFrameRef(self, label, refFrame)
+        end
+    end
+end
+
+local function ConfigureHeader(header)
+    InjectSecureHelpers(header)
+
+    -- show as much as possible
+    header:SetAttribute("showRaid", true)
+    header:SetAttribute("showParty", true)
+    header:SetAttribute("showPlayer", true)
+    header:SetAttribute("showSolo", true)
+
+    -- unit buttons template type
+    header:SetAttribute("template", "SecureHandlerAttributeTemplate")
+
+    -- fired when a new unit button is created
+    header:SetAttribute("initialConfigFunction", [=[
+        UnitButtonsCount = (UnitButtonsCount or 0) + 1
+
+        -- self = the newly created unit button
+        self:SetWidth(0)
+        self:SetHeight(0)
+        self:SetID(UnitButtonsCount)
+        self:SetAttribute("secureframe", secureframe)
+
+        RefreshUnitChange = [[
+            -- Blizzard iterate over all the unit buttons and change their unit token so this snippet is called a lot
+            -- we want to avoid spamming multiple sort attempts and only perform after all the buttons have been updated
+            -- we can do this by changing our attribute to some temporary value which blizzard will change back when it re-evaluates state attributes
+            local secureframe = self:GetAttribute("secureframe")
+            secureframe:SetAttribute("state-petstate", "ignore")
+        ]]
+        self:SetAttribute("refreshUnitChange", RefreshUnitChange)
+    ]=])
+
+    header:SetFrameRef("secureframe", secureframe)
+    header:Execute([[
+        secureframe = self:GetFrameRef("secureframe")
+    ]])
+
+    -- must be shown for it to work
+    header:SetPoint("TOPLEFT", UIParent, "TOPLEFT")
+    header:Show()
 end
 
 function Sort:OnEnable()
@@ -623,11 +723,68 @@ function Sort:OnEnable()
 
     defaultRealm = GetRealmName() or ""
 
+    if not secureframe then
+        secureframe = CreateFrame("FRAME", nil, UIParent, "SecureHandlerStateTemplate")
+        secureframe:SetAttributeNoHandler("InCombat", [[
+            return SecureCmdOptionParse("[combat] true; false") == "true"
+        ]])
+        secureframe:SetAttribute("_onstate-petstate", [[
+            if newstate == "ignore" then return end
+            if not self:RunAttribute("InCombat") then
+                return
+            end
+            local count = self:GetAttribute("frameCount")
+            local petStart = self:GetAttribute("petframeStart")
+            if count < 1 then
+                return
+            end
+            for i = 1, petStart - 1 do
+                local frame = self:GetFrameRef("frame" .. i)
+                frame:ClearAllPoints()
+            end
+            for i = 1, petStart - 1 do
+                local frame = self:GetFrameRef("frame" .. i)
+                local p1 = self:GetAttribute("frame" .. i .. "p1")
+                local p2 = self:GetFrameRef("frame" .. i .. "p2")
+                local p3 = self:GetAttribute("frame" .. i .. "p3")
+                local p4 = self:GetAttribute("frame" .. i .. "p4")
+                local p5 = self:GetAttribute("frame" .. i .. "p5")
+                frame:SetPoint(p1, p2, p3, p4, p5)
+            end
+            for i = petStart, count do
+                local frame = self:GetFrameRef("frame" .. i)
+                local point, pframe = frame:GetPoint()
+                if pframe and not pframe:GetName():match("Pet") then
+                    local first = self:GetFrameRef("frame1")
+                    local last = self:GetFrameRef("frame" .. (petStart - 1))
+                    local point, _, relativePoint, offsetX, offsetY = frame:GetPoint()
+                    frame:SetPoint(point, point == "TOPLEFT" and first or last, relativePoint, offsetX, offsetY)
+
+                    local CompactPartyFrameBorderFrame = self:GetFrameRef("CompactPartyFrameBorderFrame")
+                    CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+                    CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", last, "BOTTOMRIGHT", 8, -5 - 3)
+
+                end
+            end
+        ]])
+
+        memberHeader = CreateFrame("Frame", nil, UIParent, "SecureGroupHeaderTemplate")
+        petHeader = CreateFrame("Frame", nil, UIParent, "SecureGroupPetHeaderTemplate")
+        local headers = { memberHeader, petHeader }
+        for _, header in ipairs(headers) do
+            ConfigureHeader(header)
+        end
+
+        _G.CompactPartyFrameBorderFrame:SetProtected()
+        secureframe:SetFrameRef("CompactPartyFrameBorderFrame", _G.CompactPartyFrameBorderFrame)
+    end
+    secureframe:SetAttributeNoHandler("frameCount", 0)
+    secureframe:SetAttributeNoHandler("petframeStart", 0)
+
     self:getFramePoint()
     self:TrySort()
 
-    LS:Register(addon, function(specId, role, position, sender, channel) -- specId=Number, role=HEALER/TANK/DAMAGER, position=RANGED/MELEE
-        -- print(format("User %s has a spec id of %d and a role of %s. They are positioned in the %s group.", sender, specId, role, position))
+    LS:Register(addon, function(specId, role, position, sender, channel)
         unit_spec[sender] = {
             specId = specId,
             role = role,
@@ -670,15 +827,18 @@ function Sort:OnEnable()
         Sort:TrySort()
     end)
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        if needToSort then
+        if needToSort ~= 0 then
             Sort:TrySort(needToSort == 2)
         end
     end)
+
+    RegisterAttributeDriver(secureframe, "state-petstate", "[pet] pet; nopet;")
 end
 
 function Sort:OnDisable()
     enabled = false
     self:DisableHooks()
+    UnregisterAttributeDriver(secureframe, "state-petstate")
 
     LS:Unregister(addon)
 
@@ -711,12 +871,14 @@ function Sort:OnDisable()
             end
         end
     end
+    _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+    _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
     -- Adjust the position of the first pet frame
     for i = 1, 5 do
         local frame = _G["CompactPartyFramePet" .. i]
         if frame.unit and frame.unitExists then
             local point, pframe = frame:GetPoint(1)
-            if pframe and pframe:GetName():match("CompactPartyFrameMember") then
+            if pframe and not pframe:GetName():match("Pet") then
                 for j = 1, frame:GetNumPoints() do
                     local org = { frame:GetPoint(1) }
                     local parent = prev

@@ -524,6 +524,7 @@ options = {
                             set = "SetModuleStatus",
                         },
                         Sort = {
+                            hidden = isClassic,
                             order = 11,
                             type = "toggle",
                             name = L["Sort"],

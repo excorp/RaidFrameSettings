@@ -652,6 +652,9 @@ function Debuffs:OnEnable()
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+    if frameOpt.petframe then
+        self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
+    end
 
     if roster_changed then
         roster_changed = false

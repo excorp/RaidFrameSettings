@@ -19,5 +19,5 @@
   <Include file="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.xml"/>
   <Script file="Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
 	<Script file="Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua"/>
-  <Script file="Libs\LibSpecialization\LibSpecialization.lua"/>
+  <Include file="Libs\LibSpecialization\LibSpecialization.xml"/>
 </Ui>

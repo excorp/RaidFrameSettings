@@ -374,7 +374,7 @@ function Sort:getFramePoint()
     if group_type == "party" then
         for i = 1, 5 do
             local frame = _G["CompactPartyFrameMember" .. i]
-            if frame and frame:GetNumPoints() > 0 then
+            if frame and frame:GetNumPoints() > 0 and not frame_pos.party[i] then
                 frame_pos.party[i] = {}
                 for j = 1, frame:GetNumPoints() do
                     tinsert(frame_pos.party[i], { frame:GetPoint(j) })
@@ -555,7 +555,11 @@ function Sort:TrySort(reanchorOnly)
                 table.remove(unit_priority, idx)
             end
             for _, v in pairs(insert) do
-                table.insert(unit_priority, v.user_position, v)
+                if #unit_priority >= v.user_position then
+                    table.insert(unit_priority, v.user_position, v)
+                else
+                    table.insert(unit_priority, v)
+                end
             end
         end
     end
@@ -573,8 +577,8 @@ function Sort:TrySort(reanchorOnly)
                     count = count + 1
                     if not first then
                         first = frame
-                        frame:SetPoint(unpack(p))
-                        secureframeSetFrame(count, frame, p)
+                        frame:SetPoint(p[1], _G.CompactPartyFrame, p[3], p[4], p[5])
+                        secureframeSetFrame(count, frame, { p[1], _G.CompactPartyFrame, p[3], p[4], p[5] })
                     else
                         frame:SetPoint(p[1], prev, p[3], p[4], p[5])
                         secureframeSetFrame(count, frame, { p[1], prev, p[3], p[4], p[5] })
@@ -606,7 +610,6 @@ function Sort:TrySort(reanchorOnly)
                         end
                         frame:SetPoint(org[1], parent, org[3], org[4], org[5])
                     end
-                    break
                 end
             end
         end
@@ -795,7 +798,6 @@ function Sort:OnEnable()
                     local CompactPartyFrameBorderFrame = self:GetFrameRef("CompactPartyFrameBorderFrame")
                     CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
                     CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", last, "BOTTOMRIGHT", 8, -5 - 3)
-
                 end
             end
         ]])
@@ -846,7 +848,7 @@ function Sort:OnEnable()
         hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
     end
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        C_Timer.After(0, function() Sort:TrySort(true) end)
+        C_Timer.After(0, function() Sort:TrySort() end)
     end)
     self:RegisterEvent("UNIT_PET", function(event, unit)
         if _G.CompactRaidFrameContainer.displayPets then
@@ -856,7 +858,7 @@ function Sort:OnEnable()
         end
     end)
     self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
-        C_Timer.After(0, function() Sort:TrySort(true) end)
+        C_Timer.After(0, function() Sort:TrySort() end)
     end)
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if needToSort ~= 0 then

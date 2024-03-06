@@ -597,7 +597,7 @@ function Sort:TrySort(reanchorOnly)
             local frame = _G["CompactPartyFramePet" .. i]
             if frame.unit and frame.unitExists then
                 local point, pframe = frame:GetPoint()
-                if pframe and (not pframe:GetName():match("Pet") and pframe:GetName() ~= "CompactPartyFrame") then
+                if pframe and pframe:GetName():match("CompactPartyFrameMember") then
                     for j = 1, frame:GetNumPoints() do
                         local org = { frame:GetPoint(j) }
                         local parent = prev
@@ -786,7 +786,7 @@ function Sort:OnEnable()
             for i = petStart, count do
                 local frame = self:GetFrameRef("frame" .. i)
                 local point, pframe = frame:GetPoint()
-                if pframe and (not pframe:GetName():match("Pet") and pframe:GetName() ~= "CompactPartyFrame") then
+                if pframe and pframe:GetName():match("CompactPartyFrameMember") then
                     local first = self:GetFrameRef("frame1")
                     local last = self:GetFrameRef("frame" .. (petStart - 1))
                     local point, _, relativePoint, offsetX, offsetY = frame:GetPoint()
@@ -910,7 +910,7 @@ function Sort:OnDisable()
         local frame = _G["CompactPartyFramePet" .. i]
         if frame.unit and frame.unitExists then
             local point, pframe = frame:GetPoint()
-            if pframe and (not pframe:GetName():match("Pet") and pframe:GetName() ~= "CompactPartyFrame") then
+            if pframe and pframe:GetName():match("CompactPartyFrameMember") then
                 for j = 1, frame:GetNumPoints() do
                     local org = { frame:GetPoint(j) }
                     local parent = prev

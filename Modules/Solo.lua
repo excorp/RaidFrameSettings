@@ -8,10 +8,7 @@ local last = false
 function Solo:OnEnable()
     local function onUpdateVisibility()
         if InCombatLockdown() then
-            self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-                self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-                onUpdateVisibility()
-            end)
+            addon:RunWhenCombatEnds(onUpdateVisibility, "Solo")
             return
         end
 

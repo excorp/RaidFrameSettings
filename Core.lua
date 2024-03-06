@@ -59,13 +59,12 @@ end
 function RaidFrameSettings:SlashCommand()
     if InCombatLockdown() then
         self:Print(L["Options will show after combat ends."])
-        self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-            self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        self:RunWhenCombatEnds(function()
             local frame = RaidFrameSettings:GetOptionsFrame()
             if not frame:IsShown() then
                 frame:Show()
             end
-        end)
+        end, "Core")
         return
     end
     local frame = RaidFrameSettings:GetOptionsFrame()

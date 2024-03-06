@@ -596,10 +596,10 @@ function Sort:TrySort(reanchorOnly)
         for i = 1, 5 do
             local frame = _G["CompactPartyFramePet" .. i]
             if frame.unit and frame.unitExists then
-                local point, pframe = frame:GetPoint(1)
-                if pframe and not pframe:GetName():match("Pet") then
+                local point, pframe = frame:GetPoint()
+                if pframe and (not pframe:GetName():match("Pet") and pframe:GetName() ~= "CompactPartyFrame") then
                     for j = 1, frame:GetNumPoints() do
-                        local org = { frame:GetPoint(1) }
+                        local org = { frame:GetPoint(j) }
                         local parent = prev
                         if point == "TOPLEFT" then
                             parent = first
@@ -677,6 +677,27 @@ end
 local function ConfigureHeader(header)
     InjectSecureHelpers(header)
 
+    function header:UnitButtonCreated(index)
+        local children = { header:GetChildren() }
+        local frame = children[index]
+
+        if not frame then
+            addon:Print("Failed to find unit button " .. index)
+            return
+        end
+
+        addon:RunWhenCombatEnds(function()
+            -- the refreshUnitChange script doesn't capture when the unit is changed to nil
+            -- which can happen when someone leaves the group, or a pet ceases to exist
+            -- so we're really only interested in unit changing to nil here
+            frame:SetAttribute("_onattributechanged", [[
+                local secureframe = self:GetAttribute("secureframe")
+                secureframe:SetAttribute("state-petstate", "ignore")
+            ]])
+            frame:SetAttribute("HaveSetAttributeHandler", true)
+        end)
+    end
+
     -- show as much as possible
     header:SetAttribute("showRaid", true)
     header:SetAttribute("showParty", true)
@@ -704,10 +725,21 @@ local function ConfigureHeader(header)
             secureframe:SetAttribute("state-petstate", "ignore")
         ]]
         self:SetAttribute("refreshUnitChange", RefreshUnitChange)
+
+        if Header.CallMethod then
+            Header:CallMethod("UnitButtonCreated", UnitButtonsCount)
+        else
+            -- backwards compatibility for wotlk private
+            local run = control or self
+            run:RunFor(Header, [[
+                control:CallMethod("UnitButtonCreated")
+            ]])
+        end
     ]=])
 
     header:SetFrameRef("secureframe", secureframe)
     header:Execute([[
+        Header = self
         secureframe = self:GetFrameRef("secureframe")
     ]])
 
@@ -754,7 +786,7 @@ function Sort:OnEnable()
             for i = petStart, count do
                 local frame = self:GetFrameRef("frame" .. i)
                 local point, pframe = frame:GetPoint()
-                if pframe and not pframe:GetName():match("Pet") then
+                if pframe and (not pframe:GetName():match("Pet") and pframe:GetName() ~= "CompactPartyFrame") then
                     local first = self:GetFrameRef("frame1")
                     local last = self:GetFrameRef("frame" .. (petStart - 1))
                     local point, _, relativePoint, offsetX, offsetY = frame:GetPoint()
@@ -814,21 +846,21 @@ function Sort:OnEnable()
         hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
     end
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        Sort:TrySort()
+        C_Timer.After(0, function() Sort:TrySort(true) end)
     end)
     self:RegisterEvent("UNIT_PET", function(event, unit)
         if _G.CompactRaidFrameContainer.displayPets then
             if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
-                Sort:TrySort(true)
+                C_Timer.After(0, function() Sort:TrySort(true) end)
             end
         end
     end)
     self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
-        Sort:TrySort()
+        C_Timer.After(0, function() Sort:TrySort(true) end)
     end)
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if needToSort ~= 0 then
-            Sort:TrySort(needToSort == 2)
+            C_Timer.After(0, function() Sort:TrySort(needToSort == 2) end)
         end
     end)
 
@@ -877,10 +909,10 @@ function Sort:OnDisable()
     for i = 1, 5 do
         local frame = _G["CompactPartyFramePet" .. i]
         if frame.unit and frame.unitExists then
-            local point, pframe = frame:GetPoint(1)
-            if pframe and not pframe:GetName():match("Pet") then
+            local point, pframe = frame:GetPoint()
+            if pframe and (not pframe:GetName():match("Pet") and pframe:GetName() ~= "CompactPartyFrame") then
                 for j = 1, frame:GetNumPoints() do
-                    local org = { frame:GetPoint(1) }
+                    local org = { frame:GetPoint(j) }
                     local parent = prev
                     if point == "TOPLEFT" then
                         parent = first

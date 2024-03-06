@@ -32,6 +32,7 @@ Utils\CooldownText.lua
 Utils\Glow.lua
 Utils\Helper.lua
 Utils\HookRegistry.lua
+Utils\Scheduler.lua
 
 #Modules
 modules.xml

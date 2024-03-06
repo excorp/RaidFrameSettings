@@ -587,8 +587,10 @@ function Sort:TrySort(reanchorOnly)
                 end
             end
         end
-        _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
-        _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+        if first and prev then
+            _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+            _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+        end
 
         -- Adjust the position of the first pet frame
         secureframe:SetAttributeNoHandler("petframeStart", count + 1)
@@ -608,7 +610,9 @@ function Sort:TrySort(reanchorOnly)
                         if point == "TOPLEFT" then
                             parent = first
                         end
-                        frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                        if parent then
+                            frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                        end
                     end
                 end
             end
@@ -905,8 +909,10 @@ function Sort:OnDisable()
             end
         end
     end
-    _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
-    _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+    if first and prev then
+        _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+        _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+    end
     -- Adjust the position of the first pet frame
     for i = 1, 5 do
         local frame = _G["CompactPartyFramePet" .. i]
@@ -919,7 +925,9 @@ function Sort:OnDisable()
                     if point == "TOPLEFT" then
                         parent = first
                     end
-                    frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                    if parent then
+                        frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                    end
                 end
                 break
             end

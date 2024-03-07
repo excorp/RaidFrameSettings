@@ -222,66 +222,65 @@ local defaults = {
             },
         },
         Sort = {
-            party = {
-                priority = {
-                    player = true,
-                    role = {
-                        priority = 3,
-                        reverse  = false,
-                    },
-                    position = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                    name = {
-                        priority = 2,
-                        reverse = false,
-                    },
-                    token = {
-                        priority = 1,
-                        reverse = false,
-                    },
-                    user = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                    class = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                },
-                player = {
-                    position = 1,
-                },
+            priority = {
+                player = true,
                 role = {
-                    MAINTANK   = 5,
-                    MAINASSIST = 4,
-                    TANK       = 3,
-                    HEALER     = 2,
-                    DAMAGER    = 1,
-                    NONE       = 0,
+                    priority = 3,
+                    reverse  = false,
                 },
                 position = {
-                    MELEE  = 2,
-                    RANGED = 1,
+                    priority = 0,
+                    reverse = false,
                 },
-                class = {
-                    WARRIOR     = 13,
-                    PALADIN     = 12,
-                    HUNTER      = 11,
-                    ROGUE       = 10,
-                    PRIEST      = 9,
-                    DEATHKNIGHT = 8,
-                    SHAMAN      = 7,
-                    MAGE        = 6,
-                    WARLOCK     = 5,
-                    MONK        = 4,
-                    DRUID       = 3,
-                    DEMONHUNTER = 2,
-                    EVOKER      = 1,
+                name = {
+                    priority = 2,
+                    reverse = false,
+                },
+                token = {
+                    priority = 1,
+                    reverse = false,
                 },
                 user = {
-                    --[[
+                    priority = 0,
+                    reverse = false,
+                },
+                class = {
+                    priority = 0,
+                    reverse = false,
+                },
+            },
+            player = {
+                position = 1,
+            },
+            role = {
+                MAINTANK   = 5,
+                MAINASSIST = 4,
+                TANK       = 3,
+                HEALER     = 2,
+                DAMAGER    = 1,
+                NONE       = 0,
+            },
+            position = {
+                MELEE  = 2,
+                RANGED = 1,
+            },
+            class = {
+                WARRIOR     = 13,
+                PALADIN     = 12,
+                HUNTER      = 11,
+                ROGUE       = 10,
+                PRIEST      = 9,
+                DEATHKNIGHT = 8,
+                SHAMAN      = 7,
+                MAGE        = 6,
+                WARLOCK     = 5,
+                MONK        = 4,
+                DRUID       = 3,
+                DEMONHUNTER = 2,
+                EVOKER      = 1,
+            },
+            user = {
+                --[[
                     ["변하지롱"] = {
                         priority = 123,
                         fullname = true,
@@ -291,69 +290,6 @@ local defaults = {
                         name     = true,
                     }
                     ]]
-                },
-            },
-            raid = {
-                priority = {
-                    player = false,
-                    role = {
-                        priority = 0,
-                        reverse  = false,
-                    },
-                    position = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                    name = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                    token = {
-                        priority = 1,
-                        reverse = false,
-                    },
-                    user = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                    class = {
-                        priority = 0,
-                        reverse = false,
-                    },
-                },
-                player = {
-                    position = 1,
-                },
-                role = {
-                    MAINTANK   = 5,
-                    MAINASSIST = 4,
-                    TANK       = 3,
-                    HEALER     = 2,
-                    DAMAGER    = 1,
-                    NONE       = 0,
-                },
-                position = {
-                    MELEE  = 2,
-                    RANGED = 1,
-                },
-                class = {
-                    WARRIOR     = 13,
-                    PALADIN     = 12,
-                    HUNTER      = 11,
-                    ROGUE       = 10,
-                    PRIEST      = 9,
-                    DEATHKNIGHT = 8,
-                    SHAMAN      = 7,
-                    MAGE        = 6,
-                    WARLOCK     = 5,
-                    MONK        = 4,
-                    DRUID       = 3,
-                    DEMONHUNTER = 2,
-                    EVOKER      = 1,
-                },
-                user = {
-
-                },
             },
         },
         MinorModules = {

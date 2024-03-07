@@ -445,7 +445,7 @@ function Sort:TrySort(reanchorOnly)
 
     -- Get group members and sort
     if not reanchorOnly then
-        local priority = sortOpt[group_type]
+        local priority = sortOpt
         local priority_sorted = {}
         for k, v in pairs(priority.priority) do
             if type(v) == "table" then
@@ -485,19 +485,36 @@ function Sort:TrySort(reanchorOnly)
                     local rnp = user_conf.rolePositionShortCut[needle]
                     if v.fullname and (name == needle or fullname == needle) then
                         user = v
+                        break
                     elseif v.spec and (user_conf.specShortCut[needle] and specId ~= 0 and ((type(user_conf.specShortCut[needle]) == "table" and user_conf.specShortCut[needle][specId]) or specId == user_conf.specShortCut[needle])) then
                         user = v
+                        break
                     elseif v.rolepos and (rnp and role == rnp.role and (position == rnp.position or rnp.position == nil)) then
                         user = v
+                        break
                     elseif v.class and (user_conf.classShortCut[needle] and class == user_conf.classShortCut[needle]) then
                         user = v
+                        break
                     elseif v.name then
                         if string.find(fullname, needle) then
                             user = v
+                            break
                         end
                     end
                 end
-                tinsert(unit_priority, {
+                local groupno = 1
+                if group_type == "raid" then
+                    if group_separated then
+                        local id = tonumber(string.sub(unit, 5))
+                        if id then
+                            groupno = select(3, GetRaidRosterInfo(id))
+                        end
+                    end
+                end
+                if not unit_priority[groupno] then
+                    unit_priority[groupno] = {}
+                end
+                tinsert(unit_priority[groupno], {
                     token = unit,
                     class = priority.class[class] or 0,
                     role = priority.role[role] or 0,
@@ -508,57 +525,66 @@ function Sort:TrySort(reanchorOnly)
                 })
             end
         end
-        table.sort(unit_priority, function(a, b)
-            for _, v in pairs(priority_sorted) do
-                if a[v.key] ~= b[v.key] then
-                    if group_type == "raid" and v.key == "token" then
-                        local id1 = tonumber(string.sub(a[v.key], 5))
-                        local id2 = tonumber(string.sub(b[v.key], 5))
-                        if not id1 or not id2 then
-                            return id1
+        for _, party in pairs(unit_priority) do
+            table.sort(party, function(a, b)
+                for _, v in pairs(priority_sorted) do
+                    if a[v.key] ~= b[v.key] then
+                        if group_type == "raid" and v.key == "token" then
+                            local id1 = tonumber(string.sub(a[v.key], 5))
+                            local id2 = tonumber(string.sub(b[v.key], 5))
+                            if not id1 or not id2 then
+                                return id1
+                            end
+                            if v.reverse then
+                                return id1 > id2
+                            else
+                                return id1 < id2
+                            end
+                        end
+                        if v.key == "token" or v.key == "name" then
+                            if v.reverse then
+                                return a[v.key] > b[v.key]
+                            else
+                                return a[v.key] < b[v.key]
+                            end
                         end
                         if v.reverse then
-                            return id1 > id2
-                        else
-                            return id1 < id2
-                        end
-                    end
-                    if v.key == "token" or v.key == "name" then
-                        if v.reverse then
-                            return a[v.key] > b[v.key]
-                        else
                             return a[v.key] < b[v.key]
+                        else
+                            return a[v.key] > b[v.key]
                         end
-                    end
-                    if v.reverse then
-                        return a[v.key] < b[v.key]
-                    else
-                        return a[v.key] > b[v.key]
                     end
                 end
-            end
-            return a.token < b.token
-        end)
+                return a.token < b.token
+            end)
+        end
 
         -- Change the location of a user with a location set
         if priority.priority.player then
             local positioned = {}
-            for k, v in pairs(unit_priority) do
-                if v.user_position > 0 then
-                    tinsert(positioned, k)
+            for groupno, party in pairs(unit_priority) do
+                for k, v in pairs(party) do
+                    if v.user_position > 0 then
+                        if not positioned[groupno] then
+                            positioned[groupno] = {}
+                        end
+                        tinsert(positioned[groupno], k)
+                    end
                 end
             end
-            local insert = {}
-            for i = #positioned, 1, -1 do
-                local idx = positioned[i]
-                table.insert(insert, unit_priority[idx])
-                table.remove(unit_priority, idx)
-            end
-            for _, v in pairs(insert) do
-                if #unit_priority >= v.user_position then
-                    table.insert(unit_priority, v.user_position, v)
-                else
-                    table.insert(unit_priority, v)
+            for groupno, v in pairs(positioned) do
+                local insert = {}
+                for i = #v, 1, -1 do
+                    local idx = v[i]
+                    table.insert(insert, unit_priority[groupno][idx])
+                    table.remove(unit_priority[groupno], idx)
+                end
+                for _, info in pairs(insert) do
+                    if #unit_priority[groupno] >= info.user_position then
+                        table.insert(unit_priority[groupno], info.user_position, info)
+                    else
+                        table.insert(unit_priority[groupno], info)
+                    end
                 end
             end
         end
@@ -570,7 +596,7 @@ function Sort:TrySort(reanchorOnly)
     if group_type == "party" then
         local first
         local prev
-        for k, v in pairs(unit_priority) do
+        for k, v in pairs(unit_priority[1]) do
             local frame = self:getFrameUnit(v.token)
             if frame and frame_pos.party[k] then
                 for _, p in pairs(frame_pos.party[k]) do
@@ -619,34 +645,24 @@ function Sort:TrySort(reanchorOnly)
         end
     elseif group_type == "raid" then
         if group_separated then
-            local first = {}
-            local prev = {}
-            local groupidx = {}
-            for k, v in pairs(unit_priority) do
-                local id = tonumber(string.sub(v.token, 5))
-                if id then
-                    local _, _, subgroup = GetRaidRosterInfo(id)
-                    if groupidx[subgroup] == nil then
-                        first[subgroup] = nil
-                        prev[subgroup] = nil
-                        groupidx[subgroup] = 1
-                    end
-
+            for subgroup, party in pairs(unit_priority) do
+                local first
+                local prev
+                for k, v in pairs(party) do
                     local frame = self:getFrameUnit(v.token)
-                    if frame and frame_pos.raidgroup[subgroup][groupidx[subgroup]] then
-                        for _, p in pairs(frame_pos.raidgroup[subgroup][groupidx[subgroup]]) do
+                    if frame and frame_pos.raidgroup[subgroup][k] then
+                        for _, p in pairs(frame_pos.raidgroup[subgroup][k]) do
                             count = count + 1
-                            if not first[subgroup] then
-                                first[subgroup] = frame
+                            if not first then
+                                first = frame
                                 frame:SetPoint(unpack(p))
                                 secureframeSetFrame(count, frame, p)
                             else
-                                frame:SetPoint(p[1], prev[subgroup], p[3], p[4], p[5])
-                                secureframeSetFrame(count, frame, { p[1], prev[subgroup], p[3], p[4], p[5] })
+                                frame:SetPoint(p[1], prev, p[3], p[4], p[5])
+                                secureframeSetFrame(count, frame, { p[1], prev, p[3], p[4], p[5] })
                             end
-                            prev[subgroup] = frame
+                            prev = frame
                         end
-                        groupidx[subgroup] = groupidx[subgroup] + 1
                     end
                 end
             end

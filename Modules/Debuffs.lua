@@ -280,7 +280,7 @@ function Debuffs:OnEnable()
         frame.PrivateAuraAnchor2:ClearAllPoints()
         frame.PrivateAuraAnchor2:SetPoint(followPoint, frame.PrivateAuraAnchor1, followRelativePoint, followOffsetX, followOffsetY)
     end
-    -- self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
+    self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
     local onHideAllDebuffs = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then

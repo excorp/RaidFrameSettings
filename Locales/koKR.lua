@@ -137,7 +137,7 @@ L["Show Tooltip"]               = "툴팁 표시"
 L["Frame Strata"]               = "프레임 계층"
 L["Show \"Edge\""]              = "Edge 표시"
 L["Show \"Swipe\""]             = "Swipe 사용"
-L["Inverse"]                    = "Swipe 반대로"
+L["Inverse"]                    = "Swipe 반전"
 L["Show Duration Timer Text"]   = "지속시간 표시"
 
 L["Gap"]                        = "간격"
@@ -359,3 +359,13 @@ L["Apply the this module to the pet frame."] = "이 모듈을 펫프레임에 �
 
 L["HealthBar"] = "체력바"
 L["PowerBar"]  = "파워바"
+
+
+L["Bar Icon"]                                     = "바 아이콘"
+L["Using baricon on swipe"]                       = "Swipe시 바 아이콘 사용"
+L["Swipe direction"]                              = "Swipe 방향"
+L["Set the direction to be swiped"]               = "Swipe될 방향을 선택 합니다"
+L["Refresh Ani."]                                 = "갱신 애니"
+L["Shows an animation when aura refreshes."]      = "오라가 갱신될때 애니메이션을 보여줍니다."
+L["Ani. direction"]                               = "애니 방향"
+L["Sets the direction of the refresh animation."] = "갱신 애니메이션의 방향을 설정합니다."

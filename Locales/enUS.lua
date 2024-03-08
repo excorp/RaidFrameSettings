@@ -362,3 +362,13 @@ L["Apply the this module to the pet frame."] = "Apply the this module to the pet
 
 L["HealthBar"] = "HealthBar"
 L["PowerBar"]  = "PowerBar"
+
+
+L["Bar Icon"]                                     = "Bar Icon"
+L["Using baricon on swipe"]                       = "Using baricon on swipe"
+L["Swipe direction"]                              = "Swipe direction"
+L["Set the direction to be swiped"]               = "Set the direction to be swiped"
+L["Refresh Ani."]                                 = "Refresh Ani."
+L["Shows an animation when aura refreshes."]      = "Shows an animation when aura refreshes."
+L["Ani. direction"]                               = "Ani. direction"
+L["Sets the direction of the refresh animation."] = "Sets the direction of the refresh animation."

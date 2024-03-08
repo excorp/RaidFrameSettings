@@ -5,6 +5,7 @@
   <Script file="Modules\Raidmark.lua"/>
   <Script file="Modules\Range.lua"/>
   <Script file="Modules\AuraFilter.lua"/>
+  <Script file="Modules\Aura.lua"/>
   <Script file="Modules\Buffs.lua"/>
   <Script file="Modules\Debuffs.lua"/>
   <Script file="Modules\Overabsorb.lua"/>

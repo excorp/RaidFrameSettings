@@ -8,6 +8,7 @@ local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
+local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
 
 local fontObj = CreateFont("RaidFrameSettingsFont")
@@ -96,6 +97,8 @@ function Buffs:OnEnable()
     frameOpt.petframe = addon.db.profile.Buffs.petframe
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
+    frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
+
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Buffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
     durationOpt.font = Media:Fetch("font", durationOpt.font)
@@ -108,6 +111,11 @@ function Buffs:OnEnable()
     stackOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(stackOpt.outlinemode)
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
+
+    Aura.Opt.Buff.frameOpt = frameOpt
+    Aura.Opt.Buff.durationOpt = durationOpt
+    Aura.Opt.Buff.stackOpt = stackOpt
+
     --aura filter
     local filteredAuras = {}
     if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Buffs then
@@ -201,19 +209,24 @@ function Buffs:OnEnable()
     end
 
     local onSetBuff = function(buffFrame, aura, opt)
-        if buffFrame:IsForbidden() or not buffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+        if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
         local parent = buffFrame:GetParent()
         if not parent or not frame_registry[parent] then
             return
         end
-        local cooldown = buffFrame.cooldown
-        if not cooldown._rfs_cd_text then
-            return
+
+        local aurastored = frame_registry[parent].aura
+        if frameOpt.refreshAni and aurastored[aura.auraInstanceID] then
+            if math.abs(aura.expirationTime - aurastored[aura.auraInstanceID].expirationTime) > 1 or aurastored[aura.auraInstanceID].applications ~= aura.applications then
+                aura.refresh = true
+            end
         end
-        CDT:StartCooldownText(cooldown)
-        cooldown:SetDrawEdge(frameOpt.edge)
+        aurastored[aura.auraInstanceID] = aura
+
+        -- icon, stack, cooldown(duration) start
+        buffFrame:SetAura(aura)
 
         if aura then
             local auraGroupNo = auraGroupList[aura.spellId]
@@ -228,20 +241,11 @@ function Buffs:OnEnable()
             else
                 buffFrame:SetSize(width, height)
             end
-
-            if aura.applications > 0 then
-                if aura.duration == 0 then
-                    buffFrame.count:SetParent(buffFrame)
-                else
-                    buffFrame.count:SetParent(cooldown)
-                end
-            end
         end
 
         self:Glow(buffFrame, opt.glow)
         buffFrame:SetAlpha(opt.alpha or 1)
     end
-    -- self:HookFunc("CompactUnitFrame_UtilSetBuff", onSetBuff)
 
     local onHideAllBuffs = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
@@ -265,7 +269,6 @@ function Buffs:OnEnable()
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     local placed = userPlaced[aura.spellId]
-                    CompactUnitFrame_UtilSetBuff(buffFrame, aura)
                     onSetBuff(buffFrame, aura, placed)
                     return false
                 end
@@ -297,13 +300,11 @@ function Buffs:OnEnable()
                 if groupNo == 0 then
                     -- default aura frame
                     local buffFrame = frame_registry[frame].extraBuffFrames[k]
-                    CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
                     onSetBuff(buffFrame, v.aura, v.opt)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                    CompactUnitFrame_UtilSetBuff(buffFrame, v.aura)
                     onSetBuff(buffFrame, v.aura, v.opt)
                     if k >= auraGroup[groupNo].maxAuras then
                         break
@@ -331,16 +332,14 @@ function Buffs:OnEnable()
             local idx = frame_registry[frame].placedAuraStart + i - 1
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
             if not buffFrame.auraInstanceID or not frame.buffs[buffFrame.auraInstanceID] then
-                buffFrame:Hide()
                 self:Glow(buffFrame, false)
-                CooldownFrame_Clear(buffFrame.cooldown)
+                buffFrame:UnsetAura()
             end
         end
         for i = frameNum, math.max(frame_registry[frame].maxBuffs, frame.maxBuffs) do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
-            buffFrame:Hide()
             self:Glow(buffFrame, false)
-            CooldownFrame_Clear(buffFrame.cooldown)
+            buffFrame:UnsetAura()
         end
         -- Modify the anchor of an auraGroup and hide left aura group
         for groupNo, v in pairs(auraGroup) do
@@ -367,9 +366,8 @@ function Buffs:OnEnable()
             for i = groupFrameNum[groupNo] or 1, groupSize do
                 local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                buffFrame:Hide()
                 self:Glow(buffFrame, false)
-                CooldownFrame_Clear(buffFrame.cooldown)
+                buffFrame:UnsetAura()
             end
         end
     end
@@ -392,6 +390,7 @@ function Buffs:OnEnable()
                 extraBuffFrames = {},
                 reanchor        = {},
                 buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
+                aura            = {},
                 dirty           = true,
             }
         end
@@ -402,14 +401,8 @@ function Buffs:OnEnable()
 
             local placedAuraStart = frame.maxBuffs + 1
             for i = 1, frame_registry[frame].maxBuffs do
-                local buffFrame = frame_registry[frame].extraBuffFrames[i]
-                if not buffFrame then
-                    buffFrame = CreateFrame("Button", nil, nil, "CompactBuffTemplate")
-                    buffFrame:SetParent(frame)
-                    buffFrame:Hide()
-                    buffFrame.cooldown:SetHideCountdownNumbers(true)
-                    frame_registry[frame].extraBuffFrames[i] = buffFrame
-                end
+                local buffFrame = Aura:createAuraFrame(frame, "Buff", frameOpt.type, i) -- category:Buff,Debuff, type=blizzard,baricon
+                frame_registry[frame].extraBuffFrames[i] = buffFrame
                 buffFrame:ClearAllPoints()
                 buffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 placedAuraStart = i + 1
@@ -418,65 +411,8 @@ function Buffs:OnEnable()
 
             for i = 1, maxUserPlaced + maxAuraGroup do
                 local idx = placedAuraStart + i - 1
-                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                if not buffFrame then
-                    buffFrame = CreateFrame("Button", nil, nil, "CompactBuffTemplate")
-                    buffFrame:SetParent(frame)
-                    buffFrame:Hide()
-                    buffFrame.cooldown:SetHideCountdownNumbers(true)
-                    frame_registry[frame].extraBuffFrames[idx] = buffFrame
-                end
-                buffFrame:ClearAllPoints()
-                buffFrame.icon:SetTexCoord(0, 1, 0, 1)
-            end
-
-            for i = 1, frame_registry[frame].maxBuffs + maxUserPlaced + maxAuraGroup do
-                local buffFrame = frame_registry[frame].extraBuffFrames[i]
-                if frameOpt.framestrata ~= "Inherited" then
-                    buffFrame:SetFrameStrata(frameOpt.framestrata)
-                end
-                --Timer Settings
-                local cooldown = buffFrame.cooldown
-                if frameOpt.timerText then
-                    local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
-                    cooldownText:ClearAllPoints()
-                    cooldownText:SetPoint(durationOpt.point, buffFrame, durationOpt.relativePoint, durationOpt.xOffsetFont, durationOpt.yOffsetFont)
-                    local res = cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
-                    if not res then
-                        fontObj:SetFontObject("NumberFontNormalSmall")
-                        cooldownText:SetFont(fontObj:GetFont())
-                        frame_registry[frame].dirty = true
-                    end
-                    cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b)
-                    cooldownText:SetShadowColor(durationOpt.shadowColor.r, durationOpt.shadowColor.g, durationOpt.shadowColor.b, durationOpt.shadowColor.a)
-                    cooldownText:SetShadowOffset(durationOpt.xOffsetShadow, durationOpt.yOffsetShadow)
-                    if OmniCC and OmniCC.Cooldown and OmniCC.Cooldown.SetNoCooldownCount then
-                        if not cooldown.OmniCC then
-                            cooldown.OmniCC = {
-                                noCooldownCount = cooldown.noCooldownCount,
-                            }
-                        end
-                        OmniCC.Cooldown.SetNoCooldownCount(cooldown, true)
-                    end
-                end
-                --Stack Settings
-                local stackText = buffFrame.count
-                stackText:ClearAllPoints()
-                stackText:SetPoint(stackOpt.point, buffFrame, stackOpt.relativePoint, stackOpt.xOffsetFont, stackOpt.yOffsetFont)
-                local res = stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
-                if not res then
-                    fontObj:SetFontObject("NumberFontNormalSmall")
-                    stackText:SetFont(fontObj:GetFont())
-                    frame_registry[frame].dirty = true
-                end
-                stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
-                stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
-                stackText:SetShadowOffset(stackOpt.xOffsetShadow, stackOpt.yOffsetShadow)
-                stackText:SetParent(cooldown)
-                --Swipe Settings
-                cooldown:SetDrawSwipe(frameOpt.swipe)
-                cooldown:SetReverse(frameOpt.inverse)
-                cooldown:SetDrawEdge(frameOpt.edge)
+                local buffFrame = Aura:createAuraFrame(frame, "Buff", frameOpt.type, idx) -- category:Buff,Debuff, type=blizzard,baricon
+                frame_registry[frame].extraBuffFrames[idx] = buffFrame
             end
 
             local idx = frame_registry[frame].placedAuraStart - 1 + maxUserPlaced
@@ -616,6 +552,7 @@ function Buffs:OnEnable()
                     extraBuffFrames = {},
                     reanchor        = {},
                     buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
+                    aura            = {},
                     dirty           = true,
                 }
             end
@@ -735,4 +672,5 @@ function Buffs:OnDisable()
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)
     end
+    CDT:DisableCooldownText()
 end

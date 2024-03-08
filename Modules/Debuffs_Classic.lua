@@ -9,6 +9,7 @@ local Debuffs = addon:NewModule("Debuffs")
 Mixin(Debuffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
+local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
 
 local fontObj = CreateFont("RaidFrameSettingsFont")
@@ -72,8 +73,11 @@ function Debuffs:OnEnable()
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
 
     local frameOpt = CopyTable(addon.db.profile.Debuffs.DebuffFramesDisplay)
+    frameOpt.petframe = addon.db.profile.Buffs.petframe
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
+    frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
+
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Debuffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
     durationOpt.font = Media:Fetch("font", durationOpt.font)
@@ -86,6 +90,11 @@ function Debuffs:OnEnable()
     stackOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(stackOpt.outlinemode)
     stackOpt.point = addon:ConvertDbNumberToPosition(stackOpt.point)
     stackOpt.relativePoint = addon:ConvertDbNumberToPosition(stackOpt.relativePoint)
+
+    Aura.Opt.Debuff.frameOpt = frameOpt
+    Aura.Opt.Debuff.durationOpt = durationOpt
+    Aura.Opt.Debuff.stackOpt = stackOpt
+
     --aura filter
     local filteredAuras = {}
     if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Debuffs then
@@ -163,11 +172,13 @@ function Debuffs:OnEnable()
         resizeDebuffFrame = function(debuffFrame)
             debuffFrame:SetSize(width, height)
             debuffFrame.icon:SetTexCoord(left, right, top, bottom)
-            debuffFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
-            debuffFrame.border:SetTexCoord(0, 1, 0, 1)
-            if not isWrath then
-                debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09)
-                debuffFrame.border:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
+            if debuffFrame.border then
+                debuffFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
+                debuffFrame.border:SetTexCoord(0, 1, 0, 1)
+                if not isWrath then
+                    debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09)
+                    debuffFrame.border:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
+                end
             end
         end
     else
@@ -185,26 +196,45 @@ function Debuffs:OnEnable()
     end
 
     local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
-        if debuffFrame:IsForbidden() or not debuffFrame:IsVisible() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+        if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
         local parent = debuffFrame:GetParent()
         if not parent or not frame_registry[parent] then
             return
         end
-        local cooldown = debuffFrame.cooldown
-        if not cooldown._rfs_cd_text then
-            return
-        end
-        local name, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId
+
+        local name, icon, applications, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId
         if isBossBuff then
-            name, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitBuff(unit, index, filter)
+            name, icon, applications, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitBuff(unit, index, filter)
         else
-            name, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(unit, index, filter)
+            name, icon, applications, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(unit, index, filter)
         end
 
-        CDT:StartCooldownText(cooldown)
-        cooldown:SetDrawEdge(frameOpt.edge)
+        local aurastored = frame_registry[parent].aura
+        local auraInstanceID = (unitCaster or "X") .. "_" .. spellId
+        local refresh
+        if frameOpt.refreshAni and aurastored[auraInstanceID] then
+            if math.abs(expirationTime - aurastored[auraInstanceID].expirationTime) > 1 or aurastored[auraInstanceID].applications ~= applications then
+                refresh = true
+            end
+        end
+        aurastored[auraInstanceID] = {
+            name            = name,
+            icon            = icon,
+            applications    = applications,
+            debuffType      = debuffType,
+            duration        = duration,
+            expirationTime  = expirationTime,
+            unitCaster      = unitCaster,
+            canStealOrPurge = canStealOrPurge,
+            spellId         = spellId,
+            auraInstanceID  = auraInstanceID,
+            refresh         = refresh,
+        }
+
+        -- icon, stack, cooldown(duration) start
+        debuffFrame:SetAura(aurastored[auraInstanceID])
 
         local color = durationOpt.fontColor
         if debuffType then
@@ -213,12 +243,12 @@ function Debuffs:OnEnable()
         if Bleeds and Bleeds[spellId] then
             color = debuffColors.Bleed
         end
-        debuffFrame.border:SetVertexColor(color.r, color.g, color.b)
+        debuffFrame:SetBorderColor(color.r, color.g, color.b)
 
         if not durationOpt.debuffColor then
             color = durationOpt.fontColor
         end
-        local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
+        local cooldownText = CDT:CreateOrGetCooldownFontString(debuffFrame.cooldown)
         cooldownText:SetVertexColor(color.r, color.g, color.b)
 
         local auraGroupNo = auraGroupList[spellId]
@@ -233,18 +263,9 @@ function Debuffs:OnEnable()
             debuffFrame:SetSize(width, height)
         end
 
-        if count > 0 then
-            if duration == 0 then
-                debuffFrame.count:SetParent(debuffFrame)
-            else
-                debuffFrame.count:SetParent(cooldown)
-            end
-        end
-
         self:Glow(debuffFrame, opt.glow)
         debuffFrame:SetAlpha(opt.alpha or 1)
     end
-    -- self:HookFunc("CompactUnitFrame_UtilSetDebuff", onSetDebuff)
 
     local onUpdateDebuffs = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
@@ -274,7 +295,6 @@ function Debuffs:OnEnable()
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     local placed = userPlaced[spellId]
-                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff)
                     onSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff, placed)
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
@@ -282,12 +302,12 @@ function Debuffs:OnEnable()
                     local auraOpt = auraList[spellId]
                     local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[spellId] and filteredAuras[spellId].priority or 0
                     if not sorted[groupNo] then sorted[groupNo] = {} end
-                    tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index, opt = auraOpt })
+                    tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index, isBossAura = isBossAura, isBossBuff = isBossBuff, opt = auraOpt })
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                 elseif frameNum <= frame_registry[frame].maxDebuffs then
                     local filtered = filteredAuras[spellId]
                     local priority = filtered and filtered.priority or 0
-                    tinsert(sorted[0], { spellId = spellId, priority = priority, index = index, opt = filtered or {} })
+                    tinsert(sorted[0], { spellId = spellId, priority = priority, index = index, isBossAura = isBossAura, isBossBuff = isBossBuff, opt = filtered or {} })
                     frameNum = frameNum + 1
                 end
             end
@@ -302,14 +322,12 @@ function Debuffs:OnEnable()
                 if groupNo == 0 then
                     -- default aura frame
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
-                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter)
-                    onSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter, v.opt)
+                    onSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter, v.isBossAura, v.isBossBuff, v.opt)
                 else
                     -- aura group frame
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                    CompactUnitFrame_UtilSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter)
-                    onSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter, v.opt)
+                    onSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter, v.isBossAura, v.isBossBuff, v.opt)
                     if k >= auraGroup[groupNo].maxAuras then
                         break
                     end
@@ -338,16 +356,20 @@ function Debuffs:OnEnable()
             index = debuffFrame:GetID()
             local debuffName = UnitDebuff(frame.displayedUnit, index, filter)
             if not debuffName then
-                debuffFrame:Hide()
                 self:Glow(debuffFrame, false)
-                CooldownFrame_Clear(debuffFrame.cooldown)
+                debuffFrame:UnsetAura()
+                if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
+                    frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
+                end
             end
         end
         for i = frameNum, math.max(frame_registry[frame].maxDebuffs, frame.maxDebuffs) do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-            debuffFrame:Hide()
             self:Glow(debuffFrame, false)
-            CooldownFrame_Clear(debuffFrame.cooldown)
+            debuffFrame:UnsetAura()
+            if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
+                frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
+            end
         end
         -- Modify the anchor of an auraGroup and hide left aura group
         for groupNo, v in pairs(auraGroup) do
@@ -374,18 +396,22 @@ function Debuffs:OnEnable()
             for i = groupFrameNum[groupNo] or 1, groupSize do
                 local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                debuffFrame:Hide()
                 self:Glow(debuffFrame, false)
-                CooldownFrame_Clear(debuffFrame.cooldown)
+                debuffFrame:UnsetAura()
+                if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
+                    frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
+                end
             end
         end
     end
     self:HookFunc("CompactUnitFrame_UpdateDebuffs", onUpdateDebuffs)
 
     local function onFrameSetup(frame)
-        local fname = frame:GetName()
-        if not fname or fname:match("Pet") then
-            return
+        if not frameOpt.petframe then
+            local fname = frame:GetName()
+            if not fname or fname:match("Pet") then
+                return
+            end
         end
 
         if not frame_registry[frame] then
@@ -396,6 +422,7 @@ function Debuffs:OnEnable()
                 auraGroupEnd      = {},
                 extraDebuffFrames = {},
                 reanchor          = {},
+                aura              = {},
                 dirty             = true,
             }
         end
@@ -405,93 +432,20 @@ function Debuffs:OnEnable()
             frame_registry[frame].dirty = false
             local placedAuraStart = frame.maxDebuffs + 1
             for i = 1, frame_registry[frame].maxDebuffs do
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-                if not debuffFrame then
-                    debuffFrame = CreateFrame("Button", nil, frame, "CompactDebuffTemplate")
-                    debuffFrame:Hide()
-                    debuffFrame.baseSize = width
-                    debuffFrame.maxHeight = width
-                    debuffFrame.cooldown:SetHideCountdownNumbers(true)
-                    frame_registry[frame].extraDebuffFrames[i] = debuffFrame
-                end
+                local debuffFrame = Aura:createAuraFrame(frame, "Debuff", frameOpt.type, i) -- category:Buff,Debuff, type=blizzard,baricon
+                frame_registry[frame].extraDebuffFrames[i] = debuffFrame
                 debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
-                debuffFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
-                debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
-                if not isWrath then
-                    debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
-                end
                 placedAuraStart = i + 1
             end
             frame_registry[frame].placedAuraStart = placedAuraStart
 
             for i = 1, maxUserPlaced + maxAuraGroup do
                 local idx = placedAuraStart + i - 1
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                if not debuffFrame then
-                    debuffFrame = CreateFrame("Button", nil, frame, "CompactDebuffTemplate")
-                    debuffFrame:Hide()
-                    debuffFrame.baseSize = width
-                    debuffFrame.maxHeight = width
-                    debuffFrame.cooldown:SetHideCountdownNumbers(true)
-                    frame_registry[frame].extraDebuffFrames[idx] = debuffFrame
-                end
+                local debuffFrame = Aura:createAuraFrame(frame, "Debuff", frameOpt.type, idx) -- category:Buff,Debuff, type=blizzard,baricon
+                frame_registry[frame].extraDebuffFrames[idx] = debuffFrame
                 debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
-                debuffFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
-                debuffFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
-                if not isWrath then
-                    debuffFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
-                end
-            end
-
-            for i = 1, frame_registry[frame].maxDebuffs + maxUserPlaced + maxAuraGroup do
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-                if frameOpt.framestrata ~= "Inherited" then
-                    debuffFrame:SetFrameStrata(frameOpt.framestrata)
-                end
-                --Timer Settings
-                local cooldown = debuffFrame.cooldown
-                if frameOpt.timerText then
-                    local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
-                    cooldownText:ClearAllPoints()
-                    cooldownText:SetPoint(durationOpt.point, debuffFrame, durationOpt.relativePoint, durationOpt.xOffsetFont, durationOpt.yOffsetFont)
-                    local res = cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
-                    if not res then
-                        fontObj:SetFontObject("NumberFontNormalSmall")
-                        cooldownText:SetFont(fontObj:GetFont())
-                        frame_registry[frame].dirty = true
-                    end
-                    cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b)
-                    cooldownText:SetShadowColor(durationOpt.shadowColor.r, durationOpt.shadowColor.g, durationOpt.shadowColor.b, durationOpt.shadowColor.a)
-                    cooldownText:SetShadowOffset(durationOpt.xOffsetShadow, durationOpt.yOffsetShadow)
-                    if OmniCC and OmniCC.Cooldown and OmniCC.Cooldown.SetNoCooldownCount then
-                        if not cooldown.OmniCC then
-                            cooldown.OmniCC = {
-                                noCooldownCount = cooldown.noCooldownCount,
-                            }
-                        end
-                        OmniCC.Cooldown.SetNoCooldownCount(cooldown, true)
-                    end
-                end
-                --Stack Settings
-                local stackText = debuffFrame.count
-                stackText:ClearAllPoints()
-                stackText:SetPoint(stackOpt.point, debuffFrame, stackOpt.relativePoint, stackOpt.xOffsetFont, stackOpt.yOffsetFont)
-                local res = stackText:SetFont(stackOpt.font, stackOpt.fontSize, stackOpt.outlinemode)
-                if not res then
-                    fontObj:SetFontObject("NumberFontNormalSmall")
-                    stackText:SetFont(fontObj:GetFont())
-                    frame_registry[frame].dirty = true
-                end
-                stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
-                stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
-                stackText:SetShadowOffset(stackOpt.xOffsetShadow, stackOpt.yOffsetShadow)
-                stackText:SetParent(cooldown)
-                --Swipe Settings
-                cooldown:SetDrawSwipe(frameOpt.swipe)
-                cooldown:SetReverse(frameOpt.inverse)
-                cooldown:SetDrawEdge(frameOpt.edge)
             end
 
             local idx = frame_registry[frame].placedAuraStart - 1 + maxUserPlaced
@@ -587,6 +541,9 @@ function Debuffs:OnEnable()
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+    if frameOpt.petframe then
+        self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
+    end
 
     if roster_changed then
         roster_changed = false
@@ -603,6 +560,7 @@ function Debuffs:OnEnable()
                     auraGroupEnd      = {},
                     extraDebuffFrames = {},
                     reanchor          = {},
+                    aura              = {},
                     dirty             = true,
                 }
             end

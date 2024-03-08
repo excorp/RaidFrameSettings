@@ -1,4 +1,5 @@
 local _, addonTable = ...
+local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
 local addon = addonTable.RaidFrameSettings
 addonTable.Aura = {}
 local Aura = addonTable.Aura
@@ -52,7 +53,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             if category == "Debuff" then
                 auraFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
                 auraFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
-                auraFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
+                if not isWrath then
+                    auraFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
+                end
             end
             auraFrame:Hide()
             auraFrame.cooldown:SetHideCountdownNumbers(true)

@@ -227,6 +227,7 @@ function Debuffs:OnEnable()
         aurastored[aura.auraInstanceID] = aura
 
         -- icon, stack, cooldown(duration) start
+        debuffFrame.filter = aura.isRaid and AuraUtil.AuraFilters.Raid or nil
         debuffFrame:SetAura(aura)
 
         local color = durationOpt.fontColor
@@ -278,6 +279,7 @@ function Debuffs:OnEnable()
         end
         frame.PrivateAuraAnchor1:ClearAllPoints()
         if lastShownDebuff then
+            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap + 3, frameOpt.baseline)
             frame.PrivateAuraAnchor1:SetPoint(followPoint, lastShownDebuff, followRelativePoint, followOffsetX, followOffsetY)
         else
             frame.PrivateAuraAnchor1:SetPoint(point, frame, relativePoint, frameOpt.xOffset, frameOpt.yOffset)

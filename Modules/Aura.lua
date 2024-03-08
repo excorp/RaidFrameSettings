@@ -266,6 +266,20 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
         end
 
+        if category == "Buff" then
+            function auraFrame:UpdateTooltip()
+                GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+            end
+        else
+            function auraFrame:UpdateTooltip()
+                if (self.isBossBuff) then
+                    GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                else
+                    GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                end
+            end
+        end
+
         local ag = auraFrame:CreateAnimationGroup()
         auraFrame.ag = ag
         local t1 = ag:CreateAnimation("Translation")

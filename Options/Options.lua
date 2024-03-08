@@ -3599,7 +3599,6 @@ function RaidFrameSettings:CreateSortUserEntry(keyword)
                 name = L["Priority"],
                 type = "input",
                 get = function()
-                    DevTool:AddData(dbOjb)
                     return tostring(dbObj.priority)
                 end,
                 set = function(_, value)

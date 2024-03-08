@@ -369,3 +369,7 @@ L["Refresh Ani."]                                 = "갱신 애니"
 L["Shows an animation when aura refreshes."]      = "오라가 갱신될때 애니메이션을 보여줍니다."
 L["Ani. direction"]                               = "애니 방향"
 L["Sets the direction of the refresh animation."] = "갱신 애니메이션의 방향을 설정합니다."
+
+
+L["Track empowered buffs"] = "강화된 버프 추적"
+L["Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."] = "회복 드루이드의 \"숲의 영혼\"으로 강화된 \"재생\", \"회복\", \"급속 성장\"을 반짝이게 합니다"

@@ -38,31 +38,19 @@ local unitFrame = {}
 local roster_changed = true
 local glowOpt
 
---[[
-glowOpt = {
-    type      = "ACShine",
-    use_color = false,
-    lines     = 8,
-    frequency = 0.25,
-    scale     = nil,
-    XOffset   = nil,
-    YOffset   = nil,
+local player = {
+    GUID          = UnitGUID("player"),
+    GUIDS         = {},
+    aura          = {},
+    buff          = {},
+    sotfTrail     = 0,
+    affectedSpell = {
+        [774]    = true,
+        [155777] = true,
+        [8936]   = true,
+        [48438]  = true
+    },
 }
-
-glowOpt = {
-    type      = "Proc",
-    use_color = false,
-    startAnim = false,
-    XOffset   = nil,
-    YOffset   = nil,
-    duration  = nil,
-}
-
-glowOpt = {
-    type      = "buttonOverlay",
-    use_color = false,
-}
-]]
 
 local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
     frame.buffs:Clear()
@@ -95,6 +83,7 @@ function Buffs:OnEnable()
 
     local frameOpt = CopyTable(addon.db.profile.Buffs.BuffFramesDisplay)
     frameOpt.petframe = addon.db.profile.Buffs.petframe
+    frameOpt.sotf = addon.db.profile.Buffs.sotf
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
@@ -218,12 +207,29 @@ function Buffs:OnEnable()
         end
 
         local aurastored = frame_registry[parent].aura
-        if frameOpt.refreshAni and aurastored[aura.auraInstanceID] then
-            if math.abs(aura.expirationTime - aurastored[aura.auraInstanceID].expirationTime) > 1 or aurastored[aura.auraInstanceID].applications ~= aura.applications then
+        local oldAura = aurastored[aura.auraInstanceID]
+        if frameOpt.refreshAni and oldAura then
+            if math.abs(aura.expirationTime - oldAura.expirationTime) > 1 or oldAura.applications ~= aura.applications then
                 aura.refresh = true
             end
         end
         aurastored[aura.auraInstanceID] = aura
+
+        if frameOpt.sotf then
+            if (not oldAura or math.abs(aura.expirationTime - oldAura.expirationTime) > 1) and (player.buff[114108] or player.sotfTrail > GetTime()) or (oldAura and oldAura.empowered) then
+                if player.affectedSpell[aura.spellId] then
+                    aura.empowered = true
+                    frame_registry[parent].empowered[aura.spellId] = aura.auraInstanceID
+                    local GUID = UnitGUID(parent.unit)
+                    if GUID then
+                        if not player.GUIDS[GUID] then
+                            player.GUIDS[GUID] = {}
+                        end
+                        player.GUIDS[GUID][parent] = true
+                    end
+                end
+            end
+        end
 
         -- icon, stack, cooldown(duration) start
         buffFrame:SetAura(aura)
@@ -243,7 +249,7 @@ function Buffs:OnEnable()
             end
         end
 
-        self:Glow(buffFrame, opt.glow)
+        self:Glow(buffFrame, aura.empowered or opt.glow)
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
@@ -391,6 +397,7 @@ function Buffs:OnEnable()
                 reanchor        = {},
                 buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
                 aura            = {},
+                empowered       = {},
                 dirty           = true,
             }
         end
@@ -553,6 +560,7 @@ function Buffs:OnEnable()
                     reanchor        = {},
                     buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
                     aura            = {},
+                    empowered       = {},
                     dirty           = true,
                 }
             end
@@ -587,8 +595,66 @@ function Buffs:OnEnable()
                 end
             end
         end)
+    end
+    if frameOpt.sotf then
+        self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", function()
+            local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
+            if sourceGUID ~= player.GUID or subevent ~= "SPELL_CAST_SUCCESS" then
+                return
+            end
+            local spellId, spellName, school = select(12, CombatLogGetCurrentEventInfo())
+            if not player.affectedSpell[spellId] then
+                return
+            end
+            if not player.GUIDS[destGUID] then
+                return
+            end
+            for srcframe in pairs(player.GUIDS[destGUID]) do
+                local auraInstanceID = frame_registry[srcframe].empowered[spellId]
+                if auraInstanceID then
+                    frame_registry[srcframe].aura[auraInstanceID].empowered = nil
+                    player.GUIDS[destGUID][srcframe] = nil
+                end
+            end
+        end)
+    end
 
+    if frameOpt.petframe or frameOpt.sotf then
         self:RegisterEvent("UNIT_AURA", function(event, unit, unitAuraUpdateInfo)
+            if frameOpt.sotf then
+                if UnitIsUnit(unit, "player") then
+                    if unitAuraUpdateInfo == nil then
+                        local function HandleAura(aura)
+                            if aura.spellId == 114108 then
+                                player.aura[aura.auraInstanceID] = aura
+                                player.buff[aura.spellId] = aura
+                            end
+                        end
+                        AuraUtil.ForEachAura("player", AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), nil, HandleAura, false)
+                    else
+                        if unitAuraUpdateInfo.addedAuras ~= nil then
+                            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                                if aura.spellId == 114108 then
+                                    player.aura[aura.auraInstanceID] = aura
+                                    player.buff[aura.spellId] = aura
+                                end
+                            end
+                        end
+                        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+                            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                                local aura = player.aura[auraInstanceID]
+                                if aura then
+                                    player.aura[auraInstanceID] = nil
+                                    player.buff[aura.spellId] = nil
+                                    if aura.spellId == 114108 then
+                                        player.sotfTrail = GetTime() + 0.5
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
             if not unit:match("pet") then
                 return
             end
@@ -658,6 +724,7 @@ end
 function Buffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     self:UnregisterEvent("UNIT_AURA")
     roster_changed = true
     local restoreBuffFrames = function(frame)

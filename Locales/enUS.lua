@@ -372,3 +372,7 @@ L["Refresh Ani."]                                 = "Refresh Ani."
 L["Shows an animation when aura refreshes."]      = "Shows an animation when aura refreshes."
 L["Ani. direction"]                               = "Ani. direction"
 L["Sets the direction of the refresh animation."] = "Sets the direction of the refresh animation."
+
+
+L["Track empowered buffs"] = "Track empowered buffs"
+L["Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."] = "Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."

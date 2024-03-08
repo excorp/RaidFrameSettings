@@ -147,6 +147,7 @@ local defaults = {
         },
         Buffs = {
             petframe = false,
+            sotf = true,
             BuffFramesDisplay = {
                 width = 14,
                 height = 14,
@@ -338,7 +339,7 @@ local defaults = {
                 Bleed   = { r = 0.8, g = 0.0, b = 0.0 },
             },
             Glow = {
-                type      = 3,
+                type      = 4,
                 use_color = false,
                 color     = { r = 1, g = 1, b = 1, a = 1 },
                 lines     = 8,

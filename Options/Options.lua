@@ -1092,6 +1092,21 @@ options = {
                                     end,
                                     set = function(info, value)
                                         RaidFrameSettings.db.profile.Buffs.petframe = value
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                },
+                                sotf = {
+                                    hidden = isClassic,
+                                    order = 0.1,
+                                    type = "toggle",
+                                    name = L["Track empowered buffs"],
+                                    desc = L["Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."],
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Buffs.sotf
+                                    end,
+                                    set = function(info, value)
+                                        RaidFrameSettings.db.profile.Buffs.sotf = value
+                                        RaidFrameSettings:UpdateModule("Buffs")
                                     end,
                                 },
                                 BuffFramesDisplay = {

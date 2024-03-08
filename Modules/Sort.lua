@@ -596,48 +596,49 @@ function Sort:TrySort(reanchorOnly)
     if group_type == "party" then
         local first
         local prev
-        for k, v in pairs(unit_priority[1]) do
-            local frame = self:getFrameUnit(v.token)
-            if frame and frame_pos.party[k] then
-                for _, p in pairs(frame_pos.party[k]) do
-                    count = count + 1
-                    if not first then
-                        first = frame
-                        frame:SetPoint(p[1], _G.CompactPartyFrame, p[3], p[4], p[5])
-                        secureframeSetFrame(count, frame, { p[1], _G.CompactPartyFrame, p[3], p[4], p[5] })
-                    else
-                        frame:SetPoint(p[1], prev, p[3], p[4], p[5])
-                        secureframeSetFrame(count, frame, { p[1], prev, p[3], p[4], p[5] })
+        if unit_priority[1] then
+            for k, v in pairs(unit_priority[1]) do
+                local frame = self:getFrameUnit(v.token)
+                if frame and frame_pos.party[k] then
+                    for _, p in pairs(frame_pos.party[k]) do
+                        count = count + 1
+                        if not first then
+                            first = frame
+                            frame:SetPoint(p[1], _G.CompactPartyFrame, p[3], p[4], p[5])
+                            secureframeSetFrame(count, frame, { p[1], _G.CompactPartyFrame, p[3], p[4], p[5] })
+                        else
+                            frame:SetPoint(p[1], prev, p[3], p[4], p[5])
+                            secureframeSetFrame(count, frame, { p[1], prev, p[3], p[4], p[5] })
+                        end
+                        prev = frame
                     end
-                    prev = frame
                 end
             end
-        end
-        if first and prev then
-            _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
-            _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
-        end
-
-        -- Adjust the position of the first pet frame
-        secureframe:SetAttributeNoHandler("petframeStart", count + 1)
-        for i = 1, 5 do
-            local frame = _G["CompactPartyFramePet" .. i]
-            count = count + 1
-            secureframeSetFrame(count, frame)
-        end
-        for i = 1, 5 do
-            local frame = _G["CompactPartyFramePet" .. i]
-            if frame.unit and frame.unitExists then
-                local point, pframe = frame:GetPoint()
-                if pframe and pframe:GetName():match("CompactPartyFrameMember") then
-                    for j = 1, frame:GetNumPoints() do
-                        local org = { frame:GetPoint(j) }
-                        local parent = prev
-                        if point == "TOPLEFT" then
-                            parent = first
-                        end
-                        if parent then
-                            frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+            if first and prev then
+                _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+                _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+            end
+            -- Adjust the position of the first pet frame
+            secureframe:SetAttributeNoHandler("petframeStart", count + 1)
+            for i = 1, 5 do
+                local frame = _G["CompactPartyFramePet" .. i]
+                count = count + 1
+                secureframeSetFrame(count, frame)
+            end
+            for i = 1, 5 do
+                local frame = _G["CompactPartyFramePet" .. i]
+                if frame.unit and frame.unitExists then
+                    local point, pframe = frame:GetPoint()
+                    if pframe and pframe:GetName():match("CompactPartyFrameMember") then
+                        for j = 1, frame:GetNumPoints() do
+                            local org = { frame:GetPoint(j) }
+                            local parent = prev
+                            if point == "TOPLEFT" then
+                                parent = first
+                            end
+                            if parent then
+                                frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                            end
                         end
                     end
                 end

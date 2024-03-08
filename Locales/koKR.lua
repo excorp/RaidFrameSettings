@@ -172,7 +172,7 @@ L["Increase:"]                  = "강조(크게):"
 -- aura filter
 L["Show"]                       = "보임"
 L["Other's buff"]               = "다른사람의 버프표시"
-L["Priority"]                   = "중요도"
+L["Priority"]                   = "우선순위"
 L["Hide In Combat"]             = "전투중 숨김"
 
 -- aura highlihgt

@@ -16,6 +16,9 @@ SpellGetVisibilityInfo = function(spellId, visType)
                 if filteredAuras[spellId].hideInCombat and visType == "RAID_INCOMBAT" then
                     return true, false, false
                 end
+                if filteredAuras[spellId].debuff then
+                    return false
+                end
                 if filteredAuras[spellId].other then
                     return true, false, true
                 end
@@ -44,9 +47,11 @@ function AuraFilter:OnEnable()
         filteredAuras[k] = nil
     end
     for spellId, value in pairs(addon.db.profile.AuraFilter.Buffs) do
+        value.debuff = false
         filteredAuras[tonumber(spellId)] = value
     end
     for spellId, value in pairs(addon.db.profile.AuraFilter.Debuffs) do
+        value.debuff = true
         filteredAuras[tonumber(spellId)] = value
     end
     self:SetSpellGetVisibilityInfo(true)

@@ -3595,7 +3595,7 @@ end
 
 function RaidFrameSettings:CreateSortUserEntry(keyword)
     local dbObj = self.db.profile.Sort.user[keyword]
-    local sortOptions = options.args.Sort.args.args.user.args.userDefined.args
+    local sortOptions = options.args.Sort.args.user.args.userDefined.args
     local maxEntry = self:count(sortOptions)
     local userDefined_entry = {
         order = maxEntry + 1,

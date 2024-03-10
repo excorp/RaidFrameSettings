@@ -38,18 +38,29 @@ local unitFrame = {}
 local roster_changed = true
 local glowOpt
 
-local player = {
-    GUID          = UnitGUID("player"),
-    GUIDS         = {},
-    aura          = {},
-    buff          = {},
-    sotfTrail     = 0,
-    affectedSpell = {
+local spell = {
+    rejuvenation = 774,
+    germination  = 155777,
+    sotf         = 114108,
+}
+
+local player
+player = {
+    GUID           = UnitGUID("player"),
+    GUIDS          = {},
+    aura           = {},
+    buff           = {},
+    sotfTrail      = 0,
+    sotfTrail_time = 0.2,
+    affectedSpell  = {
         [774]    = true,
         [155777] = true,
         [8936]   = true,
         [48438]  = true
     },
+
+
+    empoweredCheckerHandler = nil,
 }
 
 local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
@@ -197,6 +208,31 @@ function Buffs:OnEnable()
         return a.priority > b.priority
     end
 
+    local onHideAllBuffs
+
+    local empoweredCheckerFunc = function()
+        player.empoweredCheckerHandler = nil
+        local sotf_used = player.buff[spell.sotf] and 0 or 1
+        local dirty
+        for GUID, v in pairs(player.GUIDS) do
+            for spellId, empowered in pairs(v.empowered) do
+                if empowered == 2 then
+                    v.empowered[spellId] = sotf_used
+                    dirty = true
+                end
+            end
+            if dirty then
+                for frame in pairs(v.frame) do
+                    if GUID ~= UnitGUID(frame.unit) then
+                        v.frame[frame] = nil
+                    else
+                        onHideAllBuffs(frame)
+                    end
+                end
+            end
+        end
+    end
+
     local onSetBuff = function(buffFrame, aura, opt)
         if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
@@ -216,17 +252,26 @@ function Buffs:OnEnable()
         aurastored[aura.auraInstanceID] = aura
 
         if frameOpt.sotf then
-            if (not oldAura or math.abs(aura.expirationTime - oldAura.expirationTime) > 1) and (player.buff[114108] or player.sotfTrail > GetTime()) or (oldAura and oldAura.empowered) then
+            local GUID = UnitGUID(parent.unit)
+            if GUID then
+                if not player.GUIDS[GUID] then
+                    player.GUIDS[GUID] = {
+                        aura      = {},
+                        empowered = {},
+                        frame     = {},
+                    }
+                end
+
+                local empowered = player.GUIDS[GUID].empowered
+                if empowered and empowered[aura.spellId] and empowered[aura.spellId] ~= 2 then
+                    aura.empowered = empowered[aura.spellId] == 1 and true or false
+                    empowered[aura.spellId] = nil
+                else
+                    aura.empowered = oldAura and oldAura.empowered
+                end
                 if player.affectedSpell[aura.spellId] then
-                    aura.empowered = true
-                    frame_registry[parent].empowered[aura.spellId] = aura.auraInstanceID
-                    local GUID = UnitGUID(parent.unit)
-                    if GUID then
-                        if not player.GUIDS[GUID] then
-                            player.GUIDS[GUID] = {}
-                        end
-                        player.GUIDS[GUID][parent] = true
-                    end
+                    player.GUIDS[GUID].aura[aura.spellId] = aura
+                    player.GUIDS[GUID].frame[parent] = true
                 end
             end
         end
@@ -253,7 +298,7 @@ function Buffs:OnEnable()
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    local onHideAllBuffs = function(frame)
+    onHideAllBuffs = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -599,22 +644,57 @@ function Buffs:OnEnable()
     if frameOpt.sotf then
         self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", function()
             local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
-            if sourceGUID ~= player.GUID or subevent ~= "SPELL_CAST_SUCCESS" then
+            if sourceGUID ~= player.GUID or subevent ~= "SPELL_CAST_SUCCESS" or not destGUID then
                 return
             end
             local spellId, spellName, school = select(12, CombatLogGetCurrentEventInfo())
             if not player.affectedSpell[spellId] then
                 return
             end
+
             if not player.GUIDS[destGUID] then
-                return
+                player.GUIDS[destGUID] = {
+                    aura      = {},
+                    empowered = {},
+                    frame     = {},
+                }
             end
-            for srcframe in pairs(player.GUIDS[destGUID]) do
-                local auraInstanceID = frame_registry[srcframe].empowered[spellId]
-                if auraInstanceID then
-                    frame_registry[srcframe].aura[auraInstanceID].empowered = nil
-                    player.GUIDS[destGUID][srcframe] = nil
+
+            local now = GetTime()
+            if spellId == spell.rejuvenation then
+                for frame in pairs(player.GUIDS[destGUID].frame) do
+                    if UnitGUID(frame.unit) ~= destGUID then
+                        player.GUIDS[destGUID].frame[frame] = nil
+                    end
                 end
+                local frame = next(player.GUIDS[destGUID].frame)
+                local aura = player.GUIDS[destGUID].aura
+                local rejuvenation = aura[spell.rejuvenation]
+                local germination = aura[spell.germination]
+
+                if frame then
+                    if rejuvenation and (not frame.buffs[rejuvenation.auraInstanceID] or rejuvenation.expirationTime < now) then
+                        aura[spell.rejuvenation] = nil
+                        rejuvenation = nil
+                    end
+                    if germination and (not frame.buffs[germination.auraInstanceID] or germination.expirationTime < now) then
+                        aura[spell.germination] = nil
+                        germination = nil
+                    end
+
+                    spellId = (rejuvenation and not germination and spell.germination) or rejuvenation and germination and germination.expirationTime < rejuvenation.expirationTime and spell.germination or spellId
+                end
+            end
+
+            if player.buff[spell.sotf] then
+                player.GUIDS[destGUID].empowered[spellId] = 2 -- 미확정
+                if not player.empoweredCheckerHandler then
+                    player.empoweredCheckerHandler = C_Timer.NewTimer(player.sotfTrail_time, empoweredCheckerFunc)
+                end
+            elseif player.sotfTrail > now then
+                player.GUIDS[destGUID].empowered[spellId] = 1
+            elseif player.GUIDS[destGUID].empowered[spellId] ~= 2 then
+                player.GUIDS[destGUID].empowered[spellId] = 0
             end
         end)
     end
@@ -625,7 +705,7 @@ function Buffs:OnEnable()
                 if UnitIsUnit(unit, "player") then
                     if unitAuraUpdateInfo == nil then
                         local function HandleAura(aura)
-                            if aura.spellId == 114108 then
+                            if aura.spellId == spell.sotf then
                                 player.aura[aura.auraInstanceID] = aura
                                 player.buff[aura.spellId] = aura
                             end
@@ -634,7 +714,7 @@ function Buffs:OnEnable()
                     else
                         if unitAuraUpdateInfo.addedAuras ~= nil then
                             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                                if aura.spellId == 114108 then
+                                if aura.spellId == spell.sotf then
                                     player.aura[aura.auraInstanceID] = aura
                                     player.buff[aura.spellId] = aura
                                 end
@@ -646,8 +726,9 @@ function Buffs:OnEnable()
                                 if aura then
                                     player.aura[auraInstanceID] = nil
                                     player.buff[aura.spellId] = nil
-                                    if aura.spellId == 114108 then
-                                        player.sotfTrail = GetTime() + 0.5
+                                    if aura.spellId == spell.sotf then
+                                        player.sotfTrail = GetTime() + player.sotfTrail_time
+                                        empoweredCheckerFunc()
                                     end
                                 end
                             end

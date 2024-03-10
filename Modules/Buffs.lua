@@ -58,6 +58,10 @@ player = {
         [8936]   = true,
         [48438]  = true
     },
+    talent         = {
+        ger  = 0, -- 82071 155675 Germination
+        sotf = 0, -- 82059 158478 Soul of the Forest
+    },
 
 
     empoweredCheckerHandler = nil,
@@ -76,6 +80,25 @@ local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuf
         end
     end
     AuraUtil.ForEachAura(frame.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), batchCount, HandleAura, usePackedAura)
+end
+
+local talentMap = {
+    [82071] = { spellId = 155675, key = "ger" },
+    [82059] = { spellId = 158478, key = "sotf" },
+}
+
+local getTalent = function()
+    for k in pairs(player.talent) do
+        player.talent[k] = 0
+    end
+    local configId = C_ClassTalents.GetActiveConfigID()
+    if not configId then return end
+    for nodeId, v in pairs(talentMap) do
+        local nodeInfo = C_Traits.GetNodeInfo(configId, nodeId)
+        if nodeInfo.activeRank > 0 then
+            player.talent[v.key] = nodeInfo.activeRank
+        end
+    end
 end
 
 function Buffs:Glow(frame, onoff)
@@ -228,7 +251,7 @@ function Buffs:OnEnable()
         end
         aurastored[aura.auraInstanceID] = aura
 
-        if frameOpt.sotf then
+        if frameOpt.sotf and player.talent.sotf > 0 then
             local GUID = UnitGUID(parent.unit)
             if GUID then
                 if not player.GUIDS[GUID] then
@@ -623,7 +646,15 @@ function Buffs:OnEnable()
             end
         end)
     end
-    if frameOpt.sotf then
+
+    local specId = GetSpecializationInfo(GetSpecialization())
+    if specId == 105 then
+        getTalent()
+        self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", getTalent)
+        self:RegisterEvent("TRAIT_CONFIG_UPDATED", getTalent)
+    end
+
+    if frameOpt.sotf and player.talent.sotf > 0 then
         self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", function()
             local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags = CombatLogGetCurrentEventInfo()
             if sourceGUID ~= player.GUID or subevent ~= "SPELL_CAST_SUCCESS" or not destGUID then
@@ -654,7 +685,8 @@ function Buffs:OnEnable()
                 local rejuvenation = aura[spell.rejuvenation]
                 local germination = aura[spell.germination]
 
-                if frame then
+                -- Determines if the skill cast is Rejuvenation or Germination.
+                if player.talent.ger > 0 and frame then
                     if rejuvenation and (not frame.buffs[rejuvenation.auraInstanceID] or rejuvenation.expirationTime < now) then
                         aura[spell.rejuvenation] = nil
                         rejuvenation = nil
@@ -683,7 +715,7 @@ function Buffs:OnEnable()
 
     if frameOpt.petframe or frameOpt.sotf then
         self:RegisterEvent("UNIT_AURA", function(event, unit, unitAuraUpdateInfo)
-            if frameOpt.sotf then
+            if frameOpt.sotf and player.talent.sotf > 0 then
                 if UnitIsUnit(unit, "player") then
                     if unitAuraUpdateInfo == nil then
                         local function HandleAura(aura)
@@ -788,6 +820,8 @@ function Buffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    self:UnregisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    self:UnregisterEvent("TRAIT_CONFIG_UPDATED")
     self:UnregisterEvent("UNIT_AURA")
     roster_changed = true
     local restoreBuffFrames = function(frame)

@@ -237,13 +237,13 @@ function Debuffs:OnEnable()
         if Bleeds[aura.spellId] then
             color = debuffColors.Bleed
         end
-        debuffFrame:SetBorderColor(color.r, color.g, color.b)
+        debuffFrame:SetBorderColor(color.r, color.g, color.b, color.a)
 
         if not durationOpt.debuffColor then
             color = durationOpt.fontColor
         end
         local cooldownText = CDT:CreateOrGetCooldownFontString(debuffFrame.cooldown)
-        cooldownText:SetVertexColor(color.r, color.g, color.b)
+        cooldownText:SetVertexColor(color.r, color.g, color.b, color.a)
 
         if aura then
             local auraGroupNo = auraGroupList[aura.spellId]

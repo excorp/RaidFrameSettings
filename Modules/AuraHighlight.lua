@@ -19,11 +19,11 @@ local next = next
 local AuraUtil_ForEachAura = AuraUtil.ForEachAura
 
 local debuffColors = {
-    Curse   = { r = 0.6, g = 0.0, b = 1.0 },
-    Disease = { r = 0.6, g = 0.4, b = 0.0 },
-    Magic   = { r = 0.2, g = 0.6, b = 1.0 },
-    Poison  = { r = 0.0, g = 0.6, b = 0.0 },
-    Bleed   = { r = 0.8, g = 0.0, b = 0.0 },
+    Curse   = { r = 0.6, g = 0.0, b = 1.0, a = 1.0 },
+    Disease = { r = 0.6, g = 0.4, b = 0.0, a = 1.0 },
+    Magic   = { r = 0.2, g = 0.6, b = 1.0, a = 1.0 },
+    Poison  = { r = 0.0, g = 0.6, b = 0.0, a = 1.0 },
+    Bleed   = { r = 0.8, g = 0.0, b = 0.0, a = 1.0 },
 }
 
 local Bleeds = addonTable.Bleeds or {}
@@ -54,7 +54,7 @@ local glowOpt = {
 local function toDebuffColor(frame, dispelName)
     blockColorUpdate[frame] = true
     if useHealthBarColor then
-        frame.healthBar:SetStatusBarColor(debuffColors[dispelName].r, debuffColors[dispelName].g, debuffColors[dispelName].b)
+        frame.healthBar:SetStatusBarColor(debuffColors[dispelName].r, debuffColors[dispelName].g, debuffColors[dispelName].b, debuffColors[dispelName].a)
     end
     if useHealthBarGlow then
         module:Glow(frame, debuffColors[dispelName])
@@ -232,21 +232,21 @@ function module:SetUpdateHealthColor()
         end
         return false
     end
-    local r, g, b = 0, 1, 0
+    local r, g, b, a = 0, 1, 0, 1
     local useClassColors
     if RaidFrameSettings.db.profile.Module.HealthBars then
         local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
         if selected == 1 then
             useClassColors = true
         elseif selected == 2 then
-            -- r,g,b = 0,1,0 -- r,g,b default = 0,1,0
+            -- r,g,b,a = 0,1,0,1 -- r,g,b default = 0,1,0,1
         elseif selected == 3 then
             local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
-            r, g, b = color.r, color.g, color.b
+            r, g, b, a = color.r, color.g, color.b, color.a
         end
     else
         if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
-            -- r,g,b = 0,1,0 -- r,g,b default = 0,1,0
+            -- r,g,b,a = 0,1,0,1 -- r,g,b default = 0,1,0,1
         else
             useClassColors = true
         end
@@ -259,18 +259,18 @@ function module:SetUpdateHealthColor()
         blockColorUpdate[frame] = false
         if hasMissingAura(frame) then
             if useHealthBarColor then
-                frame.healthBar:SetStatusBarColor(missingAuraColor.r, missingAuraColor.g, missingAuraColor.b)
+                frame.healthBar:SetStatusBarColor(missingAuraColor.r, missingAuraColor.g, missingAuraColor.b, missingAuraColor.a)
             end
             if useHealthBarGlow then
                 module:Glow(frame, missingAuraColor)
             end
         else
-            r, g, b = 0, 1, 0
+            r, g, b, a = 0, 1, 0, 1
             if useClassColors and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end
-            frame.healthBar:SetStatusBarColor(r, g, b)
+            frame.healthBar:SetStatusBarColor(r, g, b, a)
             if useHealthBarGlow then
                 module:Glow(frame, false)
             end
@@ -352,12 +352,12 @@ function module:OnDisable()
     RaidFrameSettings:IterateRoster(function(frame)
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
-            local r, g, b = 0, 1, 0
+            local r, g, b, a = 0, 1, 0, 1
             if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end
-            frame.healthBar:SetStatusBarColor(r, g, b)
+            frame.healthBar:SetStatusBarColor(r, g, b, a)
         end
         module:Glow(frame, false)
     end)

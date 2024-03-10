@@ -52,11 +52,11 @@ end
 
 function Debuffs:OnEnable()
     local debuffColors = {
-        Curse   = { r = 0.6, g = 0.0, b = 1.0 },
-        Disease = { r = 0.6, g = 0.4, b = 0.0 },
-        Magic   = { r = 0.2, g = 0.6, b = 1.0 },
-        Poison  = { r = 0.0, g = 0.6, b = 0.0 },
-        Bleed   = { r = 0.8, g = 0.0, b = 0.0 },
+        Curse   = { r = 0.6, g = 0.0, b = 1.0, a = 1 },
+        Disease = { r = 0.6, g = 0.4, b = 0.0, a = 1 },
+        Magic   = { r = 0.2, g = 0.6, b = 1.0, a = 1 },
+        Poison  = { r = 0.0, g = 0.6, b = 0.0, a = 1 },
+        Bleed   = { r = 0.8, g = 0.0, b = 0.0, a = 1 },
     }
     local Bleeds = addonTable.Bleeds
 
@@ -243,13 +243,13 @@ function Debuffs:OnEnable()
         if Bleeds and Bleeds[spellId] then
             color = debuffColors.Bleed
         end
-        debuffFrame:SetBorderColor(color.r, color.g, color.b)
+        debuffFrame:SetBorderColor(color.r, color.g, color.b, color.a)
 
         if not durationOpt.debuffColor then
             color = durationOpt.fontColor
         end
         local cooldownText = CDT:CreateOrGetCooldownFontString(debuffFrame.cooldown)
-        cooldownText:SetVertexColor(color.r, color.g, color.b)
+        cooldownText:SetVertexColor(color.r, color.g, color.b, color.a)
 
         local auraGroupNo = auraGroupList[spellId]
         if userPlaced[spellId] and userPlaced[spellId].setSize then

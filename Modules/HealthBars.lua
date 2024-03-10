@@ -53,7 +53,7 @@ function HealthBars:OnEnable()
         frame.healthBar:SetStatusBarTexture(statusBarTexture)
         frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
         frame.background:SetTexture(backgroundTexture)
-        frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b)
+        frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a)
         if raidFramesDisplayPowerBars then
             frame.powerBar:SetStatusBarTexture(powerBarTexture)
             frame.powerBar.background:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, 1)
@@ -64,7 +64,7 @@ function HealthBars:OnEnable()
             frame:SetBackdrop(backdropInfo)
         end
         frame:ApplyBackdrop()
-        frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b)
+        frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b, borderColor.a)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", updateTextures)
     self:HookFunc("DefaultCompactMiniFrameSetup", function(frame)
@@ -81,18 +81,18 @@ function HealthBars:OnEnable()
         updateTextures(frame)
     end)
     --colors
-    local r, g, b
+    local r, g, b, a
     local useClassColors
     local updateHealthColor = function(frame)
         if RaidFrameSettings.db.profile.Module.AuraHighlight then
             return
         end
-        r, g, b = 0, 1, 0
+        r, g, b, a = 0, 1, 0, 1
         if useClassColors and frame.unit and frame.unitExists and not frame.unit:match("pet") then
             local _, englishClass = UnitClass(frame.unit)
             r, g, b = GetClassColor(englishClass)
         end
-        frame.healthBar:SetStatusBarColor(r, g, b)
+        frame.healthBar:SetStatusBarColor(r, g, b, a)
     end
 
     self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
@@ -111,18 +111,18 @@ function HealthBars:OnEnable()
                 C_CVar.SetCVar("raidFramesDisplayClassColor", "1")
             end
         elseif selected == 2 then
-            -- r,g,b = 0,1,0 -- r,g,b default = 0,1,0
+            -- r,g,b,a = 0,1,0,1 -- r,g,b,a default = 0,1,0,1
             if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" then
                 C_CVar.SetCVar("raidFramesDisplayClassColor", "0")
             end
         elseif selected == 3 then
             local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
-            r, g, b = color.r, color.g, color.b
+            r, g, b, a = color.r, color.g, color.b, color.a
             self:HookFuncFiltered("CompactUnitFrame_UpdateHealthColor", updateHealthColor)
         end
     else
         if C_CVar.GetCVar("raidFramesDisplayClassColor") == "0" then
-            -- r,g,b = 0,1,0 -- r,g,b default = 0,1,0
+            -- r,g,b,a = 0,1,0,1 -- r,g,b,a default = 0,1,0,1
         else
             useClassColors = true
         end
@@ -151,12 +151,12 @@ function HealthBars:OnDisable()
         end
         if not RaidFrameSettings.db.profile.Module.AuraHighlight and frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
-            local r, g, b = 0, 1, 0
+            local r, g, b, a = 0, 1, 0, 1
             if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
             end
-            frame.healthBar:SetStatusBarColor(r, g, b)
+            frame.healthBar:SetStatusBarColor(r, g, b, a)
         end
     end
     for frame in pairs(frame_registry) do

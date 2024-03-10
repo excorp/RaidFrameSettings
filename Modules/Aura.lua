@@ -111,8 +111,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 self:Hide()
             end
 
-            function auraFrame:SetBorderColor(r, g, b)
-                self.border:SetVertexColor(r, g, b)
+            function auraFrame:SetBorderColor(r, g, b, a)
+                self.border:SetVertexColor(r, g, b, a)
             end
         elseif type == "baricon" then
             -- bar icon
@@ -239,18 +239,11 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 self:Hide()
             end
 
-            function auraFrame:SetBorderColor(r, g, b)
+            function auraFrame:SetBorderColor(r, g, b, a)
                 -- spark 색상 변경
-                auraFrame.spark:SetColorTexture(r, g, b)
+                auraFrame.spark:SetColorTexture(r, g, b, a)
                 -- border 색상 변경
-                auraFrame:SetBackdropColor(r, g, b)
-                -- 옵션에 따라 duration 색상도 변경
-                --[[
-                if xx then
-                    local cooldownText = CDT:CreateOrGetCooldownFontString(self.cooldown)
-                    cooldownText:SetVertexColor(r, g, b)
-                end
-                ]]
+                auraFrame:SetBackdropColor(r, g, b, a)
             end
 
             function auraFrame.cooldown:SetDrawSwipe(enabled)
@@ -314,7 +307,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             cooldownText:SetFont(fontObj:GetFont())
             frame_registry[frame].dirty = true
         end
-        cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b)
+        cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b, durationOpt.fontColor.a)
         cooldownText:SetShadowColor(durationOpt.shadowColor.r, durationOpt.shadowColor.g, durationOpt.shadowColor.b, durationOpt.shadowColor.a)
         cooldownText:SetShadowOffset(durationOpt.xOffsetShadow, durationOpt.yOffsetShadow)
         cooldownText.noCooldownCount = true
@@ -329,7 +322,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         stackText:SetFont(fontObj:GetFont())
         frame_registry[frame].dirty = true
     end
-    stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b)
+    stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b, stackOpt.fontColor.a)
     stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
     stackText:SetShadowOffset(stackOpt.xOffsetShadow, stackOpt.yOffsetShadow)
 

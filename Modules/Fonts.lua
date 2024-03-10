@@ -96,7 +96,7 @@ function Fonts:OnEnable()
         frame.statusText:SetWidth((frame:GetWidth()))
         frame.statusText:SetJustifyH(Status.JustifyH)
         frame.statusText:SetPoint(Status.point, frame, Status.relativePoint, Status.X_Offset, Status.Y_Offset)
-        frame.statusText:SetVertexColor(Status.FontColor.r, Status.FontColor.g, Status.FontColor.b)
+        frame.statusText:SetVertexColor(Status.FontColor.r, Status.FontColor.g, Status.FontColor.b, Status.FontColor.a)
         frame.statusText:SetShadowColor(Advanced.shadowColor.r, Advanced.shadowColor.g, Advanced.shadowColor.b, Advanced.shadowColor.a)
         frame.statusText:SetShadowOffset(Advanced.x_offset, Advanced.y_offset)
     end
@@ -105,18 +105,19 @@ function Fonts:OnEnable()
     local UpdateNameCallback = function(frame)
         local name = GetUnitName(frame.unit or "", true)
         if not name then return end
-        local r, g, b = Name.FontColor.r, Name.FontColor.g, Name.FontColor.b
+        local r, g, b, a = Name.FontColor.r, Name.FontColor.g, Name.FontColor.b, Name.FontColor.a
         if CompactUnitFrame_IsTapDenied(frame) or UnitIsDeadOrGhost(frame.unit) then
-            r, g, b = Name.FontColorDead.r, Name.FontColorDead.g, Name.FontColorDead.b
+            r, g, b, a = Name.FontColorDead.r, Name.FontColorDead.g, Name.FontColorDead.b, Name.FontColorDead.a
         elseif select(2, UnitDetailedThreatSituation("player", frame.displayedUnit)) ~= nil and not UnitIsFriend("player", frame.unit) then
-            r, g, b = Name.FontColorHostile.r, Name.FontColorHostile.g, Name.FontColorHostile.b
+            r, g, b, a = Name.FontColorHostile.r, Name.FontColorHostile.g, Name.FontColorHostile.b, Name.FontColorHostile.a
         else
             if Name.Classcolored and frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)
+                a = 1
             end
         end
-        frame.name:SetVertexColor(r, g, b)
+        frame.name:SetVertexColor(r, g, b, a)
         frame.name:SetText(name:match("[^-]+")) --hides the units server.
     end
 

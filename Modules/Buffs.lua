@@ -174,31 +174,8 @@ function Buffs:OnEnable()
     local height     = frameOpt.height
     local big_width  = width * frameOpt.increase
     local big_height = height * frameOpt.increase
-    local resizeBuffFrame
-    if frameOpt.cleanIcons then
-        local left, right, top, bottom = 0.1, 0.9, 0.1, 0.9
-        if height ~= width then
-            if height < width then
-                local delta = width - height
-                local scale_factor = (((100 / width) * delta) / 100) / 2
-                top = top + scale_factor
-                bottom = bottom - scale_factor
-            else
-                local delta = height - width
-                local scale_factor = (((100 / height) * delta) / 100) / 2
-                left = left + scale_factor
-                right = right - scale_factor
-            end
-        end
-        resizeBuffFrame = function(buffFrame)
-            buffFrame:SetSize(width, height)
-            buffFrame.icon:SetTexCoord(left, right, top, bottom)
-        end
-    else
-        resizeBuffFrame = function(buffFrame)
-            buffFrame:SetSize(width, height)
-        end
-    end
+
+
     --Buffframe position
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
@@ -387,7 +364,7 @@ function Buffs:OnEnable()
                 buffFrame:UnsetAura()
             end
         end
-        for i = frameNum, math.max(frame_registry[frame].maxBuffs, frame.maxBuffs) do
+        for i = frameNum, frame_registry[frame].maxBuffs do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
             self:Glow(buffFrame, false)
             buffFrame:UnsetAura()
@@ -453,8 +430,9 @@ function Buffs:OnEnable()
 
             local placedAuraStart = frame.maxBuffs + 1
             for i = 1, frame_registry[frame].maxBuffs do
-                local buffFrame = Aura:createAuraFrame(frame, "Buff", frameOpt.type, i) -- category:Buff,Debuff, type=blizzard,baricon
+                local buffFrame, dirty = Aura:createAuraFrame(frame, "Buff", frameOpt.type, i) -- category:Buff,Debuff, type=blizzard,baricon
                 frame_registry[frame].extraBuffFrames[i] = buffFrame
+                frame_registry[frame].dirty = dirty
                 buffFrame:ClearAllPoints()
                 buffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 placedAuraStart = i + 1
@@ -463,8 +441,9 @@ function Buffs:OnEnable()
 
             for i = 1, maxUserPlaced + maxAuraGroup do
                 local idx = placedAuraStart + i - 1
-                local buffFrame = Aura:createAuraFrame(frame, "Buff", frameOpt.type, idx) -- category:Buff,Debuff, type=blizzard,baricon
+                local buffFrame, dirty = Aura:createAuraFrame(frame, "Buff", frameOpt.type, idx) -- category:Buff,Debuff, type=blizzard,baricon
                 frame_registry[frame].extraBuffFrames[idx] = buffFrame
+                frame_registry[frame].dirty = dirty
             end
 
             local idx = frame_registry[frame].placedAuraStart - 1 + maxUserPlaced
@@ -546,7 +525,8 @@ function Buffs:OnEnable()
                 buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
             end
             prevFrame = buffFrame
-            resizeBuffFrame(buffFrame)
+            buffFrame:SetSize(width, height)
+            buffFrame:SetCoord(width, height)
         end
         local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
@@ -557,7 +537,8 @@ function Buffs:OnEnable()
             local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
             buffFrame:ClearAllPoints()
             buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
-            resizeBuffFrame(buffFrame)
+            buffFrame:SetSize(width, height)
+            buffFrame:SetCoord(width, height)
         end
         for k, v in pairs(auraGroup) do
             local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
@@ -577,7 +558,8 @@ function Buffs:OnEnable()
                     buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
                 end
                 prevFrame = buffFrame
-                resizeBuffFrame(buffFrame)
+                buffFrame:SetSize(width, height)
+                buffFrame:SetCoord(width, height)
             end
         end
     end
@@ -687,7 +669,7 @@ function Buffs:OnEnable()
             end
 
             if player.buff[spell.sotf] then
-                player.GUIDS[destGUID].empowered[spellId] = 2 -- 미확정
+                player.GUIDS[destGUID].empowered[spellId] = 2 -- Undetermined
                 if not player.empoweredCheckerHandler then
                     player.empoweredCheckerHandler = C_Timer.NewTimer(player.sotfTrail_time, empoweredCheckerFunc)
                 end

@@ -5,6 +5,8 @@ addonTable.Aura = {}
 local Aura = addonTable.Aura
 local CDT = addonTable.cooldownText
 
+local fontObj = CreateFont("RaidFrameSettingsFont")
+
 Aura.Opt = {
     Buff = {
         frameOpt = {},
@@ -18,9 +20,11 @@ Aura.Opt = {
     },
 }
 
+local iconCrop = 0
+
 local function GetTexCoord(width, height)
     -- ULx,ULy, LLx,LLy, URx,URy, LRx,LRy
-    local texCoord = { 0.12, 0.12, 0.12, 0.88, 0.88, 0.12, 0.88, 0.88 }
+    local texCoord = { iconCrop, iconCrop, iconCrop, 1 - iconCrop, 1 - iconCrop, iconCrop, 1 - iconCrop, 1 - iconCrop }
     local aspectRatio = width / height
 
     local xRatio = aspectRatio < 1 and aspectRatio or 1
@@ -46,17 +50,10 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     local scale = frame:GetScale()
     local border_size = 1.5 * scale
 
-    -- 생성
+    -- Create Aura Frame
     if not auraFrame then
         if type == "blizzard" then
             auraFrame = CreateFrame("Button", name, frame, "Compact" .. category .. "Template")
-            if category == "Debuff" then
-                auraFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
-                auraFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
-                if not isWrath then
-                    auraFrame.border:SetTextureSliceMargins(0, 0, 0, 0)
-                end
-            end
             auraFrame:Hide()
             auraFrame.cooldown:SetHideCountdownNumbers(true)
 
@@ -65,6 +62,16 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             textFrame:SetAllPoints(auraFrame)
             textFrame:SetFrameLevel(auraFrame.cooldown:GetFrameLevel() + 1)
             auraFrame.count:SetParent(textFrame)
+
+            auraFrame:SetScript("OnSizeChanged", function(self, width, height)
+                -- keep aspect ratio
+                auraFrame:SetCoord(width, height)
+            end)
+
+            function auraFrame:SetCoord(width, height)
+                -- keep aspect ratio
+                auraFrame.icon:SetTexCoord(unpack(GetTexCoord(width, height)))
+            end
 
             function auraFrame.cooldown:_SetCooldown(aura)
                 local enabled = aura and aura.expirationTime and aura.expirationTime ~= 0
@@ -123,7 +130,6 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             local icon = auraFrame:CreateTexture(name .. "Icon", "ARTWORK")
             auraFrame.icon = icon
-            icon:SetTexCoord(0.12, 0.88, 0.12, 0.88)
             if category == "Buff" then
                 icon:SetAllPoints(auraFrame)
             else
@@ -150,16 +156,13 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             local maskIcon = cooldown:CreateTexture(name .. "MaskIcon", "ARTWORK")
             auraFrame.maskIcon = maskIcon
-            maskIcon:SetTexCoord(0.12, 0.88, 0.12, 0.88)
             maskIcon:SetDesaturated(true)
             maskIcon:SetAllPoints(icon)
             maskIcon:SetVertexColor(0.5, 0.5, 0.5, 1)
             maskIcon:AddMaskTexture(mask)
 
             auraFrame:SetScript("OnSizeChanged", function(self, width, height)
-                -- keep aspect ratio
-                icon:SetTexCoord(unpack(GetTexCoord(width, height)))
-                maskIcon:SetTexCoord(unpack(GetTexCoord(width, height)))
+                auraFrame:SetCoord(width, height)
             end)
 
             local textFrame = CreateFrame("Frame", nil, auraFrame)
@@ -171,6 +174,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             auraFrame.count = count
             count:SetJustifyH("RIGHT")
             count:SetPoint("BOTTOMRIGHT", textFrame, "BOTTOMRIGHT", 0, 0)
+
+            function auraFrame:SetCoord(width, height)
+                -- keep aspect ratio
+                icon:SetTexCoord(unpack(GetTexCoord(width, height)))
+                maskIcon:SetTexCoord(unpack(GetTexCoord(width, height)))
+            end
 
             function auraFrame.cooldown:_SetCooldown(aura)
                 local enabled = aura and aura.expirationTime and aura.expirationTime ~= 0
@@ -240,9 +249,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
 
             function auraFrame:SetBorderColor(r, g, b, a)
-                -- spark 색상 변경
                 auraFrame.spark:SetColorTexture(r, g, b, a)
-                -- border 색상 변경
                 auraFrame:SetBackdropColor(r, g, b, a)
             end
 
@@ -289,7 +296,28 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         t2:SetSmoothing("IN")
     end
 
-    -- 모양 설정
+    local dirty = false
+
+    if frameOpt.cleanIcons then
+        iconCrop = 0.1
+        if category == "Debuff" and type == "blizzard" then
+            auraFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
+            auraFrame.border:SetTexCoord(0, 1, 0, 1)
+        end
+    else
+        iconCrop = 0
+        if category == "Debuff" and type == "blizzard" then
+            auraFrame.border:SetTexture("Interface\\BUTTONS\\UI-Debuff-Overlays")
+            auraFrame.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+        end
+    end
+
+    auraFrame.icon:SetTexCoord(iconCrop, 1 - iconCrop, iconCrop, 1 - iconCrop)
+    if auraFrame.maskIcon then
+        auraFrame.maskIcon:SetTexCoord(iconCrop, 1 - iconCrop, iconCrop, 1 - iconCrop)
+    end
+
+    -- Modify Aura Frame
     if frameOpt.framestrata ~= "Inherited" then
         auraFrame:SetFrameStrata(frameOpt.framestrata)
     end
@@ -305,7 +333,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         if not res then
             fontObj:SetFontObject("NumberFontNormalSmall")
             cooldownText:SetFont(fontObj:GetFont())
-            frame_registry[frame].dirty = true
+            dirty = true
         end
         cooldownText:SetTextColor(durationOpt.fontColor.r, durationOpt.fontColor.g, durationOpt.fontColor.b, durationOpt.fontColor.a)
         cooldownText:SetShadowColor(durationOpt.shadowColor.r, durationOpt.shadowColor.g, durationOpt.shadowColor.b, durationOpt.shadowColor.a)
@@ -320,7 +348,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     if not res then
         fontObj:SetFontObject("NumberFontNormalSmall")
         stackText:SetFont(fontObj:GetFont())
-        frame_registry[frame].dirty = true
+        dirty = true
     end
     stackText:SetTextColor(stackOpt.fontColor.r, stackOpt.fontColor.g, stackOpt.fontColor.b, stackOpt.fontColor.a)
     stackText:SetShadowColor(stackOpt.shadowColor.r, stackOpt.shadowColor.g, stackOpt.shadowColor.b, stackOpt.shadowColor.a)
@@ -384,7 +412,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         end
     end
 
-    -- 점프 방향을 아이콘 성장 방향에 맞게 해야 하지 않을까?
+    -- Set Animation Direction
     local ag = auraFrame.ag
     if frameOpt.aniOrientation == 1 then -- left
         ag.t1:SetOffset(-5, 0)
@@ -400,12 +428,5 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         ag.t2:SetOffset(0, 5)
     end
 
-    return auraFrame
+    return auraFrame, dirty
 end
-
---[[
-frame.icon
-frame.count
-frame.cooldown
-frame.border / frame.spark
-]]

@@ -153,39 +153,8 @@ function Debuffs:OnEnable()
     local height      = frameOpt.height
     local boss_width  = width * frameOpt.increase
     local boss_height = height * frameOpt.increase
-    local resizeDebuffFrame
-    if frameOpt.cleanIcons then
-        local left, right, top, bottom = 0.1, 0.9, 0.1, 0.9
-        if height ~= width then
-            if height < width then
-                local delta = width - height
-                local scale_factor = (((100 / width) * delta) / 100) / 2
-                top = top + scale_factor
-                bottom = bottom - scale_factor
-            else
-                local delta = height - width
-                local scale_factor = (((100 / height) * delta) / 100) / 2
-                left = left + scale_factor
-                right = right - scale_factor
-            end
-        end
-        resizeDebuffFrame = function(debuffFrame)
-            debuffFrame:SetSize(width, height)
-            debuffFrame.icon:SetTexCoord(left, right, top, bottom)
-            if debuffFrame.border then
-                debuffFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
-                debuffFrame.border:SetTexCoord(0, 1, 0, 1)
-                if not isWrath then
-                    debuffFrame.border:SetTextureSliceMargins(5.01, 26.09, 5.01, 26.09)
-                    debuffFrame.border:SetTextureSliceMode(Enum.UITextureSliceMode.Stretched)
-                end
-            end
-        end
-    else
-        resizeDebuffFrame = function(debuffFrame)
-            debuffFrame:SetSize(width, height)
-        end
-    end
+
+
     --Debuffframe position
     local point = addon:ConvertDbNumberToPosition(frameOpt.point)
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
@@ -363,7 +332,7 @@ function Debuffs:OnEnable()
                 end
             end
         end
-        for i = frameNum, math.max(frame_registry[frame].maxDebuffs, frame.maxDebuffs) do
+        for i = frameNum, frame_registry[frame].maxDebuffs do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
             self:Glow(debuffFrame, false)
             debuffFrame:UnsetAura()
@@ -432,8 +401,9 @@ function Debuffs:OnEnable()
             frame_registry[frame].dirty = false
             local placedAuraStart = frame.maxDebuffs + 1
             for i = 1, frame_registry[frame].maxDebuffs do
-                local debuffFrame = Aura:createAuraFrame(frame, "Debuff", frameOpt.type, i) -- category:Buff,Debuff, type=blizzard,baricon
+                local debuffFrame, dirty = Aura:createAuraFrame(frame, "Debuff", frameOpt.type, i) -- category:Buff,Debuff, type=blizzard,baricon
                 frame_registry[frame].extraDebuffFrames[i] = debuffFrame
+                frame_registry[frame].dirty = dirty
                 debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
                 placedAuraStart = i + 1
@@ -442,8 +412,9 @@ function Debuffs:OnEnable()
 
             for i = 1, maxUserPlaced + maxAuraGroup do
                 local idx = placedAuraStart + i - 1
-                local debuffFrame = Aura:createAuraFrame(frame, "Debuff", frameOpt.type, idx) -- category:Buff,Debuff, type=blizzard,baricon
+                local debuffFrame, dirty = Aura:createAuraFrame(frame, "Debuff", frameOpt.type, idx) -- category:Buff,Debuff, type=blizzard,baricon
                 frame_registry[frame].extraDebuffFrames[idx] = debuffFrame
+                frame_registry[frame].dirty = dirty
                 debuffFrame:ClearAllPoints()
                 debuffFrame.icon:SetTexCoord(0, 1, 0, 1)
             end
@@ -503,7 +474,8 @@ function Debuffs:OnEnable()
                 debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
             end
             prevFrame = debuffFrame
-            resizeDebuffFrame(debuffFrame)
+            debuffFrame:SetSize(width, height)
+            debuffFrame:SetCoord(width, height)
         end
         local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
@@ -514,7 +486,8 @@ function Debuffs:OnEnable()
             local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or frame
             debuffFrame:ClearAllPoints()
             debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
-            resizeDebuffFrame(debuffFrame)
+            debuffFrame:SetSize(width, height)
+            debuffFrame:SetCoord(width, height)
         end
         for k, v in pairs(auraGroup) do
             frame_registry[frame].auraGroupStart[k] = idx + 1
@@ -535,7 +508,8 @@ function Debuffs:OnEnable()
                     debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
                 end
                 prevFrame = debuffFrame
-                resizeDebuffFrame(debuffFrame)
+                debuffFrame:SetSize(width, height)
+                debuffFrame:SetCoord(width, height)
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end

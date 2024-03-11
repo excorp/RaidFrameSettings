@@ -43,6 +43,7 @@ local function updateFontStrings(_, elapsed)
             fs.duration = fs.duration - fs.elapsed
             fs.elapsed = 0
             if fs.duration <= 0 then
+                Cooldown._rfs_cd_text:SetText("")
                 CooldownQueue[Cooldown] = nil
             end
             Cooldown._rfs_cd_text:SetText(getTimerText(fs.duration))

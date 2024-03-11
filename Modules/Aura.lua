@@ -140,6 +140,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             local cooldown = CreateFrame("StatusBar", name .. "CooldownBar", auraFrame)
             auraFrame.cooldown = cooldown
             cooldown.swipe = frameOpt.swipe
+            cooldown.edge = frameOpt.edge
             cooldown:SetPoint("TOPLEFT", auraFrame.icon)
             cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon)
             cooldown:SetStatusBarTexture("Interface\\Buttons\\WHITE8x8")
@@ -186,7 +187,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 if enabled then
                     local startTime = aura.expirationTime - aura.duration
                     local elasped = GetTime() - startTime
-                    if self.swipe then
+                    if self.swipe or self.edge then
                         self.elapsed = 0
                         self:SetMinMaxValues(0, aura.duration)
                         self:SetValue(elasped)
@@ -211,7 +212,6 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         fs.duration = aura.duration
                         CDT:StartCooldownText(self)
                     end
-                    self:SetDrawEdge(self.edge)
 
                     if aura.refresh then
                         auraFrame.ag:Play()
@@ -258,10 +258,11 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
 
             function auraFrame.cooldown:SetDrawEdge(enabled)
-                if enabled and self.swipe then
-                    auraFrame.spark:Show()
+                self.edge = enabled
+                if enabled then
+                    spark:Show()
                 else
-                    auraFrame.spark:Hide()
+                    spark:Hide()
                 end
             end
         end
@@ -356,19 +357,28 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
     --Swipe Settings
     cooldown:SetDrawSwipe(frameOpt.swipe)
+    cooldown:SetDrawEdge(frameOpt.edge)
     local spark = auraFrame.spark
     local mask = auraFrame.mask
     if type == "blizzard" then
         cooldown:SetReverse(frameOpt.inverse)
     elseif type == "baricon" then
+        if not cooldown.swipe and cooldown.edge then
+            auraFrame.maskIcon:Hide()
+        else
+            auraFrame.maskIcon:Show()
+        end
+
+        spark:ClearAllPoints()
         if frameOpt.cdOrientation == 1 then -- left
             cooldown:SetOrientation("HORIZONTAL")
             cooldown:SetReverseFill(true)
 
-            spark:ClearAllPoints()
-            spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "TOPLEFT", border_size / 2, 0)
-            spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT", border_size / 2, 0)
+            spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "TOPLEFT")
+            spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
             spark:SetWidth(border_size)
+            cooldown:SetPoint("TOPLEFT", auraFrame.icon, "TOPLEFT", cooldown.edge and border_size or 0, 0)
+            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon)
 
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture())
@@ -377,10 +387,11 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             cooldown:SetOrientation("HORIZONTAL")
             cooldown:SetReverseFill(false)
 
-            spark:ClearAllPoints()
-            spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "TOPRIGHT", -border_size / 2, 0)
-            spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT", -border_size / 2, 0)
+            spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
+            spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
             spark:SetWidth(border_size)
+            cooldown:SetPoint("TOPLEFT", auraFrame.icon)
+            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon, "BOTTOMRIGHT", cooldown.edge and -border_size or 0, 0)
 
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT")
@@ -389,10 +400,11 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             cooldown:SetOrientation("VERTICAL")
             cooldown:SetReverseFill(false)
 
-            spark:ClearAllPoints()
-            spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "TOPLEFT", 0, -border_size / 2)
-            spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "TOPRIGHT", 0, -border_size / 2)
+            spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "TOPLEFT")
+            spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
             spark:SetHeight(border_size)
+            cooldown:SetPoint("TOPLEFT", auraFrame.icon, "TOPLEFT", 0, cooldown.edge and -border_size or 0)
+            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon)
 
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture())
@@ -401,10 +413,11 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             cooldown:SetOrientation("VERTICAL")
             cooldown:SetReverseFill(true)
 
-            spark:ClearAllPoints()
-            spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT", 0, border_size / 2)
-            spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT", 0, border_size / 2)
+            spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
+            spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
             spark:SetHeight(border_size)
+            cooldown:SetPoint("TOPLEFT", auraFrame.icon)
+            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon, "BOTTOMRIGHT", 0, cooldown.edge and border_size or 0)
 
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT")

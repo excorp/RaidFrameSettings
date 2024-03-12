@@ -1118,6 +1118,21 @@ options = {
                                         RaidFrameSettings:UpdateModule("Buffs")
                                     end,
                                 },
+                                mastery = {
+                                    hidden = isClassic,
+                                    disabled = function() return not RaidFrameSettings.db.profile.Buffs.sotf end,
+                                    order = 0.2,
+                                    type = "toggle",
+                                    name = L["Show Mastery Stack"],
+                                    desc = L["Show the Mastery Stack for Restoration Druid."],
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Buffs.mastery
+                                    end,
+                                    set = function(info, value)
+                                        RaidFrameSettings.db.profile.Buffs.mastery = value
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                },
                                 BuffFramesDisplay = {
                                     order = 1,
                                     name = L["Buff Frames"],

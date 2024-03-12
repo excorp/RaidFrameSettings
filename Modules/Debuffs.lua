@@ -46,7 +46,11 @@ function Debuffs:Glow(frame, onoff)
 end
 
 local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-    frame.debuffs:Clear()
+    if not frame.debuffs then
+        frame.debuffs = TableUtil.CreatePriorityTable(AuraUtil.UnitFrameDebuffComparator, TableUtil.Constants.AssociativePriorityTable)
+    else
+        frame.debuffs:Clear()
+    end
     for type, _ in pairs(AuraUtil.DispellableDebuffTypes) do
         frame.dispels[type]:Clear()
     end
@@ -180,6 +184,96 @@ function Debuffs:OnEnable()
         return a.priority > b.priority
     end
 
+    local onHideAllDebuffs
+    
+    local onUnitAuraPet = function(unit, unitAuraUpdateInfo)
+        if not unit:match("pet") then
+            return
+        end
+        if not unitFrame[unit] then
+            return
+        end
+        for srcframe in pairs(unitFrame[unit]) do
+            local frame = frame_registry[srcframe]
+            if frame then
+                local debuffsChanged = false
+                local dispelsChanged = false
+
+                local displayOnlyDispellableDebuffs = false
+                local ignoreBuffs = true
+                local ignoreDebuffs = false
+                local ignoreDispelDebuffs = true
+
+                frame.unit = srcframe.unit
+                frame.displayedUnit = srcframe.displayedUnit
+
+                if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or frame.debuffs == nil then
+                    CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                    debuffsChanged = true
+                    dispelsChanged = true
+                else
+                    if unitAuraUpdateInfo.addedAuras ~= nil then
+                        for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                            local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                            if type == AuraUtil.AuraUpdateChangedType.Debuff then
+                                frame.debuffs[aura.auraInstanceID] = aura
+                                debuffsChanged = true
+                            elseif type == AuraUtil.AuraUpdateChangedType.Dispel then
+                                frame.debuffs[aura.auraInstanceID] = aura
+                                debuffsChanged = true
+                                frame.dispels[aura.dispelName][aura.auraInstanceID] = aura
+                                dispelsChanged = true
+                            end
+                        end
+                    end
+
+                    if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
+                        for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                            if frame.debuffs[auraInstanceID] ~= nil then
+                                local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
+                                local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
+                                if newAura ~= nil then
+                                    newAura.debuffType = oldDebuffType
+                                end
+                                frame.debuffs[auraInstanceID] = newAura
+                                debuffsChanged = true
+
+                                for _, tbl in pairs(frame.dispels) do
+                                    if tbl[auraInstanceID] ~= nil then
+                                        tbl[auraInstanceID] = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
+                                        dispelsChanged = true
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+                        for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                            if frame.debuffs[auraInstanceID] ~= nil then
+                                frame.debuffs[auraInstanceID] = nil
+                                debuffsChanged = true
+
+                                for _, tbl in pairs(frame.dispels) do
+                                    if tbl[auraInstanceID] ~= nil then
+                                        tbl[auraInstanceID] = nil
+                                        dispelsChanged = true
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+
+                if debuffsChanged then
+                    onHideAllDebuffs(srcframe)
+                end
+            end
+        end
+    end
+
     local onSetDebuff = function(debuffFrame, aura, opt)
         if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
@@ -260,7 +354,7 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
-    local onHideAllDebuffs = function(frame)
+    onHideAllDebuffs = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -295,13 +389,9 @@ function Debuffs:OnEnable()
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
                     return false
                 end
-                if frameNum <= frame_registry[frame].maxDebuffs then
-                    local filtered = filteredAuras[aura.spellId]
-                    local priority = filtered and filtered.priority or 0
-                    tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
-                    frameNum = frameNum + 1
-                end
-                return false
+                local filtered = filteredAuras[aura.spellId]
+                local priority = filtered and filtered.priority or 0
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
             end)
         end
         -- set debuffs after sorting to priority.
@@ -312,6 +402,10 @@ function Debuffs:OnEnable()
             for k, v in pairs(auralist) do
                 if groupNo == 0 then
                     -- default aura frame
+                    if k > frame_registry[frame].maxDebuffs then
+                        break
+                    end
+                    frameNum = k + 1
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
                     onSetDebuff(debuffFrame, v.aura, v.opt)
                 else
@@ -344,7 +438,7 @@ function Debuffs:OnEnable()
         for i = 1, maxUserPlaced do
             local idx = frame_registry[frame].placedAuraStart + i - 1
             local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            if not debuffFrame.auraInstanceID or not frame.debuffs[debuffFrame.auraInstanceID] then
+            if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
                 self:Glow(debuffFrame, false)
                 debuffFrame:UnsetAura()
             end
@@ -403,7 +497,7 @@ function Debuffs:OnEnable()
                 auraGroupEnd      = {},
                 extraDebuffFrames = {},
                 reanchor          = {},
-                debuffs           = TableUtil.CreatePriorityTable(AuraUtil.UnitFrameDebuffComparator, TableUtil.Constants.AssociativePriorityTable),
+                debuffs           = nil,
                 dispels           = {},
                 aura              = {},
                 dirty             = true,
@@ -580,7 +674,7 @@ function Debuffs:OnEnable()
                     auraGroupEnd      = {},
                     extraDebuffFrames = {},
                     reanchor          = {},
-                    debuffs           = TableUtil.CreatePriorityTable(AuraUtil.UnitFrameDebuffComparator, TableUtil.Constants.AssociativePriorityTable),
+                    debuffs           = nil,
                     dispels           = {},
                     aura              = {},
                     dirty             = true,
@@ -600,6 +694,7 @@ function Debuffs:OnEnable()
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
                 CompactUnitFrame_UpdateAuras(frame)
             end
+            onUnitAuraPet(frame.unit)
         end
     end
 
@@ -622,91 +717,7 @@ function Debuffs:OnEnable()
         end)
 
         self:RegisterEvent("UNIT_AURA", function(event, unit, unitAuraUpdateInfo)
-            if not unit:match("pet") then
-                return
-            end
-            if not unitFrame[unit] then
-                return
-            end
-            for srcframe in pairs(unitFrame[unit]) do
-                local frame = frame_registry[srcframe]
-                if frame then
-                    local debuffsChanged = false
-                    local dispelsChanged = false
-
-                    local displayOnlyDispellableDebuffs = false
-                    local ignoreBuffs = true
-                    local ignoreDebuffs = false
-                    local ignoreDispelDebuffs = true
-
-                    frame.unit = srcframe.unit
-                    frame.displayedUnit = srcframe.displayedUnit
-
-                    if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or frame.debuffs == nil then
-                        CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-                        debuffsChanged = true
-                        dispelsChanged = true
-                    else
-                        if unitAuraUpdateInfo.addedAuras ~= nil then
-                            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                                local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-                                if type == AuraUtil.AuraUpdateChangedType.Debuff then
-                                    frame.debuffs[aura.auraInstanceID] = aura
-                                    debuffsChanged = true
-                                elseif type == AuraUtil.AuraUpdateChangedType.Dispel then
-                                    frame.debuffs[aura.auraInstanceID] = aura
-                                    debuffsChanged = true
-                                    frame.dispels[aura.dispelName][aura.auraInstanceID] = aura
-                                    dispelsChanged = true
-                                end
-                            end
-                        end
-
-                        if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
-                            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                                if frame.debuffs[auraInstanceID] ~= nil then
-                                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
-                                    local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
-                                    if newAura ~= nil then
-                                        newAura.debuffType = oldDebuffType
-                                    end
-                                    frame.debuffs[auraInstanceID] = newAura
-                                    debuffsChanged = true
-
-                                    for _, tbl in pairs(frame.dispels) do
-                                        if tbl[auraInstanceID] ~= nil then
-                                            tbl[auraInstanceID] = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
-                                            dispelsChanged = true
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-                        end
-
-                        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
-                            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                                if frame.debuffs[auraInstanceID] ~= nil then
-                                    frame.debuffs[auraInstanceID] = nil
-                                    debuffsChanged = true
-
-                                    for _, tbl in pairs(frame.dispels) do
-                                        if tbl[auraInstanceID] ~= nil then
-                                            tbl[auraInstanceID] = nil
-                                            dispelsChanged = true
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-
-                    if debuffsChanged then
-                        onHideAllDebuffs(srcframe)
-                    end
-                end
-            end
+            onUnitAuraPet(unit, unitAuraUpdateInfo)
         end)
     end
 end
@@ -725,6 +736,7 @@ function Debuffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
+        frame_registry[frame].debuffs = nil
     end
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)

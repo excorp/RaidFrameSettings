@@ -240,11 +240,10 @@ function Buffs:OnEnable()
                     if not sorted[groupNo] then sorted[groupNo] = {} end
                     tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index, opt = auraOpt })
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
-                elseif frameNum <= frame_registry[frame].maxBuffs then
+                else
                     local filtered = filteredAuras[spellId]
                     local priority = filtered and filtered.priority or 0
                     tinsert(sorted[0], { spellId = spellId, priority = priority, index = index, opt = filtered or {} })
-                    frameNum = frameNum + 1
                 end
             end
             index = index + 1
@@ -256,6 +255,10 @@ function Buffs:OnEnable()
         for groupNo, auralist in pairs(sorted) do
             for k, v in pairs(auralist) do
                 if groupNo == 0 then
+                    if frameNum > frame_registry[frame].maxBuffs then
+                        break
+                    end
+                    frameNum = k + 1
                     -- default aura frame
                     local buffFrame = frame_registry[frame].extraBuffFrames[k]
                     onSetBuff(buffFrame, frame.displayedUnit, v.index, filter, v.opt)
@@ -295,7 +298,7 @@ function Buffs:OnEnable()
             if not buffName then
                 self:Glow(buffFrame, false)
                 buffFrame:UnsetAura()
-                if buffFrame.auraInstanceID and frame_registry[frame].aura[buffFrame.auraInstanceID] then
+                if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
                     frame_registry[frame].aura[buffFrame.auraInstanceID] = nil
                 end
             end

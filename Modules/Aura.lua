@@ -98,8 +98,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             function auraFrame:SetAura(aura)
                 self.icon:SetTexture(aura.icon)
-                if (aura.applications > 1) then
-                    local countText = aura.applications
+                if (aura.applications > 1 or (aura.applications >= 1 and aura.applicationsp)) then
+                    local countText = aura.applications .. (aura.applicationsp or "")
                     if (aura.applications >= 100) then
                         countText = BUFF_STACKS_OVERFLOW
                     end
@@ -228,8 +228,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 auraFrame.icon:SetTexture(aura.icon)
                 auraFrame.maskIcon:SetTexture(aura.icon)
 
-                if (aura.applications > 1) then
-                    local countText = aura.applications
+                if (aura.applications > 1 or (aura.applications >= 1 and aura.applicationsp)) then
+                    local countText = aura.applications .. (aura.applicationsp or "")
                     if (aura.applications >= 100) then
                         countText = BUFF_STACKS_OVERFLOW
                     end
@@ -269,14 +269,18 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
         if category == "Buff" then
             function auraFrame:UpdateTooltip()
-                GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                if self.auraInstanceID > 0 then
+                    GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                end
             end
         else
             function auraFrame:UpdateTooltip()
-                if (self.isBossBuff) then
-                    GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
-                else
-                    GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                if self.auraInstanceID > 0 then
+                    if (self.isBossBuff) then
+                        GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                    else
+                        GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                    end
                 end
             end
         end

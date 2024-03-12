@@ -273,11 +273,10 @@ function Debuffs:OnEnable()
                     if not sorted[groupNo] then sorted[groupNo] = {} end
                     tinsert(sorted[groupNo], { spellId = spellId, priority = priority, index = index, isBossAura = isBossAura, isBossBuff = isBossBuff, opt = auraOpt })
                     groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
-                elseif frameNum <= frame_registry[frame].maxDebuffs then
+                else
                     local filtered = filteredAuras[spellId]
                     local priority = filtered and filtered.priority or 0
                     tinsert(sorted[0], { spellId = spellId, priority = priority, index = index, isBossAura = isBossAura, isBossBuff = isBossBuff, opt = filtered or {} })
-                    frameNum = frameNum + 1
                 end
             end
             index = index + 1
@@ -289,6 +288,10 @@ function Debuffs:OnEnable()
         for groupNo, auralist in pairs(sorted) do
             for k, v in pairs(auralist) do
                 if groupNo == 0 then
+                    if frameNum > frame_registry[frame].maxBuffs then
+                        break
+                    end
+                    frameNum = k + 1
                     -- default aura frame
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
                     onSetDebuff(debuffFrame, frame.displayedUnit, v.index, filter, v.isBossAura, v.isBossBuff, v.opt)
@@ -327,7 +330,7 @@ function Debuffs:OnEnable()
             if not debuffName then
                 self:Glow(debuffFrame, false)
                 debuffFrame:UnsetAura()
-                if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
+                if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
                     frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
                 end
             end

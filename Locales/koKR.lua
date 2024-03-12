@@ -373,3 +373,5 @@ L["Sets the direction of the refresh animation."] = "갱신 애니메이션의 �
 
 L["Track empowered buffs"] = "강화된 버프 추적"
 L["Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."] = "회복 드루이드의 \"숲의 영혼\"으로 강화된 \"재생\", \"회복\", \"급속 성장\"을 반짝이게 합니다"
+L["Show Mastery Stack"] = "특화 스택 표시"
+L["Show the Mastery Stack for Restoration Druid."] = "회복 드루이드의 특화 스택수를 표시 합니다."

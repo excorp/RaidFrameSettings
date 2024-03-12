@@ -149,6 +149,7 @@ local defaults = {
         Buffs = {
             petframe = false,
             sotf = true,
+            mastery = true,
             BuffFramesDisplay = {
                 width = 14,
                 height = 14,

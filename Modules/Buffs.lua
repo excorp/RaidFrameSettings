@@ -38,38 +38,39 @@ local unitFrame = {}
 local roster_changed = true
 local glowOpt
 
-
-local duridMasterySpell = {
-    [774]    = true, -- 회복
-    [8936]   = true, -- 재생
-    [48438]  = true, -- 급속
-    [33763]  = true, -- 피생
-    [188550] = true, -- 피생 (푸른신록)
-    [200389] = true, -- 재배
-    [157982] = true, -- 평온
-    [383193] = true, -- 숲손
-    [207386] = true, -- 봄꽃
-    [102351] = true, -- 세수
-    [155777] = true  -- 싹틔
+-- Code for the Restoration Druid
+local spell = {
+    rejuvenation      = 774,
+    germination       = 155777,
+    sotf              = 114108,
+    wildgrowth        = 48438,
+    regrowth          = 8936,
+    mastery           = 77495,
+    clarity           = 16870,
+    nss               = 132158,
+    forestwalk        = 400129,
+    lifebloom         = 33763,
+    lifebloomVerdancy = 188550,
 }
 
-local spell = {
-    rejuvenation = 774,
-    germination  = 155777,
-    sotf         = 114108,
-    wildgrowth   = 48438,
-    regrowth     = 8936,
-    mastery      = 77495,
-    clarity      = 16870,
-    nss          = 132158,
-    forestwalk   = 400129,
+local duridMasterySpell = {
+    [spell.rejuvenation]      = true, -- Rejuvenation
+    [spell.regrowth]          = true, -- Regrowth
+    [spell.wildgrowth]        = true, -- Wild Growth
+    [spell.lifebloom]         = true, -- Lifebloom
+    [spell.lifebloomVerdancy] = true, -- Lifebloom (Verdancy)
+    [200389]                  = true, -- Cultivation
+    [157982]                  = true, -- Tranquility
+    [383193]                  = true, -- Grove Tending
+    [207386]                  = true, -- Spring Blossoms
+    [102351]                  = true, -- Cenarion Ward
+    [spell.germination]       = true  -- Germination
 }
 
 local lifebloom = {
-    [33763]  = true, -- 피생
-    [188550] = true, -- 피생 (푸른신록)
+    [spell.lifebloom]         = true, -- Lifebloom
+    [spell.lifebloomVerdancy] = true, -- Lifebloom (Verdancy)
 }
-
 
 local player
 player = {
@@ -82,131 +83,36 @@ player = {
     sotfTrail      = 0,
     sotfTrail_time = 0.2,
     affectedSpell  = {
-        [774]    = true,
-        [155777] = true,
-        [8936]   = true,
-        [48438]  = true
+        [spell.rejuvenation] = true,
+        [spell.germination]  = true,
+        [spell.regrowth]     = true,
+        [spell.wildgrowth]   = true
     },
     talent         = {
-        ger  = 0, -- 82071 155675 Germination
-        sotf = 0, -- 82059 158478 Soul of the Forest
-        hb   = 0, -- 82065 392256 Harmonious Blooming. 1스택일때=2, 2스택일때=3 으로 설정
-        ni   = 0, -- 82214 33873 Nurturing Instinct 회복의 본능 - 주문공격력 및 치유량 6% 증가
-        nr   = 0, -- 82206 377796 Natural Recovery 자연 회복 - 치유량과 받는 치유 효과 4% 증가
-        rlfn = 0, -- 82207 417712 Rising Light, Falling Night 떠오르는 빛, 몰락하는 밤 - 낮 치유/공격력 3% 증가 / 밤 유연 2%
-        fw   = 0, -- 92229 400129 Forestwalk 숲걸음 - <내가> 받는 모든 치유 5% 증가 -> 재생 힐량 계산시 무시한다.
-        rg   = 0, -- 82058 404521 Rampant Growth 무성한 생장
+        ger  = 0, -- 82071 Germination
+        sotf = 0, -- 82059 Soul of the Forest
+        hb   = 0, -- 82065 Harmonious Blooming. 1스택일때=2, 2스택일때=3 으로 설정
+        ni   = 0, -- 82214 Nurturing Instinct 회복의 본능 - 주문공격력 및 치유량 6% 증가
+        nr   = 0, -- 82206 Natural Recovery 자연 회복 - 치유량과 받는 치유 효과 4% 증가
+        rlfn = 0, -- 82207 Rising Light, Falling Night 떠오르는 빛, 몰락하는 밤 - 낮 치유/공격력 3% 증가 / 밤 유연 2%
+        fw   = 0, -- 92229 Forestwalk 숲걸음 - <내가> 받는 모든 치유 5% 증가 -> 재생 힐량 계산시 무시한다.
+        rg   = 0, -- 82058 Rampant Growth 무성한 생장
+        nss  = 0, -- 82051 Nature's Splendor
+        sb   = 0, -- 82081 Stonebark
     },
 }
 
-local getPlayerStat = function()
-    local _, int = UnitStat("player", 4)
-    local haste = GetHaste()
-    local critical = GetCritChance()
-    if GetSpecializationInfo(GetSpecialization()) == 63 then
-        critical = critical + 15
-    end
-    local mastery = GetMasteryEffect()
-    local versatility = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE)
-    return {
-        int         = int,
-        haste       = haste / 100,
-        critical    = critical / 100,
-        mastery     = mastery / 100,
-        versatility = versatility / 100,
-    }
-end
-
-local cachedEstimatedHeal = {}
-local getEstimatedHeal = function(spellId, masteryStack, me)
-    if not player.stat then
-        player.stat = getPlayerStat()
-    end
-    local power
-    if spellId == spell.rejuvenation or spellId == spell.germination then
-        power = 0.2959400299850075
-    elseif spellId == spell.regrowth then
-        power = 1.854572713643178
-    elseif spellId == spell.wildgrowth then
-        power = 0.1830815361549994
-    end
-
-    -- todo: 각종 특성들에 대한 힐량 보정을 반영 해야 한다. 회복의본능,자연회복,떠오르는 빛 몰락한느 밤, 숲걸음, 무성한 생장
-    -- todo: 재생 힐량에서 자연의 신속함, 청명 버프가 걸려있는경우 기본힐량이 늘어나는걸로 간주해야한다 (도트힐에는 증가된 힐량이 반영되지 않기때문)
-
-    --[[
-        바위 껍질 -> 무껍 대상자는 HoT 힐량 20% 증가
-        자연의 광채 -> 신속함 대상자에게 재생 사용치 추가로 35%
-    ]]
-
-    local clarity = player.buff[spell.clarity] and 1 or 0
-    local nss = player.buff[spell.nss] and 1 or 0
-    local forestwalk = player.buff[spell.forestwalk] and 1 or 0
-
-
-    local key = string.format("%d_%d_%f_%f_%d_%d_%d_%d_%d_%d_%d_%d", spellId, player.stat.int, player.stat.mastery, player.stat.versatility, player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg, masteryStack, clarity, nss, forestwalk)
-    if cachedEstimatedHeal[key] then
-        return cachedEstimatedHeal[key]
-    end
-    local estimated = player.stat.int * power * (1 + masteryStack * player.stat.mastery) * (1 + player.stat.versatility)
-
-    local inc = 0
-    if player.talent.ni > 0 then
-        inc = inc + player.talent.ni * 0.03
-    end
-    if player.talent.nr > 0 then
-        inc = inc + player.talent.nr * 0.02
-    end
-    if player.talent.rlfn > 0 then
-        local hour, _ = GetGameTime()
-        if hour >= 6 and hour < 18 then
-            -- 낮인경우 공격/치유량 3%. 밤인경우 내 스탯 유연에 이미 포함되어 있다
-            inc = inc + 0.03
-        end
-    end
-    if spellId == spell.regrowth then
-        -- 재생의 첫 힐량을 구하는것이라서 주기적인 힐량 증가는 계산하면 안된다
-        --[[
-        if player.talent.rg > 0 then
-            inc = inc + 0.5
-        end
-        ]]
-        -- 청명은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
-        if clarity > 0 then
-            inc = inc + 0.3
-        end
-        -- 신속함은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
-        if nss > 0 then
-            inc = inc + 1
-        end
-    end
-
-    if me then
-        -- 내가 나한테 힐하는것에는 반영이 안된다
-        --[[
-        if player.talent.nr > 0 then
-            inc = inc + 0.04
-        end
-        ]]
-        if forestwalk then
-            inc = inc + 0.05
-        end
-    end
-
-    estimated = estimated * (1 + inc)
-    cachedEstimatedHeal[key] = estimated
-    return estimated
-end
-
 local talentMap = {
-    [82071] = { spellId = 155675, key = "ger" },
-    [82059] = { spellId = 158478, key = "sotf" },
-    [82065] = { spellId = 392256, key = "hb" },
-    [82214] = { spellId = 33873, key = "ni" },
-    [82206] = { spellId = 377796, key = "nr" },
-    [82207] = { spellId = 417712, key = "rlfn" },
-    [92229] = { spellId = 400129, key = "fw" },
-    [82058] = { spellId = 404521, key = "rg" },
+    [82071] = { key = "ger" },
+    [82059] = { key = "sotf" },
+    [82065] = { key = "hb" },
+    [82214] = { key = "ni" },
+    [82206] = { key = "nr" },
+    [82207] = { key = "rlfn" },
+    [92229] = { key = "fw" },
+    [82058] = { key = "rg" },
+    [82051] = { key = "nss" },
+    [82081] = { key = "sb" },
 }
 
 local onUnitAuraSotf
@@ -244,6 +150,102 @@ local getTalent = function()
             end
         end
     end
+end
+
+local getPlayerStat = function()
+    local _, int = UnitStat("player", 4)
+    local haste = GetHaste()
+    local critical = GetCritChance()
+    if GetSpecializationInfo(GetSpecialization()) == 63 then
+        critical = critical + 15
+    end
+    local mastery = GetMasteryEffect()
+    local versatility = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE)
+    return {
+        int         = int,
+        haste       = haste / 100,
+        critical    = critical / 100,
+        mastery     = mastery / 100,
+        versatility = versatility / 100,
+    }
+end
+
+local cachedEstimatedHeal = {}
+local getEstimatedHeal = function(spellId, masteryStack, me)
+    if not player.stat then
+        player.stat = getPlayerStat()
+    end
+    local power
+    if spellId == spell.rejuvenation or spellId == spell.germination then
+        power = 0.2961111816      -- 24.65% * -7% * 15% * 8% * 4%
+    elseif spellId == spell.regrowth then
+        power = 1.855769616       -- 207.6% * -7% * -11% * 8%
+    elseif spellId == spell.wildgrowth then
+        power = 0.190175753722752 -- (94.08% * -7% * 15% * 8%) /7 * 7% * 7% * 7%
+    end
+
+    -- 특성중에 바위 껍질 -> 무껍 대상자는 HoT 힐량 20% 증가. 이건 무시한다.
+
+    local clarity = player.buff[spell.clarity] and 1 or 0
+    local nss = player.buff[spell.nss] and 1 or 0
+    local forestwalk = player.buff[spell.forestwalk] and 1 or 0
+
+
+    local key = string.format("%d_%d_%f_%f_%d_%d_%d_%d_%d_%d_%d_%d", spellId, player.stat.int, player.stat.mastery, player.stat.versatility, player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg, masteryStack, clarity, nss, forestwalk)
+    if cachedEstimatedHeal[key] then
+        return cachedEstimatedHeal[key]
+    end
+    local estimated = player.stat.int * power * (1 + masteryStack * player.stat.mastery) * (1 + player.stat.versatility)
+
+    local inc = 0
+    if player.talent.ni > 0 then
+        inc = inc + player.talent.ni * 0.03
+    end
+    if player.talent.nr > 0 then
+        inc = inc + player.talent.nr * 0.02
+    end
+    if player.talent.rlfn > 0 then
+        local hour, _ = GetGameTime()
+        if hour >= 6 and hour < 18 then
+            -- Increased healing by 3% during the day. At night, this is already included in my versatility.
+            inc = inc + 0.03
+        end
+    end
+    if spellId == spell.regrowth then
+        -- 재생의 첫 힐량을 구하는것이라서 주기적인 힐량 증가는 계산하면 안된다
+        --[[
+        if player.talent.rg > 0 then
+            inc = inc + 0.5
+        end
+        ]]
+        -- 청명은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
+        if clarity > 0 then
+            inc = inc + 0.3
+        end
+        -- 신속함은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
+        if nss > 0 then
+            inc = inc + 1
+            if player.talent.nss > 0 then
+                inc = inc + 0.35
+            end
+        end
+    end
+
+    if me then
+        -- It doesn't reflect on the heal you give yourself.
+        --[[
+        if player.talent.nr > 0 then
+            inc = inc + 0.04
+        end
+        ]]
+        if forestwalk > 0 then
+            inc = inc + 0.05
+        end
+    end
+
+    estimated = estimated * (1 + inc)
+    cachedEstimatedHeal[key] = estimated
+    return estimated
 end
 
 local masteryChange = function(GUID, spellId, delta, showIcon)
@@ -298,6 +300,8 @@ local masteryChange = function(GUID, spellId, delta, showIcon)
         end
     end
 end
+-- END: Code for the Restoration Druid
+
 
 local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
     if not frame.debuffs then
@@ -429,6 +433,76 @@ function Buffs:OnEnable()
 
     local onHideAllBuffs
 
+    -- Code for the Restoration Druid
+    local trackEmpowered = function()
+        local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, school, amount, overhealing, absorbed, critical = CombatLogGetCurrentEventInfo()
+        if sourceGUID ~= player.GUID or not destGUID or not spellId or player.spec ~= 105 then
+            return
+        end
+
+        if not player.GUIDS[destGUID] then
+            player.GUIDS[destGUID] = {
+                aura         = nil,
+                auraById     = {},
+                empowered    = {},
+                masteryStack = 0,
+                frame        = {},
+            }
+        end
+
+        if spellId == spell.rejuvenation then
+            local aura = player.GUIDS[destGUID].auraById
+            local rejuvenation = aura[spell.rejuvenation]
+            local germination = aura[spell.germination]
+            -- Determines if the skill cast is Rejuvenation or Germination.
+            if player.talent.ger > 0 then
+                spellId = (rejuvenation and not germination and spell.germination) or rejuvenation and germination and germination.expirationTime < rejuvenation.expirationTime and spell.germination or spellId
+            end
+        end
+
+        if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
+            -- 급성,회복 아니면 무시
+            if spellId ~= spell.rejuvenation and spellId ~= spell.germination and spellId ~= spell.wildgrowth then
+                return
+            end
+            if spellId == spell.wildgrowth and player.buff[spell.sotf] or player.sotfTrail >= GetTime() then
+                -- 숲영 버프 받은 급성일 확율이 높음
+                player.GUIDS[destGUID].empowered[spellId] = -1.5
+            else
+                -- 강화% 초기화
+                player.GUIDS[destGUID].empowered[spellId] = nil
+            end
+        elseif subevent == "SPELL_PERIODIC_HEAL" then
+            -- 급성,회복 아니면 무시
+            if spellId ~= spell.rejuvenation and spellId ~= spell.germination and spellId ~= spell.wildgrowth then
+                return
+            end
+            -- 강화%가 없다면 새로 구함
+            if not player.GUIDS[destGUID].empowered[spellId] or player.GUIDS[destGUID].empowered[spellId] < 0 then
+                -- calc -> set -> display
+                local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID)
+                local rate = (critical and amount / 2 or amount) / estimatedHeal
+                player.GUIDS[destGUID].empowered[spellId] = rate
+                for frame in pairs(player.GUIDS[destGUID].frame) do
+                    if UnitGUID(frame.unit) ~= destGUID then
+                        player.GUIDS[destGUID].frame[frame] = nil
+                    else
+                        onHideAllBuffs(frame)
+                    end
+                end
+            end
+        elseif subevent == "SPELL_HEAL" then
+            -- 재생 아니면 무시
+            if spellId ~= spell.regrowth then
+                return
+            end
+            -- 강화 % 구해서 임시 변수에 셋팅 -> UNIT_AURA에서 재생이 걸리거나,갱신될때 사용
+            local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID)
+            local rate = (critical and amount / 2 or amount) / estimatedHeal
+            player.GUIDS[destGUID].empowered[spellId] = rate
+        end
+    end
+
     onUnitAuraSotf = function(unit, unitAuraUpdateInfo)
         if frameOpt.sotf and player.spec == 105 then
             if UnitIsUnit(unit, "player") then
@@ -523,6 +597,7 @@ function Buffs:OnEnable()
             end
         end
     end
+    -- END: Code for the Restoration Druid
 
     local onUnitAuraPet = function(unit, unitAuraUpdateInfo)
         if not unit:match("pet") then
@@ -606,6 +681,7 @@ function Buffs:OnEnable()
         end
         aurastored[aura.auraInstanceID] = aura
 
+        -- Code for the Restoration Druid
         if frameOpt.sotf and player.spec == 105 then
             local GUID = UnitGUID(parent.unit)
             if GUID then
@@ -1017,74 +1093,7 @@ function Buffs:OnEnable()
     end
 
     if frameOpt.sotf then
-        self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", function()
-            local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, school, amount, overhealing, absorbed, critical = CombatLogGetCurrentEventInfo()
-            if sourceGUID ~= player.GUID or not destGUID or not spellId or player.spec ~= 105 then
-                return
-            end
-
-            if not player.GUIDS[destGUID] then
-                player.GUIDS[destGUID] = {
-                    aura         = nil,
-                    auraById     = {},
-                    empowered    = {},
-                    masteryStack = 0,
-                    frame        = {},
-                }
-            end
-
-            if spellId == spell.rejuvenation then
-                local aura = player.GUIDS[destGUID].auraById
-                local rejuvenation = aura[spell.rejuvenation]
-                local germination = aura[spell.germination]
-                -- Determines if the skill cast is Rejuvenation or Germination.
-                if player.talent.ger > 0 then
-                    spellId = (rejuvenation and not germination and spell.germination) or rejuvenation and germination and germination.expirationTime < rejuvenation.expirationTime and spell.germination or spellId
-                end
-            end
-
-            if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
-                -- 급성,회복 아니면 무시
-                if spellId ~= spell.rejuvenation and spellId ~= spell.germination and spellId ~= spell.wildgrowth then
-                    return
-                end
-                if spellId == spell.wildgrowth and player.buff[spell.sotf] or player.sotfTrail >= GetTime() then
-                    -- 숲영 버프 받은 급성일 확율이 높음
-                    player.GUIDS[destGUID].empowered[spellId] = -1.5
-                else
-                    -- 강화% 초기화
-                    player.GUIDS[destGUID].empowered[spellId] = nil
-                end
-            elseif subevent == "SPELL_PERIODIC_HEAL" then
-                -- 급성,회복 아니면 무시
-                if spellId ~= spell.rejuvenation and spellId ~= spell.germination and spellId ~= spell.wildgrowth then
-                    return
-                end
-                -- 강화%가 없다면 새로 구함
-                if not player.GUIDS[destGUID].empowered[spellId] or player.GUIDS[destGUID].empowered[spellId] < 0 then
-                    -- calc -> set -> display
-                    local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID)
-                    local rate = (critical and amount / 2 or amount) / estimatedHeal
-                    player.GUIDS[destGUID].empowered[spellId] = rate
-                    for frame in pairs(player.GUIDS[destGUID].frame) do
-                        if UnitGUID(frame.unit) ~= destGUID then
-                            player.GUIDS[destGUID].frame[frame] = nil
-                        else
-                            onHideAllBuffs(frame)
-                        end
-                    end
-                end
-            elseif subevent == "SPELL_HEAL" then
-                -- 재생 아니면 무시
-                if spellId ~= spell.regrowth then
-                    return
-                end
-                -- 강화 % 구해서 임시 변수에 셋팅 -> UNIT_AURA에서 재생이 걸리거나,갱신될때 사용
-                local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID)
-                local rate = (critical and amount / 2 or amount) / estimatedHeal
-                player.GUIDS[destGUID].empowered[spellId] = rate
-            end
-        end)
+        self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", trackEmpowered)
     end
 
     if frameOpt.petframe or frameOpt.sotf then

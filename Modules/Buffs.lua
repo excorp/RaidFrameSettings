@@ -51,6 +51,8 @@ local spell = {
     forestwalk        = 400129,
     lifebloom         = 33763,
     lifebloomVerdancy = 188550,
+    adaptiveSwarm     = 391891,
+    ironbark          = 102342,
 }
 
 local duridMasterySpell = {
@@ -63,8 +65,9 @@ local duridMasterySpell = {
     [157982]                  = true, -- Tranquility
     [383193]                  = true, -- Grove Tending
     [207386]                  = true, -- Spring Blossoms
-    [102351]                  = true, -- Cenarion Ward
-    [spell.germination]       = true  -- Germination
+    [102352]                  = true, -- Cenarion Ward
+    [spell.germination]       = true, -- Germination
+    [spell.adaptiveSwarm]     = true, -- Adaptive Swarm
 }
 
 local lifebloom = {
@@ -171,30 +174,48 @@ local getPlayerStat = function()
 end
 
 local cachedEstimatedHeal = {}
-local getEstimatedHeal = function(spellId, masteryStack, me)
+local getEstimatedHeal = function(spellId, masteryStack, me, GUID)
     if not player.stat then
         player.stat = getPlayerStat()
     end
     local power
     if spellId == spell.rejuvenation or spellId == spell.germination then
-        power = 0.28472229        -- 24.65% * -7% * 15% * 8%
+        power = 0.28594        -- 24.65% * 16%
     elseif spellId == spell.regrowth then
-        power = 1.855769616       -- 207.6% * -7% * -11% * 8%
+        power = 1.8684         -- 207.6% * -10%
     elseif spellId == spell.wildgrowth then
-        power = 0.190175753722752 -- (94.08% * -7% * 15% * 8%) /7 * 7% * 7% * 7%
+        power = 0.190989103872 -- 94.08% * 16% /7 * 1.07 * 1.07 * 1.07
     end
 
     -- 특성중에 바위 껍질 -> 무껍 대상자는 HoT 힐량 20% 증가. 이건 무시한다.
 
-    local clarity = player.buff[spell.clarity] and 1 or 0
-    local nss = player.buff[spell.nss] and 1 or 0
+    local clarity    = player.buff[spell.clarity] and 1 or 0
+    local nss        = player.buff[spell.nss] and 1 or 0
     local forestwalk = player.buff[spell.forestwalk] and 1 or 0
 
-    local key = string.format("ID:%d I:%d M:%f V:%f,ni:%d nr:%d rlfn:%d rg:%d,ms:%d,c:%d nss:%d fw:%d", spellId, player.stat.int, player.stat.mastery, player.stat.versatility, player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg, masteryStack, clarity, nss, forestwalk)
+
+    local adaptiveSwarm = player.GUIDS[GUID].buff[spell.adaptiveSwarm] and 1 or 0
+    local ironbark = player.GUIDS[GUID].buff[spell.ironbark] and 1 or 0
+
+    local key = string.format("ID:%d I:%d M:%f V:%f,ni:%d nr:%d rlfn:%d rg:%d,ms:%d,c:%d nss:%d fw:%d,as:%d ib:%d",
+        spellId,
+        player.stat.int, player.stat.mastery, player.stat.versatility,
+        player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg,
+        masteryStack, clarity, nss, forestwalk,
+        adaptiveSwarm, ironbark)
     if cachedEstimatedHeal[key] then
         return cachedEstimatedHeal[key]
     end
     local estimated = player.stat.int * power * (1 + masteryStack * player.stat.mastery) * (1 + player.stat.versatility)
+
+    if spellId ~= spell.regrowth then
+        if player.talent.sb and ironbark > 0 then
+            estimated = estimated * 1.2
+        end
+        if adaptiveSwarm > 0 then
+            estimated = estimated * 1.2
+        end
+    end
 
     local inc = 0
     if player.talent.ni > 0 then
@@ -444,19 +465,10 @@ function Buffs:OnEnable()
         player.GUIDS[GUID] = {
             unit         = nil,
             empowered    = {},
+            buff         = {},
             frame        = {},
             masteryStack = 0,
         }
-
-        local function HandleAura(aura)
-            -- 내가 건 aura 일때
-            if aura.isFromPlayerOrPlayerPet then
-                -- 특화 stack 관련이 있나? -> 특화스택 증가
-                masteryChange(GUID, aura.spellId, 1, frameOpt.mastery and player.spec == 105)
-            end
-        end
-        player.GUIDS[GUID].masteryStack = 0
-        AuraUtil.ForEachAura("player", AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), nil, HandleAura, true)
 
         for frame in pairs(frame_registry) do
             if frame and frame.unit and UnitGUID(frame.unit) == GUID then
@@ -467,7 +479,18 @@ function Buffs:OnEnable()
 
         if not player.GUIDS[GUID].unit then
             player.GUIDS[GUID] = nil
+            return
         end
+
+        local function HandleAura(aura)
+            -- 대상이 나 이거나, 내가 건 aura 일때
+            if GUID == player.GUID or aura.isFromPlayerOrPlayerPet then
+                -- 특화 stack 관련이 있나? -> 특화스택 증가
+                masteryChange(GUID, aura.spellId, 1, frameOpt.mastery and player.spec == 105)
+            end
+        end
+        player.GUIDS[GUID].masteryStack = 0
+        AuraUtil.ForEachAura(player.GUIDS[GUID].unit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), nil, HandleAura, true)
     end
 
     local trackingEvent = {
@@ -519,6 +542,8 @@ function Buffs:OnEnable()
         end
 
         if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
+            player.GUIDS[destGUID].buff[spellId] = true
+
             -- 급성,회복 아니면 무시
             if spellId ~= spell.rejuvenation and spellId ~= spell.germination and spellId ~= spell.wildgrowth then
                 return
@@ -530,6 +555,8 @@ function Buffs:OnEnable()
                 -- 강화% 초기화
                 player.GUIDS[destGUID].empowered[spellId] = nil
             end
+        elseif subevent == "SPELL_AURA_REMOVED" then
+            player.GUIDS[destGUID].buff[spellId] = nil
         elseif subevent == "SPELL_PERIODIC_HEAL" then
             -- 급성,회복 아니면 무시
             if spellId ~= spell.rejuvenation and spellId ~= spell.germination and spellId ~= spell.wildgrowth then
@@ -538,7 +565,7 @@ function Buffs:OnEnable()
             -- 강화%가 없다면 새로 구함
             if not player.GUIDS[destGUID].empowered[spellId] or player.GUIDS[destGUID].empowered[spellId] < 0 then
                 -- calc -> set -> display
-                local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID)
+                local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID, destGUID)
                 local rate = (critical and amount / 2 or amount) / estimatedHeal
                 player.GUIDS[destGUID].empowered[spellId] = rate
                 for frame in pairs(player.GUIDS[destGUID].frame) do
@@ -555,7 +582,7 @@ function Buffs:OnEnable()
                 return
             end
             -- 강화 % 구해서 임시 변수에 셋팅 -> UNIT_AURA에서 재생이 걸리거나,갱신될때 사용
-            local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID)
+            local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID, destGUID)
             local rate = (critical and amount / 2 or amount) / estimatedHeal
             player.GUIDS[destGUID].empowered[spellId] = rate
         end

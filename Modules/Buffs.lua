@@ -115,7 +115,7 @@ local talentMap = {
     [82081] = { key = "sb" },
 }
 
-local onUnitAuraSotf
+local initMember
 
 local getTalent = function()
     local specId = GetSpecializationInfo(GetSpecialization())
@@ -127,7 +127,7 @@ local getTalent = function()
             v.buffs:Clear()
             v.debuffs = nil
             if frame.unit then
-                onUnitAuraSotf(frame.unit)
+                initMember(UnitGUID(frame.unit))
             end
         end
     end
@@ -177,7 +177,7 @@ local getEstimatedHeal = function(spellId, masteryStack, me)
     end
     local power
     if spellId == spell.rejuvenation or spellId == spell.germination then
-        power = 0.2961111816      -- 24.65% * -7% * 15% * 8% * 4%
+        power = 0.28472229        -- 24.65% * -7% * 15% * 8%
     elseif spellId == spell.regrowth then
         power = 1.855769616       -- 207.6% * -7% * -11% * 8%
     elseif spellId == spell.wildgrowth then
@@ -190,8 +190,7 @@ local getEstimatedHeal = function(spellId, masteryStack, me)
     local nss = player.buff[spell.nss] and 1 or 0
     local forestwalk = player.buff[spell.forestwalk] and 1 or 0
 
-
-    local key = string.format("%d_%d_%f_%f_%d_%d_%d_%d_%d_%d_%d_%d", spellId, player.stat.int, player.stat.mastery, player.stat.versatility, player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg, masteryStack, clarity, nss, forestwalk)
+    local key = string.format("ID:%d I:%d M:%f V:%f,ni:%d nr:%d rlfn:%d rg:%d,ms:%d,c:%d nss:%d fw:%d", spellId, player.stat.int, player.stat.mastery, player.stat.versatility, player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg, masteryStack, clarity, nss, forestwalk)
     if cachedEstimatedHeal[key] then
         return cachedEstimatedHeal[key]
     end
@@ -232,18 +231,15 @@ local getEstimatedHeal = function(spellId, masteryStack, me)
     end
 
     if me then
-        -- It doesn't reflect on the heal you give yourself.
-        --[[
         if player.talent.nr > 0 then
-            inc = inc + 0.04
+            inc = inc + player.talent.nr * 0.02
         end
-        ]]
         if forestwalk > 0 then
             inc = inc + 0.05
         end
     end
 
-    estimated = estimated * (1 + inc)
+    estimated = Round(estimated * (1 + inc))
     cachedEstimatedHeal[key] = estimated
     return estimated
 end
@@ -255,9 +251,16 @@ local masteryChange = function(GUID, spellId, delta, showIcon)
         end
 
         player.GUIDS[GUID].masteryStack = player.GUIDS[GUID].masteryStack + delta
-
         if not showIcon then
             return
+        end
+        if addon:count(player.GUIDS[GUID].frame) == 0 then
+            for frame in pairs(frame_registry) do
+                if frame and frame.unit and UnitGUID(frame.unit) == GUID then
+                    player.GUIDS[GUID].frame[frame] = true
+                    player.GUIDS[GUID].unit = frame.unit
+                end
+            end
         end
         for frame in pairs(player.GUIDS[GUID].frame) do
             if UnitGUID(frame.unit) ~= GUID then
@@ -434,29 +437,84 @@ function Buffs:OnEnable()
     local onHideAllBuffs
 
     -- Code for the Restoration Druid
+    initMember = function(GUID)
+        if not frameOpt.sotf or player.spec ~= 105 or not GUID then
+            return
+        end
+        player.GUIDS[GUID] = {
+            unit         = nil,
+            empowered    = {},
+            frame        = {},
+            masteryStack = 0,
+        }
+
+        local function HandleAura(aura)
+            -- 내가 건 aura 일때
+            if aura.isFromPlayerOrPlayerPet then
+                -- 특화 stack 관련이 있나? -> 특화스택 증가
+                masteryChange(GUID, aura.spellId, 1, frameOpt.mastery and player.spec == 105)
+            end
+        end
+        player.GUIDS[GUID].masteryStack = 0
+        AuraUtil.ForEachAura("player", AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), nil, HandleAura, true)
+
+        for frame in pairs(frame_registry) do
+            if frame and frame.unit and UnitGUID(frame.unit) == GUID then
+                player.GUIDS[GUID].frame[frame] = true
+                player.GUIDS[GUID].unit = frame.unit
+            end
+        end
+
+        if not player.GUIDS[GUID].unit then
+            player.GUIDS[GUID] = nil
+        end
+    end
+
+    local trackingEvent = {
+        SPELL_AURA_APPLIED  = true,
+        SPELL_AURA_REMOVED  = true,
+        SPELL_AURA_REFRESH  = true,
+        SPELL_PERIODIC_HEAL = true,
+        SPELL_HEAL          = true,
+    }
     local trackEmpowered = function()
         local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, school, amount, overhealing, absorbed, critical = CombatLogGetCurrentEventInfo()
+
+        if not trackingEvent[subevent] then
+            return
+        end
+
+        -- 플레이어의 버프/디버프가 변경되면 스탯을 다시 구한다
+        if destGUID == player.GUID and (subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REMOVED" or subevent == "SPELL_AURA_REFRESH") then
+            player.stat = nil
+            player.buff[spellId] = subevent ~= "SPELL_AURA_REMOVED" and true or nil
+        end
+
         if sourceGUID ~= player.GUID or not destGUID or not spellId or player.spec ~= 105 then
             return
         end
 
+        local buffsChanged
         if not player.GUIDS[destGUID] then
-            player.GUIDS[destGUID] = {
-                aura         = nil,
-                auraById     = {},
-                empowered    = {},
-                masteryStack = 0,
-                frame        = {},
-            }
+            initMember(destGUID)
+            buffsChanged = true
+            if not player.GUIDS[destGUID] then
+                return
+            end
         end
 
-        if spellId == spell.rejuvenation then
-            local aura = player.GUIDS[destGUID].auraById
-            local rejuvenation = aura[spell.rejuvenation]
-            local germination = aura[spell.germination]
-            -- Determines if the skill cast is Rejuvenation or Germination.
-            if player.talent.ger > 0 then
-                spellId = (rejuvenation and not germination and spell.germination) or rejuvenation and germination and germination.expirationTime < rejuvenation.expirationTime and spell.germination or spellId
+        -- 특화 스택 추적
+        if not buffsChanged and duridMasterySpell[spellId] then
+            if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
+                if subevent == "SPELL_AURA_APPLIED" then
+                    -- 특화 stack 관련이 있나? -> 특화스택 증가
+                    masteryChange(destGUID, spellId, 1, frameOpt.mastery)
+                    buffsChanged = frameOpt.mastery and true or buffsChanged
+                end
+            elseif subevent == "SPELL_AURA_REMOVED" then
+                -- 특화 stack 관련이 있나? -> 특화스택 감사
+                masteryChange(destGUID, spellId, -1, frameOpt.mastery)
+                buffsChanged = frameOpt.mastery and true or buffsChanged
             end
         end
 
@@ -501,98 +559,13 @@ function Buffs:OnEnable()
             local rate = (critical and amount / 2 or amount) / estimatedHeal
             player.GUIDS[destGUID].empowered[spellId] = rate
         end
-    end
 
-    onUnitAuraSotf = function(unit, unitAuraUpdateInfo)
-        if frameOpt.sotf and player.spec == 105 then
-            if UnitIsUnit(unit, "player") then
-                player.stat = nil
-            end
-
-            local GUID = UnitGUID(unit)
-            if GUID then
-                local buffsChanged
-                if not player.GUIDS[GUID] then
-                    player.GUIDS[GUID] = {
-                        aura         = nil,
-                        auraById     = {},
-                        empowered    = {},
-                        masteryStack = 0,
-                        frame        = {},
-                    }
-                end
-
-                local function HandleAura(aura)
-                    player.aura[aura.auraInstanceID] = aura
-                    player.buff[aura.spellId] = aura
-
-                    -- 내가 건 aura 일때
-                    if aura.isFromPlayerOrPlayerPet then
-                        player.GUIDS[GUID].aura[aura.auraInstanceID] = aura
-                        player.GUIDS[GUID].auraById[aura.spellId] = aura
-
-                        -- 특화 stack 관련이 있나? -> 특화스택 증가
-                        masteryChange(GUID, aura.spellId, 1, frameOpt.mastery and player.spec == 105)
-                        buffsChanged = true
-                    end
-                end
-
-                if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or not player.GUIDS[GUID].aura then
-                    player.GUIDS[GUID].aura = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable)
-                    player.GUIDS[GUID].auraById = {}
-                    player.GUIDS[GUID].masteryStack = 0
-                    AuraUtil.ForEachAura("player", AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), nil, HandleAura, true)
+        if buffsChanged then
+            for frame in pairs(player.GUIDS[destGUID].frame) do
+                if UnitGUID(frame.unit) ~= destGUID then
+                    player.GUIDS[destGUID].frame[frame] = nil
                 else
-                    if unitAuraUpdateInfo.addedAuras ~= nil then
-                        for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                            HandleAura(aura)
-                        end
-                    end
-                    if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
-                        for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                            local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
-                            if newAura then
-                                -- 내가 건 aura 일때
-                                if newAura.isFromPlayerOrPlayerPet then
-                                    player.GUIDS[GUID].aura[auraInstanceID] = newAura
-                                    player.GUIDS[GUID].auraById[newAura.spellId] = newAura
-                                end
-                            end
-                        end
-                    end
-                    if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
-                        local now = GetTime()
-                        for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                            local aura = player.aura[auraInstanceID]
-                            if aura then
-                                player.aura[auraInstanceID] = nil
-                                player.buff[aura.spellId] = nil
-                                if aura.spellId == spell.sotf and aura.expirationTime > now then
-                                    player.sotfTrail = now + player.sotfTrail_time
-                                end
-                            end
-
-                            aura = player.GUIDS[GUID].aura[auraInstanceID]
-                            if aura then
-                                player.GUIDS[GUID].aura[auraInstanceID] = nil
-                                player.GUIDS[GUID].auraById[aura.spellId] = nil
-
-                                -- 특화 stack 관련이 있나? -> 특화스택 감사
-                                masteryChange(GUID, aura.spellId, -1, frameOpt.mastery and player.spec == 105)
-                                buffsChanged = true
-                            end
-                        end
-                    end
-                end
-
-                if buffsChanged then
-                    for frame in pairs(player.GUIDS[GUID].frame) do
-                        if UnitGUID(frame.unit) ~= GUID then
-                            player.GUIDS[GUID].frame[frame] = nil
-                        else
-                            onHideAllBuffs(frame)
-                        end
-                    end
+                    onHideAllBuffs(frame)
                 end
             end
         end
@@ -686,13 +659,7 @@ function Buffs:OnEnable()
             local GUID = UnitGUID(parent.unit)
             if GUID then
                 if not player.GUIDS[GUID] then
-                    player.GUIDS[GUID] = {
-                        aura         = nil,
-                        auraById     = {},
-                        empowered    = {},
-                        masteryStack = 0,
-                        frame        = {},
-                    }
+                    initMember(GUID)
                 end
 
                 local empowered = player.GUIDS[GUID].empowered and player.GUIDS[GUID].empowered[aura.spellId]
@@ -709,6 +676,7 @@ function Buffs:OnEnable()
                 end
 
                 player.GUIDS[GUID].frame[parent] = true
+                player.GUIDS[GUID].unit = parent.unit
             end
         end
 
@@ -1061,8 +1029,8 @@ function Buffs:OnEnable()
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
                 CompactUnitFrame_UpdateAuras(frame)
             end
-            onUnitAuraSotf(frame.unit)
             onUnitAuraPet(frame.unit)
+            initMember(UnitGUID(frame.unit))
         end
     end
 
@@ -1098,7 +1066,6 @@ function Buffs:OnEnable()
 
     if frameOpt.petframe or frameOpt.sotf then
         self:RegisterEvent("UNIT_AURA", function(event, unit, unitAuraUpdateInfo)
-            onUnitAuraSotf(unit, unitAuraUpdateInfo)
             onUnitAuraPet(unit, unitAuraUpdateInfo)
         end)
     end

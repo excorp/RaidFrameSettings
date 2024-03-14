@@ -656,8 +656,10 @@ function Sort:TrySort(reanchorOnly)
                             count = count + 1
                             if not first then
                                 first = frame
-                                frame:SetPoint(unpack(p))
-                                secureframeSetFrame(count, frame, p)
+                                -- frame:SetPoint(unpack(p))
+                                -- secureframeSetFrame(count, frame, p)
+                                frame:SetPoint(p[1], _G["CompactRaidGroup" .. subgroup], p[3], p[4], p[5])
+                                secureframeSetFrame(count, frame, { p[1], _G["CompactRaidGroup" .. subgroup], p[3], p[4], p[5] })
                             else
                                 frame:SetPoint(p[1], prev, p[3], p[4], p[5])
                                 secureframeSetFrame(count, frame, { p[1], prev, p[3], p[4], p[5] })

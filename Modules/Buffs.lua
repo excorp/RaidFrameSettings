@@ -305,7 +305,7 @@ local masteryChange = function(GUID, spellId, delta, showIcon)
             end
         end
         for frame in pairs(player.GUIDS[GUID].frame) do
-            if UnitGUID(frame.unit) ~= GUID then
+            if not frame.unit or UnitGUID(frame.unit) ~= GUID then
                 player.GUIDS[GUID].frame[frame] = nil
             else
                 -- 가짜 aura 생성

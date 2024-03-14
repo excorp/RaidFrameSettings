@@ -61,13 +61,13 @@ local duridMasterySpell = {
     [spell.wildgrowth]        = true, -- Wild Growth
     [spell.lifebloom]         = true, -- Lifebloom
     [spell.lifebloomVerdancy] = true, -- Lifebloom (Verdancy)
+    [spell.germination]       = true, -- Germination
+    [spell.adaptiveSwarm]     = true, -- Adaptive Swarm
     [200389]                  = true, -- Cultivation
     [157982]                  = true, -- Tranquility
     [383193]                  = true, -- Grove Tending
     [207386]                  = true, -- Spring Blossoms
     [102352]                  = true, -- Cenarion Ward
-    [spell.germination]       = true, -- Germination
-    [spell.adaptiveSwarm]     = true, -- Adaptive Swarm
 }
 
 local lifebloom = {
@@ -102,6 +102,7 @@ player = {
         rg   = 0, -- 82058 Rampant Growth 무성한 생장
         nss  = 0, -- 82051 Nature's Splendor
         sb   = 0, -- 82081 Stonebark
+        re   = 0, -- 82062 Regenesis
     },
 }
 
@@ -116,9 +117,138 @@ local talentMap = {
     [82058] = { key = "rg" },
     [82051] = { key = "nss" },
     [82081] = { key = "sb" },
+    [82062] = { key = "re" },
 }
 
 local initMember
+
+local getPlayerStat = function()
+    local _, int = UnitStat("player", 4)
+    local haste = GetHaste()
+    local critical = GetCritChance()
+    if GetSpecializationInfo(GetSpecialization()) == 63 then
+        critical = critical + 15
+    end
+    local mastery = GetMasteryEffect()
+    local versatility = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE)
+    return {
+        int         = int,
+        haste       = haste / 100,
+        critical    = critical / 100,
+        mastery     = mastery / 100,
+        versatility = versatility / 100,
+    }
+end
+
+local cachedEstimatedHeal = {}
+local getEstimatedHeal = function(spellId, masteryStack, GUID)
+    if not player.stat then
+        player.stat = getPlayerStat()
+    end
+    local power
+    if spellId == spell.rejuvenation or spellId == spell.germination then
+        -- power = 0.3188889648 -- 27.608 * -7% * 15% * 8%
+        power = 0.3193403298350825
+    elseif spellId == spell.regrowth then
+        -- power = 1.855769616  -- 207.6% * -7% * -11% * 8%
+        power = 1.855322337331334
+    elseif spellId == spell.wildgrowth then
+        power = 0.190175753722752 -- 94.08% * -7% * 15% * 8% /7 * 1.07 * 1.07 * 1.07
+    end
+
+    local talent        = player.talent
+
+    local me            = GUID == player.GUID
+
+    local clarity       = player.buff[spell.clarity] and 1 or 0
+    local nss           = player.buff[spell.nss] and 1 or 0
+    local forestwalk    = player.buff[spell.forestwalk] and 1 or 0
+
+    local unit          = player.GUIDS[GUID].unit
+    local adaptiveSwarm = player.GUIDS[GUID].buff[spell.adaptiveSwarm] and 1 or 0
+    local ironbark      = player.GUIDS[GUID].buff[spell.ironbark] and 1 or 0
+    local re            = 0
+
+    if spellId == spell.rejuvenation or spellId == spell.germination then
+        if talent.re > 0 then
+            re = (10 - math.floor(UnitHealth(unit) / UnitHealthMax(unit) * 10))
+        end
+    end
+
+    local key = string.format("S:%d I:%d M:%f V:%f|c:%d nss:%d|me:%d ms:%d as:%d ib:%d re:%d",
+        spellId, player.stat.int, player.stat.mastery, player.stat.versatility,
+        clarity, nss,
+        me, masteryStack, adaptiveSwarm, ironbark, re
+    )
+    if cachedEstimatedHeal[key] then
+        return cachedEstimatedHeal[key]
+    end
+    local estimated = player.stat.int * power * (1 + masteryStack * player.stat.mastery) * (1 + player.stat.versatility)
+
+    local inc = 0
+    if talent.ni > 0 then
+        -- inc = inc + talent.ni * 0.03
+        estimated = estimated * (1 + talent.ni * 0.03)
+    end
+    if talent.nr > 0 then
+        -- inc = inc + talent.nr * 0.02
+        estimated = estimated * (1 + talent.nr * 0.02)
+        if me then
+            -- inc = inc + talent.nr * 0.02
+            estimated = estimated * (1 + talent.nr * 0.02)
+        end
+    end
+    if talent.rlfn > 0 then
+        local hour, _ = GetGameTime()
+        if hour >= 6 and hour < 18 then
+            -- Increased healing by 3% during the day. At night, this is already included in my versatility.
+            -- inc = inc + 0.03
+            estimated = estimated * 1.03
+        end
+    end
+
+    if spellId ~= spell.regrowth then
+        if spellId == spell.rejuvenation or spellId == spell.germination then
+            if talent.re > 0 then
+                -- 대상의 깍인 체력 10%당 1%씩 힐량 증가.
+                estimated = estimated * (1 + re * talent.re * 0.01)
+            end
+        end
+        if talent.sb and ironbark > 0 then
+            estimated = estimated * 1.2
+        end
+        if adaptiveSwarm > 0 then
+            estimated = estimated * 1.2
+        end
+    else
+        -- 청명은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
+        if clarity > 0 then
+            -- inc = inc + 0.3
+            estimated = estimated * 1.3
+        end
+        -- 신속함은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
+        if nss > 0 then
+            -- inc = inc + 1 + talent.nss > 0 and 0.35 or 0
+            --[[
+            estimated = estimated * 2
+            if talent.nss > 0 then
+                estimated = estimated * 1.35
+            end
+            ]]
+            estimated = estimated * (1 + talent.nss > 0 and 1.35 or 1)
+        end
+    end
+
+    if me and forestwalk > 0 then
+        -- inc = inc + 0.05
+        estimated = estimated * 1.05
+    end
+
+    -- estimated = Round(estimated * (1 + inc))
+    estimated = estimated * (1 + inc)
+    cachedEstimatedHeal[key] = Round(estimated)
+    return cachedEstimatedHeal[key]
+end
 
 local getTalent = function()
     local specId = GetSpecializationInfo(GetSpecialization())
@@ -153,116 +283,7 @@ local getTalent = function()
             end
         end
     end
-end
-
-local getPlayerStat = function()
-    local _, int = UnitStat("player", 4)
-    local haste = GetHaste()
-    local critical = GetCritChance()
-    if GetSpecializationInfo(GetSpecialization()) == 63 then
-        critical = critical + 15
-    end
-    local mastery = GetMasteryEffect()
-    local versatility = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE)
-    return {
-        int         = int,
-        haste       = haste / 100,
-        critical    = critical / 100,
-        mastery     = mastery / 100,
-        versatility = versatility / 100,
-    }
-end
-
-local cachedEstimatedHeal = {}
-local getEstimatedHeal = function(spellId, masteryStack, me, GUID)
-    if not player.stat then
-        player.stat = getPlayerStat()
-    end
-    local power
-    if spellId == spell.rejuvenation or spellId == spell.germination then
-        power = 0.28594        -- 24.65% * 16%
-    elseif spellId == spell.regrowth then
-        power = 1.8684         -- 207.6% * -10%
-    elseif spellId == spell.wildgrowth then
-        power = 0.190989103872 -- 94.08% * 16% /7 * 1.07 * 1.07 * 1.07
-    end
-
-    -- 특성중에 바위 껍질 -> 무껍 대상자는 HoT 힐량 20% 증가. 이건 무시한다.
-
-    local clarity    = player.buff[spell.clarity] and 1 or 0
-    local nss        = player.buff[spell.nss] and 1 or 0
-    local forestwalk = player.buff[spell.forestwalk] and 1 or 0
-
-
-    local adaptiveSwarm = player.GUIDS[GUID].buff[spell.adaptiveSwarm] and 1 or 0
-    local ironbark = player.GUIDS[GUID].buff[spell.ironbark] and 1 or 0
-
-    local key = string.format("ID:%d I:%d M:%f V:%f,ni:%d nr:%d rlfn:%d rg:%d,ms:%d,c:%d nss:%d fw:%d,as:%d ib:%d",
-        spellId,
-        player.stat.int, player.stat.mastery, player.stat.versatility,
-        player.talent.ni, player.talent.nr, player.talent.rlfn, player.talent.rg,
-        masteryStack, clarity, nss, forestwalk,
-        adaptiveSwarm, ironbark)
-    if cachedEstimatedHeal[key] then
-        return cachedEstimatedHeal[key]
-    end
-    local estimated = player.stat.int * power * (1 + masteryStack * player.stat.mastery) * (1 + player.stat.versatility)
-
-    if spellId ~= spell.regrowth then
-        if player.talent.sb and ironbark > 0 then
-            estimated = estimated * 1.2
-        end
-        if adaptiveSwarm > 0 then
-            estimated = estimated * 1.2
-        end
-    end
-
-    local inc = 0
-    if player.talent.ni > 0 then
-        inc = inc + player.talent.ni * 0.03
-    end
-    if player.talent.nr > 0 then
-        inc = inc + player.talent.nr * 0.02
-    end
-    if player.talent.rlfn > 0 then
-        local hour, _ = GetGameTime()
-        if hour >= 6 and hour < 18 then
-            -- Increased healing by 3% during the day. At night, this is already included in my versatility.
-            inc = inc + 0.03
-        end
-    end
-    if spellId == spell.regrowth then
-        -- 재생의 첫 힐량을 구하는것이라서 주기적인 힐량 증가는 계산하면 안된다
-        --[[
-        if player.talent.rg > 0 then
-            inc = inc + 0.5
-        end
-        ]]
-        -- 청명은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
-        if clarity > 0 then
-            inc = inc + 0.3
-        end
-        -- 신속함은 첫 힐에만 반영되고, 주기적인 힐에는 반영되지 않는다. 따라서 주기적인 힐의 강화 여부를 첫힐량으로 판단할때는 버프 받은 힐량으로 구해야 한다.
-        if nss > 0 then
-            inc = inc + 1
-            if player.talent.nss > 0 then
-                inc = inc + 0.35
-            end
-        end
-    end
-
-    if me then
-        if player.talent.nr > 0 then
-            inc = inc + player.talent.nr * 0.02
-        end
-        if forestwalk > 0 then
-            inc = inc + 0.05
-        end
-    end
-
-    estimated = Round(estimated * (1 + inc))
-    cachedEstimatedHeal[key] = estimated
-    return estimated
+    cachedEstimatedHeal = {}
 end
 
 local masteryChange = function(GUID, spellId, delta, showIcon)
@@ -500,6 +521,7 @@ function Buffs:OnEnable()
         SPELL_PERIODIC_HEAL = true,
         SPELL_HEAL          = true,
     }
+
     local trackEmpowered = function()
         local timestamp, subevent, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, spellId, spellName, school, amount, overhealing, absorbed, critical = CombatLogGetCurrentEventInfo()
 
@@ -565,7 +587,7 @@ function Buffs:OnEnable()
             -- 강화%가 없다면 새로 구함
             if not player.GUIDS[destGUID].empowered[spellId] or player.GUIDS[destGUID].empowered[spellId] < 0 then
                 -- calc -> set -> display
-                local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID, destGUID)
+                local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID)
                 local rate = (critical and amount / 2 or amount) / estimatedHeal
                 player.GUIDS[destGUID].empowered[spellId] = rate
                 for frame in pairs(player.GUIDS[destGUID].frame) do
@@ -582,7 +604,7 @@ function Buffs:OnEnable()
                 return
             end
             -- 강화 % 구해서 임시 변수에 셋팅 -> UNIT_AURA에서 재생이 걸리거나,갱신될때 사용
-            local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID == player.GUID, destGUID)
+            local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID)
             local rate = (critical and amount / 2 or amount) / estimatedHeal
             player.GUIDS[destGUID].empowered[spellId] = rate
         end

@@ -455,7 +455,7 @@ function Buffs:OnEnable()
             local buffFrame = frame_registry[frame].extraBuffFrames[idx]
             local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
                 (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
-            local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
+            local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
             buffFrame:ClearAllPoints()
             buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
             buffFrame:SetSize(width, height)
@@ -471,7 +471,7 @@ function Buffs:OnEnable()
                 if not anchorSet then
                     local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
                         (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
-                    local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or frame
+                    local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
                     buffFrame:ClearAllPoints()
                     buffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
                     anchorSet = true

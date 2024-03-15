@@ -1219,8 +1219,8 @@ options = {
                                             order = 5.1,
                                             name = L["to Attach Frame"],
                                             type = "select",
-                                            values = { L["Unit Frame"], L["HealthBar"], L["PowerBar"] },
-                                            sorting = { 1, 2, 3 },
+                                            values = { L["Unit Frame"], L["HealthBar"] },
+                                            sorting = { 1, 2 },
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.8,
@@ -1679,8 +1679,8 @@ options = {
                                             order = 5.1,
                                             name = L["to Attach Frame"],
                                             type = "select",
-                                            values = { L["Unit Frame"], L["HealthBar"], L["PowerBar"] },
-                                            sorting = { 1, 2, 3 },
+                                            values = { L["Unit Frame"], L["HealthBar"] },
+                                            sorting = { 1, 2 },
                                             get = "GetStatus",
                                             set = "SetStatus",
                                             width = 0.8,
@@ -3853,8 +3853,8 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 order = 4,
                 name = L["to Attach Frame"],
                 type = "select",
-                values = { L["Unit Frame"], L["Placed"], L["Group"], L["HealthBar"], L["PowerBar"] },
-                sorting = { 1, 4, 5, 2, 3 },
+                values = { L["Unit Frame"], L["Placed"], L["Group"], L["HealthBar"] },
+                sorting = { 1, 4, 2, 3 },
                 get = function()
                     local optObj = auraPositionOptions[spellId].args
                     if dbObj.frame == 2 then
@@ -4271,8 +4271,8 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 order = 3.1,
                 name = L["to Attach Frame"],
                 type = "select",
-                values = { L["Unit Frame"], L["Placed"], L["Group"], L["HealthBar"], L["PowerBar"] },
-                sorting = { 1, 4, 5, 2, 3 },
+                values = { L["Unit Frame"], L["Placed"], L["Group"], L["HealthBar"] },
+                sorting = { 1, 4, 2, 3 },
                 get = function()
                     local optObj = groupOptions["group" .. groupNo].args
                     if dbObj.frame == 2 then

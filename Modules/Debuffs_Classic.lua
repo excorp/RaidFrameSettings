@@ -73,7 +73,7 @@ function Debuffs:OnEnable()
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
 
     local frameOpt = CopyTable(addon.db.profile.Debuffs.DebuffFramesDisplay)
-    frameOpt.petframe = addon.db.profile.Buffs.petframe
+    frameOpt.petframe = addon.db.profile.Debuffs.petframe
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
@@ -288,7 +288,7 @@ function Debuffs:OnEnable()
         for groupNo, auralist in pairs(sorted) do
             for k, v in pairs(auralist) do
                 if groupNo == 0 then
-                    if frameNum > frame_registry[frame].maxBuffs then
+                    if frameNum > frame_registry[frame].maxDebuffs then
                         break
                     end
                     frameNum = k + 1

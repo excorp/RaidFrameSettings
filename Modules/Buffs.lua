@@ -45,6 +45,8 @@ if not classMod then
     classMod = {
         onSetBuff = function(buffFrame, aura, oldAura, opt)
         end,
+        rosterUpdate = function()
+        end,
         init = function(frame)
         end,
         onEnable = function(opt)
@@ -629,6 +631,7 @@ function Buffs:OnEnable()
 
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
+        classMod:rosterUpdate()
     end)
 
     if frameOpt.petframe then

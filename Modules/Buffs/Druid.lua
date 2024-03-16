@@ -460,7 +460,6 @@ local trackEmpowered = function()
     end
 end
 
-
 function mod:initMod(buffs_mod, buffs_frame_registry, displayAura)
     Buffs = buffs_mod
     frame_registry = buffs_frame_registry
@@ -516,6 +515,12 @@ function mod:onDisable()
     Buffs:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     Buffs:UnregisterEvent("PLAYER_SPECIALIZATION_CHANGED")
     Buffs:UnregisterEvent("TRAIT_CONFIG_UPDATED")
+    player.GUIDS = {}
+    player.aura = {}
+    player.buff = {}
+end
+
+function mod:rosterUpdate()
     player.GUIDS = {}
     player.aura = {}
     player.buff = {}

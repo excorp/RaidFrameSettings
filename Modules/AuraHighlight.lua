@@ -265,9 +265,12 @@ function module:SetUpdateHealthColor()
                 module:Glow(frame, missingAuraColor)
             end
         else
-            if useClassColors and frame.unit and frame.unitExists and not frame.unit:match("pet") then
-                local _, englishClass = UnitClass(frame.unit)
-                r, g, b = GetClassColor(englishClass)
+            if useClassColors then
+                r, g, b, a = 0, 1, 0, 1
+                if frame.unit and frame.unitExists and not frame.unit:match("pet") then
+                    local _, englishClass = UnitClass(frame.unit)
+                    r, g, b = GetClassColor(englishClass)
+                end
             end
             frame.healthBar:SetStatusBarColor(r, g, b, a)
             if useHealthBarGlow then

@@ -94,14 +94,6 @@ function HealthBars:OnEnable()
         frame.healthBar:SetStatusBarColor(r, g, b, a)
     end
 
-    self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
-        if not unit or unit:match("nameplate") then
-            return
-        end
-        updateTextures(frame)
-        updateHealthColor(frame)
-    end)
-
     if RaidFrameSettings.db.profile.Module.HealthBars then
         local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
         if selected == 1 then
@@ -131,8 +123,10 @@ function HealthBars:OnEnable()
         RaidFrameSettings:UpdateModule("AuraHighlight")
     end
     RaidFrameSettings:IterateRoster(function(frame)
-        updateTextures(frame)
-        updateHealthColor(frame)
+        C_Timer.After(0, function()
+            updateTextures(frame)
+            updateHealthColor(frame)
+        end)
     end)
 end
 

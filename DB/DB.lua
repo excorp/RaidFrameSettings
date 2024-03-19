@@ -31,7 +31,7 @@ local defaults = {
         HealthBars = {
             Textures = {
                 statusbar  = "Solid",
-                powerbar   = "Solid",
+                powerbar   = "Blizzard Raid Bar",
                 background = "Solid",
                 border     = "Solid",
             },

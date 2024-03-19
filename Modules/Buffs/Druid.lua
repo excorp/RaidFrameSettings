@@ -524,4 +524,8 @@ function mod:rosterUpdate()
     player.GUIDS = {}
     player.aura = {}
     player.buff = {}
+    for frame, v in pairs(frame_registry) do
+        v.buffs:Clear()
+        v.debuffs = nil
+    end
 end

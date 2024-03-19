@@ -81,13 +81,12 @@ function HealthBars:OnEnable()
         updateTextures(frame)
     end)
     --colors
-    local r, g, b, a
+    local r, g, b, a = 0, 1, 0, 1
     local useClassColors
     local updateHealthColor = function(frame)
         if RaidFrameSettings.db.profile.Module.AuraHighlight then
             return
         end
-        r, g, b, a = 0, 1, 0, 1
         if useClassColors and frame.unit and frame.unitExists and not frame.unit:match("pet") then
             local _, englishClass = UnitClass(frame.unit)
             r, g, b = GetClassColor(englishClass)

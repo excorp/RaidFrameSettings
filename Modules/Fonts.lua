@@ -26,46 +26,47 @@ local fontObj = CreateFont("RaidFrameSettingsFont")
 local frame_registry = {}
 
 function Fonts:OnEnable()
-    local dbObj          = RaidFrameSettings.db.profile.Fonts
+    local dbObj           = RaidFrameSettings.db.profile.Fonts
     --Name
-    local Name           = {}
-    Name.Font            = Media:Fetch("font", dbObj.Name.font)
-    Name.FontSize        = dbObj.Name.fontsize
-    Name.FontColor       = dbObj.Name.fontcolor
-    Name.FontColorDead   = dbObj.Name.fontcolorDead
-    Name.Classcolored    = dbObj.Name.useclasscolor
+    local Name            = {}
+    Name.Font             = Media:Fetch("font", dbObj.Name.font)
+    Name.FontSize         = dbObj.Name.fontsize
+    Name.FontColor        = dbObj.Name.fontcolor
+    Name.FontColorDead    = dbObj.Name.fontcolorDead
+    Name.FontColorHostile = dbObj.Name.fontcolorHostile
+    Name.Classcolored     = dbObj.Name.useclasscolor
     --OUTLINEMODE
-    local flag1          = dbObj.Name.thick and "THICK" or ""
-    local flag2          = dbObj.Name.outline and "OUTLINE" or ""
-    local flag3          = dbObj.Name.monochrome and "MONOCHROME" or ""
-    Name.Outlinemode     = (flag1 .. flag2 .. ", " .. flag3)
-    Name.point           = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.point)
-    Name.relativePoint   = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.relativePoint)
-    Name.frame           = dbObj.Name.frame
-    Name.JustifyH        = (dbObj.Name.justifyH == 1 and "LEFT") or (dbObj.Name.justifyH == 2 and "CENTER") or (dbObj.Name.justifyH == 3 and "RIGHT")
-    Name.X_Offset        = dbObj.Name.x_offset
-    Name.Y_Offset        = dbObj.Name.y_offset
+    local flag1           = dbObj.Name.thick and "THICK" or ""
+    local flag2           = dbObj.Name.outline and "OUTLINE" or ""
+    local flag3           = dbObj.Name.monochrome and "MONOCHROME" or ""
+    Name.Outlinemode      = (flag1 .. flag2 .. ", " .. flag3)
+    Name.point            = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.point)
+    Name.relativePoint    = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Name.relativePoint)
+    Name.frame            = dbObj.Name.frame
+    Name.JustifyH         = (dbObj.Name.justifyH == 1 and "LEFT") or (dbObj.Name.justifyH == 2 and "CENTER") or (dbObj.Name.justifyH == 3 and "RIGHT")
+    Name.X_Offset         = dbObj.Name.x_offset
+    Name.Y_Offset         = dbObj.Name.y_offset
     --Status
-    local Status         = {}
-    Status.Font          = Media:Fetch("font", dbObj.Status.font)
-    Status.FontSize      = dbObj.Status.fontsize
-    Status.FontColor     = dbObj.Status.fontcolor
-    Status.Classcolored  = dbObj.Status.useclasscolor
+    local Status          = {}
+    Status.Font           = Media:Fetch("font", dbObj.Status.font)
+    Status.FontSize       = dbObj.Status.fontsize
+    Status.FontColor      = dbObj.Status.fontcolor
+    Status.Classcolored   = dbObj.Status.useclasscolor
     --OUTLINEMODE
-    local flag1          = dbObj.Status.thick and "THICK" or ""
-    local flag2          = dbObj.Status.outline and "OUTLINE" or ""
-    local flag3          = dbObj.Status.monochrome and "MONOCHROME" or ""
-    Status.Outlinemode   = (flag1 .. flag2 .. ", " .. flag3)
-    Status.point         = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.point)
-    Status.relativePoint = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.relativePoint)
-    Status.JustifyH      = (dbObj.Status.justifyH == 1 and "LEFT") or (dbObj.Status.justifyH == 2 and "CENTER") or (dbObj.Status.justifyH == 3 and "RIGHT")
-    Status.X_Offset      = dbObj.Status.x_offset
-    Status.Y_Offset      = dbObj.Status.y_offset
+    local flag1           = dbObj.Status.thick and "THICK" or ""
+    local flag2           = dbObj.Status.outline and "OUTLINE" or ""
+    local flag3           = dbObj.Status.monochrome and "MONOCHROME" or ""
+    Status.Outlinemode    = (flag1 .. flag2 .. ", " .. flag3)
+    Status.point          = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.point)
+    Status.relativePoint  = RaidFrameSettings:ConvertDbNumberToPosition(dbObj.Status.relativePoint)
+    Status.JustifyH       = (dbObj.Status.justifyH == 1 and "LEFT") or (dbObj.Status.justifyH == 2 and "CENTER") or (dbObj.Status.justifyH == 3 and "RIGHT")
+    Status.X_Offset       = dbObj.Status.x_offset
+    Status.Y_Offset       = dbObj.Status.y_offset
     --Advanced Font Settings
-    local Advanced       = {}
-    Advanced.shadowColor = dbObj.Advanced.shadowColor
-    Advanced.x_offset    = dbObj.Advanced.x_offset
-    Advanced.y_offset    = dbObj.Advanced.y_offset
+    local Advanced        = {}
+    Advanced.shadowColor  = dbObj.Advanced.shadowColor
+    Advanced.x_offset     = dbObj.Advanced.x_offset
+    Advanced.y_offset     = dbObj.Advanced.y_offset
     --Callbacks
     local function UpdateFont(frame)
         if not frame_registry[frame] then

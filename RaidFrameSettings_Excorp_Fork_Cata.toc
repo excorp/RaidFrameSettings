@@ -1,16 +1,14 @@
-## Interface: 100206
+## Interface: 40400
 ## Version: @project-version@
 ## Title: RaidFrameSettings Excorp Fork
 ## Title-koKR: RaidFrameSettings 변하지롱 수정판
 ## Notes: An efficient AddOn that extends the default World of Warcraft Raid Frames.
 ## Notes-koKR: 기본 레이드 프레임을 강화시켜주는 효율적인 애드온 입니다
-## Author: Slothpala,변하지롱-아즈샤라
-## SavedVariables: RaidFrameSettingsDB
-## AddonCompartmentFunc: RaidFrameSettings_AddOnCompartmentClick
-## IconTexture: Interface\AddOns\RaidFrameSettings_Excorp_Fork\Textures\Icon\Icon.tga
+## Author: Slothpala
+## SavedVariables: RaidFrameSettingsDB, RaidFrameSettingsDBPP, RaidFrameSettingsDBRP
 ## OptionalDeps: Ace3, LibDeflate, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibDDI-1.0, AceGUI-3.0_SFX-Widgets, LibCanDispel-1.0
 
-Init.lua
+Init_Cata.lua
 
 #Libs
 embeds.xml
@@ -18,7 +16,6 @@ locales.xml
 
 #Config
 Core.lua
-
 Roster.lua
 ProfileSharing.lua
 DB\DB.lua
@@ -35,7 +32,7 @@ Utils\HookRegistry.lua
 Utils\Scheduler.lua
 
 #Modules
-modules.xml
+modules_cata.xml
 
 
 

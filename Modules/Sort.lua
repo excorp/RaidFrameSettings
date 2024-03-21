@@ -18,6 +18,7 @@ local unit_priority = {}
 local unit_frame = {}
 local unit_spec = {}
 
+local timer
 
 local user_conf = {
     specShortCut = {
@@ -871,21 +872,33 @@ function Sort:OnEnable()
         hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
     end
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        C_Timer.After(0, function() Sort:TrySort() end)
+        if timer and not timer:IsCancelled() then
+            timer:Cancel()
+        end
+        timer = C_Timer.NewTimer(0, function() Sort:TrySort() end)
     end)
     self:RegisterEvent("UNIT_PET", function(event, unit)
         if _G.CompactRaidFrameContainer.displayPets then
             if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
-                C_Timer.After(0, function() Sort:TrySort(true) end)
+                if timer and not timer:IsCancelled() then
+                    timer:Cancel()
+                end
+                timer = C_Timer.NewTimer(0, function() Sort:TrySort(true) end)
             end
         end
     end)
     self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
-        C_Timer.After(0, function() Sort:TrySort() end)
+        if timer and not timer:IsCancelled() then
+            timer:Cancel()
+        end
+        timer = C_Timer.NewTimer(0, function() Sort:TrySort() end)
     end)
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if needToSort ~= 0 then
-            C_Timer.After(0, function() Sort:TrySort(needToSort == 2) end)
+            if timer and not timer:IsCancelled() then
+                timer:Cancel()
+            end
+            timer = C_Timer.NewTimer(0, function() Sort:TrySort(needToSort == 2) end)
         end
     end)
 
@@ -894,6 +907,9 @@ end
 
 function Sort:OnDisable()
     enabled = false
+    if timer and not timer:IsCancelled() then
+        timer:Cancel()
+    end
     self:DisableHooks()
     UnregisterAttributeDriver(secureframe, "state-petstate")
 

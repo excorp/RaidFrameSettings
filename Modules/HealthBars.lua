@@ -25,6 +25,7 @@ local ApplyBackdrop = ApplyBackdrop
 local SetBackdropBorderColor = SetBackdropBorderColor
 
 local frame_registry = {}
+local timer
 
 function HealthBars:OnEnable()
     --textures
@@ -126,7 +127,10 @@ function HealthBars:OnEnable()
         RaidFrameSettings:UpdateModule("AuraHighlight")
     end
     RaidFrameSettings:IterateRoster(function(frame)
-        C_Timer.After(0, function()
+        if timer and not timer:IsCancelled() then
+            timer:Cancel()
+        end
+        timer = C_Timer.NewTimer(0, function()
             updateTextures(frame)
             updateHealthColor(frame)
         end)
@@ -135,6 +139,9 @@ end
 
 function HealthBars:OnDisable()
     self:DisableHooks()
+    if timer and not timer:IsCancelled() then
+        timer:Cancel()
+    end
     local restoreStatusBars = function(frame)
         frame.healthBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
         frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")

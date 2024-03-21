@@ -67,7 +67,7 @@ player = {
     talent         = {
         ger  = 0, -- 82071 Germination
         sotf = 0, -- 82059 Soul of the Forest
-        hb   = 0, -- 82065 Harmonious Blooming. 1스택일때=2, 2스택일때=3 으로 설정
+        hb   = 0, -- 82065 Harmonious Blooming
         ni   = 0, -- 82214 Nurturing Instinct 회복의 본능 - 주문공격력 및 치유량 6% 증가
         nr   = 0, -- 82206 Natural Recovery 자연 회복 - 치유량과 받는 치유 효과 4% 증가
         rlfn = 0, -- 82207 Rising Light, Falling Night 떠오르는 빛, 몰락하는 밤 - 낮 치유/공격력 3% 증가 / 밤 유연 2%
@@ -249,11 +249,7 @@ local getTalent = function()
     for nodeId, v in pairs(talentMap) do
         local nodeInfo = C_Traits.GetNodeInfo(configId, nodeId)
         if nodeInfo.activeRank > 0 then
-            if v.key == "hb" then
-                player.talent[v.key] = nodeInfo.activeRank + 1
-            else
-                player.talent[v.key] = nodeInfo.activeRank
-            end
+            player.talent[v.key] = nodeInfo.activeRank
         end
     end
     cachedEstimatedHeal = {}
@@ -262,7 +258,7 @@ end
 local masteryChange = function(GUID, spellId, delta, showIcon)
     if duridMasterySpell[spellId] then
         if lifebloom[spellId] then
-            delta = delta * player.talent.hb
+            delta = delta + player.talent.hb
         end
 
         player.GUIDS[GUID].masteryStack = player.GUIDS[GUID].masteryStack + delta

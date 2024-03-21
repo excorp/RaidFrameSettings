@@ -225,18 +225,6 @@ end
 
 local getTalent = function()
     local specId = GetSpecializationInfo(GetSpecialization())
-    if player.spec ~= specId then
-        player.GUIDS = {}
-        player.aura = {}
-        player.buff = {}
-        for frame, v in pairs(frame_registry) do
-            v.buffs:Clear()
-            v.debuffs = nil
-            if frame.unit then
-                initMember(UnitGUID(frame.unit))
-            end
-        end
-    end
     player.spec = specId
     if specId ~= 105 then
         return
@@ -253,12 +241,22 @@ local getTalent = function()
         end
     end
     cachedEstimatedHeal = {}
+    player.GUIDS = {}
+    player.aura = {}
+    player.buff = {}
+    for frame, v in pairs(frame_registry) do
+        v.buffs:Clear()
+        v.debuffs = nil
+        if frame.unit then
+            initMember(UnitGUID(frame.unit))
+        end
+    end
 end
 
 local masteryChange = function(GUID, spellId, delta, showIcon)
     if duridMasterySpell[spellId] then
         if lifebloom[spellId] then
-            delta = delta + player.talent.hb
+            delta = delta * (1 + player.talent.hb)
         end
 
         player.GUIDS[GUID].masteryStack = player.GUIDS[GUID].masteryStack + delta

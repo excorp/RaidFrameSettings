@@ -126,11 +126,9 @@ function HealthBars:OnEnable()
     if RaidFrameSettings.db.profile.Module.AuraHighlight then
         RaidFrameSettings:UpdateModule("AuraHighlight")
     end
-    RaidFrameSettings:IterateRoster(function(frame)
-        if timer and not timer:IsCancelled() then
-            timer:Cancel()
-        end
-        timer = C_Timer.NewTimer(0, function()
+
+    timer = C_Timer.NewTimer(0, function()
+        RaidFrameSettings:IterateRoster(function(frame)
             updateTextures(frame)
             updateHealthColor(frame)
         end)

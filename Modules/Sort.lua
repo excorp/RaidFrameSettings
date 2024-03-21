@@ -880,10 +880,9 @@ function Sort:OnEnable()
     self:RegisterEvent("UNIT_PET", function(event, unit)
         if _G.CompactRaidFrameContainer.displayPets then
             if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
-                if timer and not timer:IsCancelled() then
-                    timer:Cancel()
+                if not timer or timer:IsCancelled() then
+                    timer = C_Timer.NewTimer(0, function() Sort:TrySort(true) end)
                 end
-                timer = C_Timer.NewTimer(0, function() Sort:TrySort(true) end)
             end
         end
     end)
@@ -895,10 +894,16 @@ function Sort:OnEnable()
     end)
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if needToSort ~= 0 then
-            if timer and not timer:IsCancelled() then
-                timer:Cancel()
+            if needToSort == 2 then
+                if not timer or timer:IsCancelled() then
+                    timer = C_Timer.NewTimer(0, function() Sort:TrySort(true) end)
+                end
+            else
+                if timer and not timer:IsCancelled() then
+                    timer:Cancel()
+                end
+                timer = C_Timer.NewTimer(0, function() Sort:TrySort() end)
             end
-            timer = C_Timer.NewTimer(0, function() Sort:TrySort(needToSort == 2) end)
         end
     end)
 

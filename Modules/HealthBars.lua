@@ -40,8 +40,8 @@ function HealthBars:OnEnable()
     local statusBarTexture  = Media:Fetch("statusbar", RaidFrameSettings.db.profile.HealthBars.Textures.statusbar)
     local backgroundTexture = Media:Fetch("statusbar", RaidFrameSettings.db.profile.HealthBars.Textures.background)
     local powerBarTexture   = Media:Fetch("statusbar", RaidFrameSettings.db.profile.HealthBars.Textures.powerbar)
-    local backgroundColor   = RaidFrameSettings.db.profile.HealthBars.Colors.background
-    local borderColor       = RaidFrameSettings.db.profile.HealthBars.Colors.border
+    local backgroundColor   = CopyTable(RaidFrameSettings.db.profile.HealthBars.Colors.background)
+    local borderColor       = CopyTable(RaidFrameSettings.db.profile.HealthBars.Colors.border)
 
 
     --callbacks

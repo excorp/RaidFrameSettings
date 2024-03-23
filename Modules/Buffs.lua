@@ -512,7 +512,9 @@ function Buffs:OnEnable()
                 if frameOpt.tooltip then
                     v:SetScript("OnUpdate", nil)
                     v:SetScript("OnEnter", function(self)
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                        if frameOpt.tooltipPosition then
+                            GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                        end
                         self:UpdateTooltip()
                         local function RunOnUpdate()
                             if (GameTooltip:IsOwned(self)) then
@@ -631,7 +633,9 @@ function Buffs:OnEnable()
 
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
-        classMod:rosterUpdate()
+        C_Timer.After(0, function()
+            classMod:rosterUpdate()
+        end)
     end)
 
     if frameOpt.petframe then

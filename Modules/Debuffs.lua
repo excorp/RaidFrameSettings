@@ -574,7 +574,9 @@ function Debuffs:OnEnable()
                 if frameOpt.tooltip then
                     v:SetScript("OnUpdate", nil)
                     v:SetScript("OnEnter", function(self)
-                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                        if frameOpt.tooltipPosition then
+                            GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                        end
                         self:UpdateTooltip()
                         local function RunOnUpdate()
                             if (GameTooltip:IsOwned(self)) then

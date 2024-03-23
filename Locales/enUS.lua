@@ -378,3 +378,6 @@ L["Track empowered buffs"] = "Track empowered buffs"
 L["Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."] = "Glow \"Regrowth\", \"Rejuvenation\" and \"Wild Growth\" enhanced by Restoration Druid's \"Soul of the Forest\"."
 L["Show Mastery Stack"] = "Show Mastery Stack"
 L["Show the Mastery Stack for Restoration Druid."] = "Show the Mastery Stack for Restoration Druid."
+
+L["Tooltip Position"] = "Tooltip Position"
+L["Displays a tooltip at the mouse position."] = "Displays a tooltip at the mouse position."

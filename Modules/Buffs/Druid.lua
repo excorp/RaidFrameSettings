@@ -500,15 +500,20 @@ function mod:onEnable(opt)
     Buffs:RegisterEvent("TRAIT_CONFIG_UPDATED", getTalent)
     getTalent()
 
+    Buffs:RegisterEvent("ENCOUNTER_END", function()
+        self:rosterUpdate()
+    end)
+
     if frameOpt.sotf then
         Buffs:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", trackEmpowered)
     end
 end
 
 function mod:onDisable()
-    Buffs:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     Buffs:UnregisterEvent("PLAYER_SPECIALIZATION_CHANGED")
     Buffs:UnregisterEvent("TRAIT_CONFIG_UPDATED")
+    Buffs:UnregisterEvent("ENCOUNTER_END")
+    Buffs:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     player.GUIDS = {}
     player.aura = {}
     player.buff = {}

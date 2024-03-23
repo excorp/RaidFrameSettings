@@ -13,6 +13,9 @@ local next = next
 local string_format = string.format
 
 function Glow:Stop(actions, frame, id)
+    if not frame then
+        return
+    end
     if not frame._rfs_glow_frame then return end
     if actions.type == "buttonOverlay" then
         LCG.ButtonGlow_Stop(frame._rfs_glow_frame)

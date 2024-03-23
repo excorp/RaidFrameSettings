@@ -18,8 +18,6 @@ local unit_priority = {}
 local unit_frame = {}
 local unit_spec = {}
 
-local timer
-
 local user_conf = {
     specShortCut = {
         ["암살"] = 259,
@@ -485,21 +483,26 @@ function Sort:TrySort(reanchorOnly)
                 for needle, v in pairs(priority.user) do
                     local rnp = user_conf.rolePositionShortCut[needle]
                     if v.fullname and (name == needle or fullname == needle) then
-                        user = v
-                        break
+                        if (priority.priority.user.reverse and user.priority > v.priority) or (not priority.priority.user.reverse and user.priority < v.priority) then
+                            user = v
+                        end
                     elseif v.spec and (user_conf.specShortCut[needle] and specId ~= 0 and ((type(user_conf.specShortCut[needle]) == "table" and user_conf.specShortCut[needle][specId]) or specId == user_conf.specShortCut[needle])) then
-                        user = v
-                        break
+                        if (priority.priority.user.reverse and user.priority > v.priority) or (not priority.priority.user.reverse and user.priority < v.priority) then
+                            user = v
+                        end
                     elseif v.rolepos and (rnp and role == rnp.role and (position == rnp.position or rnp.position == nil)) then
-                        user = v
-                        break
+                        if (priority.priority.user.reverse and user.priority > v.priority) or (not priority.priority.user.reverse and user.priority < v.priority) then
+                            user = v
+                        end
                     elseif v.class and (user_conf.classShortCut[needle] and class == user_conf.classShortCut[needle]) then
-                        user = v
-                        break
+                        if (priority.priority.user.reverse and user.priority > v.priority) or (not priority.priority.user.reverse and user.priority < v.priority) then
+                            user = v
+                        end
                     elseif v.name then
                         if string.find(fullname, needle) then
-                            user = v
-                            break
+                            if (priority.priority.user.reverse and user.priority > v.priority) or (not priority.priority.user.reverse and user.priority < v.priority) then
+                                user = v
+                            end
                         end
                     end
                 end
@@ -559,7 +562,6 @@ function Sort:TrySort(reanchorOnly)
                 return a.token < b.token
             end)
         end
-
         -- Change the location of a user with a location set
         if priority.priority.player then
             local positioned = {}
@@ -872,38 +874,21 @@ function Sort:OnEnable()
         hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
     end
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        if timer and not timer:IsCancelled() then
-            timer:Cancel()
-        end
-        timer = C_Timer.NewTimer(0, function() Sort:TrySort() end)
+        C_Timer.After(0, function() Sort:TrySort() end)
     end)
     self:RegisterEvent("UNIT_PET", function(event, unit)
         if _G.CompactRaidFrameContainer.displayPets then
             if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
-                if not timer or timer:IsCancelled() then
-                    timer = C_Timer.NewTimer(0, function() Sort:TrySort(true) end)
-                end
+                C_Timer.After(0, function() Sort:TrySort(true) end)
             end
         end
     end)
     self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
-        if timer and not timer:IsCancelled() then
-            timer:Cancel()
-        end
-        timer = C_Timer.NewTimer(0, function() Sort:TrySort() end)
+        C_Timer.After(0, function() Sort:TrySort() end)
     end)
     self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if needToSort ~= 0 then
-            if needToSort == 2 then
-                if not timer or timer:IsCancelled() then
-                    timer = C_Timer.NewTimer(0, function() Sort:TrySort(true) end)
-                end
-            else
-                if timer and not timer:IsCancelled() then
-                    timer:Cancel()
-                end
-                timer = C_Timer.NewTimer(0, function() Sort:TrySort() end)
-            end
+            C_Timer.After(0, function() Sort:TrySort(needToSort == 2) end)
         end
     end)
 
@@ -912,9 +897,6 @@ end
 
 function Sort:OnDisable()
     enabled = false
-    if timer and not timer:IsCancelled() then
-        timer:Cancel()
-    end
     self:DisableHooks()
     UnregisterAttributeDriver(secureframe, "state-petstate")
 
@@ -924,13 +906,15 @@ function Sort:OnDisable()
         scheduler:Cancel()
     end
 
-    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     if isRetail then
         EventRegistry:UnregisterCallback("EditMode.Exit", OnEditModeExited_id)
         self:UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
     end
-    self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
     self:UnregisterEvent("CVAR_UPDATE")
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    self:UnregisterEvent("UNIT_PET")
+    self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
+    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
 
     -- restore anchor
     self:clearPoints()

@@ -25,6 +25,7 @@ local ApplyBackdrop = ApplyBackdrop
 local SetBackdropBorderColor = SetBackdropBorderColor
 
 local frame_registry = {}
+local needUpdate = {}
 local timer
 
 function HealthBars:OnEnable()
@@ -47,27 +48,68 @@ function HealthBars:OnEnable()
     --only apply the power bar texture if the power bar is shown
     local raidFramesDisplayPowerBars = C_CVar.GetCVar("raidFramesDisplayPowerBars") == "1" and true or false
     --with powerbar
+    local updateReal = function(frame1)
+        local target
+        if frame1 then
+            target = {
+                [frame1] = true,
+            }
+        else
+            target = needUpdate
+            timer = nil
+        end
+        for frame in pairs(target) do
+            target[frame] = nil
+            if not frame_registry[frame] then
+                frame_registry[frame] = {
+
+                }
+            end
+            -- 텍스쳐가 동일하면 무시한다
+            if frame_registry[frame].texture == frame.background:GetTexture(backgroundTexture) then
+                return
+            end
+
+            if frame.unit and frame.unit:match("pet") then
+                for _, border in pairs({
+                    "horizTopBorder",
+                    "horizBottomBorder",
+                    "vertLeftBorder",
+                    "vertRightBorder",
+                }) do
+                    if frame[border] then
+                        frame[border]:SetAlpha(0)
+                    end
+                end
+            end
+
+            frame.healthBar:SetStatusBarTexture(statusBarTexture)
+            frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
+            frame.background:SetTexture(backgroundTexture)
+            frame_registry[frame].texture = frame.background:GetTexture(backgroundTexture)
+            frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a)
+            if raidFramesDisplayPowerBars then
+                frame.powerBar:SetStatusBarTexture(powerBarTexture)
+                frame.powerBar.background:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, 1)
+                frame.powerBar.background:SetPoint("BOTTOMRIGHT", frame.background, "BOTTOMRIGHT", 0, 0)
+            end
+            if not frame.backdropInfo then
+                Mixin(frame, BackdropTemplateMixin)
+                frame:SetBackdrop(backdropInfo)
+            end
+            frame:ApplyBackdrop()
+            frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b, borderColor.a)
+        end
+    end
     local updateTextures = function(frame)
-        if not frame_registry[frame] then
-            frame_registry[frame] = true
+        updateReal(frame)
+        needUpdate[frame] = true
+        if not timer or timer:IsCancelled() then
+            timer = C_Timer.NewTimer(0, function() updateReal() end)
         end
-        frame.healthBar:SetStatusBarTexture(statusBarTexture)
-        frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")
-        frame.background:SetTexture(backgroundTexture)
-        frame.background:SetVertexColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a)
-        if raidFramesDisplayPowerBars then
-            frame.powerBar:SetStatusBarTexture(powerBarTexture)
-            frame.powerBar.background:SetPoint("TOPLEFT", frame.healthBar, "BOTTOMLEFT", 0, 1)
-            frame.powerBar.background:SetPoint("BOTTOMRIGHT", frame.background, "BOTTOMRIGHT", 0, 0)
-        end
-        if not frame.backdropInfo then
-            Mixin(frame, BackdropTemplateMixin)
-            frame:SetBackdrop(backdropInfo)
-        end
-        frame:ApplyBackdrop()
-        frame:SetBackdropBorderColor(borderColor.r, borderColor.g, borderColor.b, borderColor.a)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", updateTextures)
+    --[[
     self:HookFunc("DefaultCompactMiniFrameSetup", function(frame)
         for _, border in pairs({
             "horizTopBorder",
@@ -81,6 +123,7 @@ function HealthBars:OnEnable()
         end
         updateTextures(frame)
     end)
+    ]]
     --colors
     local r, g, b, a = 0, 1, 0, 1
     local useClassColors
@@ -127,19 +170,39 @@ function HealthBars:OnEnable()
         RaidFrameSettings:UpdateModule("AuraHighlight")
     end
 
-    timer = C_Timer.NewTimer(0, function()
-        RaidFrameSettings:IterateRoster(function(frame)
-            updateTextures(frame)
-            updateHealthColor(frame)
-        end)
+    self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
+        if not unit or unit:match("nameplate") then
+            return
+        end
+        updateTextures(frame)
+        updateHealthColor(frame)
+    end)
+
+    --[[
+    self:RegisterEvent("UNIT_PET", function(event, unit)
+        for frame in pairs(frame_registry) do
+            if frame.unit == unit then
+                updateTextures(frame)
+                updateHealthColor(frame)
+            end
+        end
+    end)
+    ]]
+
+    RaidFrameSettings:IterateRoster(function(frame)
+        updateTextures(frame)
+        updateHealthColor(frame)
     end)
 end
 
 function HealthBars:OnDisable()
     self:DisableHooks()
+    -- self:UnregisterEvent("UNIT_PET")
     if timer and not timer:IsCancelled() then
         timer:Cancel()
     end
+    timer = nil
+    needUpdate = {}
     local restoreStatusBars = function(frame)
         frame.healthBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
         frame.healthBar:GetStatusBarTexture():SetDrawLayer("BORDER")

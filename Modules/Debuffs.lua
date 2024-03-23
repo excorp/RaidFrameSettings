@@ -569,32 +569,6 @@ function Debuffs:OnEnable()
                     })
                 end
             end
-
-            for _, v in pairs(frame_registry[frame].extraDebuffFrames) do
-                if frameOpt.tooltip then
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", function(self)
-                        if frameOpt.tooltipPosition then
-                            GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
-                        end
-                        self:UpdateTooltip()
-                        local function RunOnUpdate()
-                            if (GameTooltip:IsOwned(self)) then
-                                self:UpdateTooltip()
-                            end
-                        end
-                        self:SetScript("OnUpdate", RunOnUpdate)
-                    end)
-                    v:SetScript("OnLeave", function(self)
-                        GameTooltip:Hide()
-                        self:SetScript("OnUpdate", nil)
-                    end)
-                else
-                    v:SetScript("OnUpdate", nil)
-                    v:SetScript("OnEnter", nil)
-                    v:SetScript("OnLeave", nil)
-                end
-            end
         end
 
         -- set anchor and resize

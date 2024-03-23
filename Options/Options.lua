@@ -1193,7 +1193,7 @@ options = {
                                             width = 0.5,
                                         },
                                         tooltipPosition = {
-                                            hidden = function() return isClassic end,
+                                            hidden = function() return isClassic or not RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.tooltip end,
                                             order = 2.4,
                                             type = "toggle",
                                             name = L["Tooltip Position"],
@@ -1663,7 +1663,7 @@ options = {
                                             width = 0.5,
                                         },
                                         tooltipPosition = {
-                                            hidden = function() return isClassic end,
+                                            hidden = function() return isClassic or not RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.tooltip end,
                                             order = 2.4,
                                             type = "toggle",
                                             name = L["Tooltip Position"],

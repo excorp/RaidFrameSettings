@@ -525,6 +525,7 @@ function Buffs:OnEnable()
             prevFrame = buffFrame
             buffFrame:SetSize(width, height)
             buffFrame:SetCoord(width, height)
+            buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
         end
         local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
@@ -537,6 +538,7 @@ function Buffs:OnEnable()
             buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
             buffFrame:SetSize(width, height)
             buffFrame:SetCoord(width, height)
+            buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
         end
         for k, v in pairs(auraGroup) do
             local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
@@ -558,6 +560,7 @@ function Buffs:OnEnable()
                 prevFrame = buffFrame
                 buffFrame:SetSize(width, height)
                 buffFrame:SetCoord(width, height)
+                buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
             end
         end
     end
@@ -656,4 +659,5 @@ function Buffs:OnDisable()
         restoreBuffFrames(frame)
     end
     CDT:DisableCooldownText()
+    Aura:reset()
 end

@@ -587,6 +587,7 @@ function Debuffs:OnEnable()
             prevFrame = debuffFrame
             debuffFrame:SetSize(width, height)
             debuffFrame:SetCoord(width, height)
+            debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
         end
         local idx = frame_registry[frame].placedAuraStart - 1
         for _, place in pairs(userPlaced) do
@@ -599,6 +600,7 @@ function Debuffs:OnEnable()
             debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
             debuffFrame:SetSize(width, height)
             debuffFrame:SetCoord(width, height)
+            debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
         end
         for k, v in pairs(auraGroup) do
             local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
@@ -620,6 +622,7 @@ function Debuffs:OnEnable()
                 prevFrame = debuffFrame
                 debuffFrame:SetSize(width, height)
                 debuffFrame:SetCoord(width, height)
+                debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
             end
         end
         if frame.PrivateAuraAnchors then
@@ -718,4 +721,5 @@ function Debuffs:OnDisable()
         restoreDebuffFrames(frame)
     end
     CDT:DisableCooldownText()
+    Aura:reset()
 end

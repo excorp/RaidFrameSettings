@@ -305,17 +305,25 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
         if category == "Buff" then
             function auraFrame:UpdateTooltip()
-                if self.auraInstanceID > 0 and auraFrame:IsShown() then
-                    GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                if auraFrame:IsShown() then
+                    if auraFrame.auraInstanceID > 0 then
+                        GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                    else
+                        GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
+                    end
                 end
             end
         else
             function auraFrame:UpdateTooltip()
-                if self.auraInstanceID > 0 and auraFrame:IsShown() then
-                    if (self.isBossBuff) then
-                        GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                if auraFrame:IsShown() then
+                    if self.auraInstanceID > 0 then
+                        if (self.isBossBuff) then
+                            GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                        else
+                            GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                        end
                     else
-                        GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                        GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
                     end
                 end
             end

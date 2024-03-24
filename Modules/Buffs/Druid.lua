@@ -276,7 +276,7 @@ local masteryChange = function(GUID, spellId, delta, showIcon)
                 player.GUIDS[GUID].frame[frame] = nil
             else
                 -- 가짜 aura 생성
-                local auraInstanceID = -1
+                local auraInstanceID = -spell.mastery
                 local masterySpellName, _, masteryIcon, _, _, _, masterySpellId = GetSpellInfo(spell.mastery)
                 if player.GUIDS[GUID].masteryStack > 0 then
                     frame_registry[frame].buffs[auraInstanceID] = {

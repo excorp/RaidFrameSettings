@@ -605,7 +605,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 onLeave(self)
             end)
         else
-            auraFrame:SetScript("OnUpdate", nil)
+            auraFrame:SetScript("OnShow", nil)
+            auraFrame:SetScript("OnHide", nil)
         end
     end
 

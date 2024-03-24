@@ -474,10 +474,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     end
 
     -- tooltip
+    auraFrame.tooltip         = frameOpt.tooltip
+    auraFrame.tooltipPosition = frameOpt.tooltipPosition
     if type == "blizzard" then
-        if frameOpt.tooltip then
+        if auraFrame.tooltip then
             auraFrame:SetScript("OnEnter", function(self)
-                if frameOpt.tooltipPosition then
+                if self.tooltipPosition then
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
                 else
                     GameTooltip:SetOwner(self, "ANCHOR_PRESERVE")
@@ -503,12 +505,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         end
     elseif type == "baricon" then
         auraFrame:EnableMouse(false)
-        if frameOpt.tooltip then
+        if auraFrame.tooltip then
             local onEnter = function(self)
                 if GameTooltip:IsOwned(self) then
                     return
                 end
-                if frameOpt.tooltipPosition then
+                if self.tooltipPosition then
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
                 else
                     GameTooltip:SetOwner(self, "ANCHOR_PRESERVE")
@@ -521,7 +523,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     local parent = self:GetParent()
                     if parent:IsMouseOver() then
                         if parent.UpdateTooltip then
-                            if frameOpt.tooltipPosition then
+                            if self.tooltipPosition then
                                 GameTooltip:SetOwner(parent, "ANCHOR_RIGHT", 0, 0)
                             else
                                 GameTooltip:SetOwner(parent, "ANCHOR_PRESERVE")

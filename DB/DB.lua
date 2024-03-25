@@ -82,6 +82,20 @@ local defaults = {
             Buffs = {},
             Debuffs = {},
         },
+        Blacklist = {  
+            --[[
+                spellId = true,
+            ]]
+        },
+        Watchlist = {  
+            --[[
+                spellId = {
+                    ownOnly = true/false,
+                    hideInCombat = true/false,
+                }
+            ]]
+        },
+        oldBlacklistsImported = false,
         Debuffs = {
             petframe = false,
             DebuffFramesDisplay = {

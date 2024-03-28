@@ -1,4 +1,23 @@
 # **Changelog**
+### Version [2.23.0] - 2024-03-27
+#### Changed
+* Extra buff frames finally arrived! 
+    * The backend of the buffs module has been reworked. The user now has the option to adjust the number of buff icons displayed on the raid frame (from 0 to 10). If you need more please let me know.
+    * Auras set in Aura Position now have their own dedicated buff frame and will always be displayed when applied.
+    * Auras set in Aura Position can now be scaled per aura.
+
+#### Fixes
+* Fixed some spellIds in the personal defensive list.
+
+#### Author's Note
+* Expect the same to happen with "Debuffs" in an upcoming update. Once "Debuffs" is done i will start porting the changes to classic.
+
+### Version [2.22.7] - 2024-03-26
+* Moved Aura Position one row up and added ab option to scale user placed auras.
+
+### Version [2.22.6] - 2024-03-26
+* Small visual improvements to the watchlist and an option to import the most important def CDs for all classes have been added.
+
 ### Version [2.22.5] - 2024-03-25
 #### Changed
 * AuraVisibility.lua now checks if a watchlist entry is flagged as debuff.

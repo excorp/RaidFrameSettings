@@ -82,12 +82,10 @@ local defaults = {
             Buffs = {},
             Debuffs = {},
         },
-        Blacklist = {  
-            --[[
-                spellId = true,
-            ]]
+        Blacklist = {
+            ["206151"] = true, -- Challanger's Burden
         },
-        Watchlist = {  
+        Watchlist = {
             --[[
                 spellId = {
                     ownOnly = true/false,

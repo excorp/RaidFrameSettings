@@ -331,11 +331,19 @@ function module:OnEnable()
         end
     end
 
+    --[[
     self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
         if not unit or unit:match("nameplate") then
             return
         end
         updateAurasFull(frame)
+    end)
+    ]]
+
+    self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+        RaidFrameSettings:IterateRoster(function(frame)
+            updateAurasFull(frame)
+        end)
     end)
 
     --[[
@@ -351,6 +359,7 @@ end
 
 function module:OnDisable()
     self:DisableHooks()
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     RaidFrameSettings:IterateRoster(function(frame)
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color

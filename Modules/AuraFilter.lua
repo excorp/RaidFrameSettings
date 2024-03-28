@@ -62,7 +62,7 @@ function AuraFilter:reloadConf()
         filteredAuras[tonumber(spellId)] = value
     end
 
-    if addon.db.profile.Module.Buffs then
+    if addon:IsModuleEnabled("Buffs") then
         --increase
         for spellId in pairs(addon.db.profile.Buffs.Increase) do
             setFilter(spellId)
@@ -79,7 +79,7 @@ function AuraFilter:reloadConf()
         end
     end
 
-    if addon.db.profile.Module.Debuffs then
+    if addon:IsModuleEnabled("Debuffs") then
         --increase
         for spellId in pairs(addon.db.profile.Debuffs.Increase) do
             setFilter(spellId)

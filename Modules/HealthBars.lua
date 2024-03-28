@@ -128,7 +128,7 @@ function HealthBars:OnEnable()
     local r, g, b, a = 0, 1, 0, 1
     local useClassColors
     local updateHealthColor = function(frame)
-        if RaidFrameSettings.db.profile.Module.AuraHighlight then
+        if RaidFrameSettings:IsModuleEnabled("AuraHighlight") then
             return
         end
         if useClassColors then
@@ -141,7 +141,7 @@ function HealthBars:OnEnable()
         frame.healthBar:SetStatusBarColor(r, g, b, a)
     end
 
-    if RaidFrameSettings.db.profile.Module.HealthBars then
+    if RaidFrameSettings:IsModuleEnabled("HealthBars") then
         local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
         if selected == 1 then
             useClassColors = true
@@ -166,7 +166,7 @@ function HealthBars:OnEnable()
         end
     end
 
-    if RaidFrameSettings.db.profile.Module.AuraHighlight then
+    if RaidFrameSettings:IsModuleEnabled("AuraHighlight") then
         RaidFrameSettings:UpdateModule("AuraHighlight")
     end
 
@@ -213,7 +213,7 @@ function HealthBars:OnDisable()
         if frame.backdropInfo then
             frame:ClearBackdrop()
         end
-        if not RaidFrameSettings.db.profile.Module.AuraHighlight and frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
+        if not RaidFrameSettings:IsModuleEnabled("AuraHighlight") and frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
             local r, g, b, a = 0, 1, 0, 1
             if C_CVar.GetCVar("raidFramesDisplayClassColor") == "1" and frame.unit and frame.unitExists and not frame.unit:match("pet") then

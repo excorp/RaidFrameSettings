@@ -81,7 +81,7 @@ function Buffs:OnEnable()
 
     --aura filter
     local filteredAuras = {}
-    if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Buffs then
+    if addon:IsModuleEnabled("AuraFilter") and addon:IsModuleEnabled("Buffs") then
         for spellId, value in pairs(addon.db.profile.AuraFilter.Buffs) do
             filteredAuras[tonumber(spellId)] = value
         end

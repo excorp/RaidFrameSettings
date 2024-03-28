@@ -453,17 +453,17 @@ function RaidFrameSettings:SetStatus(info, value)
     --will reload the config each time the settings have been adjusted
     local module_name = info[#info - 2] == "MinorModules" and info[#info - 1] or info[#info - 2]
     if module_name == "DebuffColors" then
-        if self.db.profile.Module.Debuffs then
+        if self:IsModuleEnabled("Debuffs") then
             self:UpdateModule("Debuffs")
         end
-        if self.db.profile.Module.AuraHighlight then
+        if self:IsModuleEnabled("AuraHighlight") then
             self:UpdateModule("AuraHighlight")
         end
     elseif module_name == "Glow" then
-        if self.db.profile.Module.Buffs then
+        if self:IsModuleEnabled("Buffs") then
             self:UpdateModule("Buffs")
         end
-        if self.db.profile.Module.Debuffs then
+        if self:IsModuleEnabled("Debuffs") then
             self:UpdateModule("Debuffs")
         end
     elseif module_name == "minimapIcon" then

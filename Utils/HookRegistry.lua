@@ -9,11 +9,11 @@ local hooksecurefunc = hooksecurefunc
 local GetName = GetName
 local IsForbidden = IsForbidden
 local tostring = tostring
-local string_sub = string.sub 
+local string_sub = string.sub
 local next = next
 local pairs = pairs
 
-local doNothing = function() 
+local doNothing = function()
     return
 end
 
@@ -62,7 +62,7 @@ function Hooks:HookFunc(arg1, arg2, arg3)
         functionName = arg1
         hookfunc = arg2
     end
-    local id = tostring(self) .. tostring(obj) ..tostring(functionName)
+    local id = tostring(self) .. tostring(obj) .. tostring(functionName)
     hookfunc = type(hookfunc) == "string" and self[hookfunc] or hookfunc
     if not callbacks[obj] then
         callbacks[obj] = {}
@@ -102,7 +102,7 @@ function Hooks:HookFuncFiltered(arg1, arg2, arg3)
         functionName = arg1
         hookfunc = arg2
     end
-    local id = tostring(self) .. tostring(obj) ..tostring(functionName)
+    local id = tostring(self) .. tostring(obj) .. tostring(functionName)
     hookfunc = type(hookfunc) == "string" and self[hookfunc] or hookfunc
     if not callbacks[obj] then
         callbacks[obj] = {}
@@ -113,12 +113,8 @@ function Hooks:HookFuncFiltered(arg1, arg2, arg3)
     callbacks[obj][functionName][self] = hookfunc
     if not hooked[obj] or not hooked[obj][functionName] then
         hooksecurefunc(obj, functionName, function(frame, ...)
-            local frame = frame
-            if not frame then
+            if not frame or frame:IsForbidden() then
                 return
-            end
-            if frame:IsForbidden() then 
-                return 
             end
             local name = frame:GetName()
             if not name then
@@ -169,12 +165,12 @@ function Hooks:DisableHooks()
     if not registry[self] then
         return
     end
-    for _,id in pairs(registry[self]) do
+    for _, id in pairs(registry[self]) do
         callbacks[id.key1][id.key2][self] = doNothing
     end
 end
 
---useful when blizzard code removes an event handler and 
+--useful when blizzard code removes an event handler and
 --hooking again is necessary
 function Hooks:RemoveHandler(frame, handler)
     if not hooked[frame] then
@@ -182,4 +178,3 @@ function Hooks:RemoveHandler(frame, handler)
     end
     hooked[frame][handler] = nil
 end
-

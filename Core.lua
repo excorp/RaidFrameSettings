@@ -91,6 +91,10 @@ function RaidFrameSettings:OnDisable()
     end
 end
 
+function RaidFrameSettings:IsModuleEnabled(name)
+    return self.db.profile.Module[name]
+end
+
 function RaidFrameSettings:UpdateModule(module_name)
     self:DisableModule(module_name)
     self:EnableModule(module_name)

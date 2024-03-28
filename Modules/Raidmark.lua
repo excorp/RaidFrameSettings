@@ -10,7 +10,7 @@ function RaidMark:UpdateRaidMarker(frame)
         return
     end
 
-    if not addon.db.profile.Module.RaidMark then
+    if not addon:IsModuleEnabled("RaidMark") then
         frame.raidmark:Hide()
         return
     end

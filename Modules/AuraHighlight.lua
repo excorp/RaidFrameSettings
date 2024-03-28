@@ -193,7 +193,7 @@ function module:HookFrame(frame)
     --
     self:RemoveHandler(frame, "OnEvent") --remove the registry key for frame["OnEvent"] so that it actually gets hooked again and not just stores a callback for an non existing hook
     self:HookScript(frame, "OnEvent", function(frame, event, unit, updateInfo)
-        if event ~= "UNIT_AURA" or not RaidFrameSettings.db.profile.Module.AuraHighlight then
+        if event ~= "UNIT_AURA" or not RaidFrameSettings:IsModuleEnabled("AuraHighlight") then
             return
         end
         if isClassic or updateInfo.isFullUpdate then
@@ -234,7 +234,7 @@ function module:SetUpdateHealthColor()
     end
     local r, g, b, a = 0, 1, 0, 1
     local useClassColors
-    if RaidFrameSettings.db.profile.Module.HealthBars then
+    if RaidFrameSettings:IsModuleEnabled("HealthBars") then
         local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
         if selected == 1 then
             useClassColors = true

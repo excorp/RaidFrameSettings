@@ -97,7 +97,7 @@ function Debuffs:OnEnable()
 
     --aura filter
     local filteredAuras = {}
-    if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Debuffs then
+    if addon:IsModuleEnabled("AuraFilter") and addon:IsModuleEnabled("Debuffs") then
         for spellId, value in pairs(addon.db.profile.AuraFilter.Debuffs) do
             filteredAuras[tonumber(spellId)] = value
         end

@@ -22,7 +22,6 @@ local SetSize = SetSize
 local SetTexCoord = SetTexCoord
 local ClearAllPoints = ClearAllPoints
 local SetPoint = SetPoint
-local Hide = Hide
 local SetFont = SetFont
 local SetTextColor = SetTextColor
 local SetShadowColor = SetShadowColor
@@ -30,8 +29,8 @@ local SetShadowOffset = SetShadowOffset
 local SetDrawSwipe = SetDrawSwipe
 local SetReverse = SetReverse
 local SetDrawEdge = SetDrawEdge
-local IsForbidden = IsForbidden
---Lua
+local SetScale = SetScale
+-- Lua
 local next = next
 
 local frame_registry = {}
@@ -74,7 +73,7 @@ end
 
 function Debuffs:OnEnable()
     AuraFilter:reloadConf()
-    
+
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
         Disease = { r = 0.6, g = 0.4, b = 0.0 },
@@ -108,7 +107,7 @@ function Debuffs:OnEnable()
     durationOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(durationOpt.outlinemode)
     durationOpt.point = addon:ConvertDbNumberToPosition(durationOpt.point)
     durationOpt.relativePoint = addon:ConvertDbNumberToPosition(durationOpt.relativePoint)
-    --Stack
+    -- Stack display options
     local stackOpt = CopyTable(addon.db.profile.Debuffs.StacksDisplay)
     stackOpt.font = Media:Fetch("font", stackOpt.font)
     stackOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(stackOpt.outlinemode)

@@ -12,6 +12,8 @@ local Aura = addonTable.Aura
 local classMod = addonTable.classMod
 local Media = LibStub("LibSharedMedia-3.0")
 
+local AuraFilter = addon:GetModule("AuraFilter")
+
 local fontObj = CreateFont("RaidFrameSettingsFont")
 
 --[[
@@ -90,6 +92,8 @@ function Buffs:Glow(frame, onoff)
 end
 
 function Buffs:OnEnable()
+    AuraFilter:reloadConf()
+
     CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
 
     glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
@@ -121,12 +125,8 @@ function Buffs:OnEnable()
     Aura.Opt.Buff.stackOpt = stackOpt
 
     --aura filter
-    local filteredAuras = {}
-    if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Buffs then
-        for spellId, value in pairs(addon.db.profile.AuraFilter.Buffs) do
-            filteredAuras[tonumber(spellId)] = value
-        end
-    end
+    local filteredAuras = addon.filteredAuras
+
     --increase
     local increase = {}
     for spellId, value in pairs(addon.db.profile.Buffs.Increase) do

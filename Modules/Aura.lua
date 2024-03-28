@@ -544,7 +544,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         return
                     end
 
-                    local frameName = GetMouseFocus() and GetMouseFocus():GetName()
+                    local focusFrame = GetMouseFocus()
+                    local frameName = focusFrame and focusFrame.GetName and focusFrame:GetName()
                     local finish
                     if TooltipCheckQueueUnderFrame[frameName] then
                         for frame in pairs(TooltipCheckQueueUnderFrame[frameName]) do

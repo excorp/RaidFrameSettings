@@ -381,3 +381,7 @@ L["Show the Mastery Stack for Restoration Druid."] = "Show the Mastery Stack for
 
 L["Tooltip Position"] = "Tooltip Position"
 L["Displays a tooltip at the mouse position."] = "Displays a tooltip at the mouse position."
+
+L["Import presets:"] = "Import presets:"
+L["Personal Defs"] = "Personal Defs"
+L["Import the most imporant personal defensive cooldowns for all classes."] = "Import the most imporant personal defensive cooldowns for all classes."

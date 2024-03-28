@@ -1019,43 +1019,15 @@ options = {
                         },
                         importOptions = {
                             order = 2,
-                            name = "Import presets:",
+                            name = L["Import presets:"],
                             type = "group",
                             inline = true,
                             args = {
                                 retailDefensiveCooldowns = {
                                     order = 1,
                                     hidden = not isRetail,
-                                    name = "Personal Defs",
-                                    desc = "Import the most imporant personal defensive cooldowns for all classes.",
-                                    type = "execute",
-                                    func = function()
-                                        local defensives = RaidFrameSettings:GetPersonalCooldowns()
-                                        for i = 1, #defensives do
-                                            local spellId = defensives[i]
-                                            if not RaidFrameSettings.db.profile.AuraFilter.Buffs[spellId] then
-                                                RaidFrameSettings.db.profile.AuraFilter.Buffs[spellId] = {
-                                                    spellId = tonumber(spellId),
-                                                    show = true,
-                                                    other = true,
-                                                    hideInCombat = false,
-                                                    priority = 0,
-                                                    glow = false,
-                                                    alpha = 1,
-                                                }
-                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs")
-                                            end
-                                        end
-                                        RaidFrameSettings:LoadUserInputEntrys()
-                                        RaidFrameSettings:UpdateModule("Buffs")
-                                    end,
-                                    width = 0.8,
-                                },
-                                retailHealer = {
-                                    order = 1,
-                                    hidden = not isRetail,
-                                    name = "Personal Defs",
-                                    desc = "Import the most imporant personal defensive cooldowns for all classes.",
+                                    name = L["Personal Defs"],
+                                    desc = L["Import the most imporant personal defensive cooldowns for all classes."],
                                     type = "execute",
                                     func = function()
                                         local defensives = RaidFrameSettings:GetPersonalCooldowns()
@@ -3728,6 +3700,8 @@ function RaidFrameSettings:CreateSortUserEntry(keyword)
                 order = 2,
                 name = L["Priority"],
                 type = "input",
+                pattern = "^%d+$",
+                L["please enter a number"],
                 get = function()
                     return tostring(dbObj.priority)
                 end,

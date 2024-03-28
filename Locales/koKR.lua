@@ -378,3 +378,7 @@ L["Show the Mastery Stack for Restoration Druid."] = "회복 드루이드의 특
 
 L["Tooltip Position"] = "툴팁 위치"
 L["Displays a tooltip at the mouse position."] = "툴팁을 마우스 위치에 표시 합니다"
+
+L["Import presets:"] = "Import presets:"
+L["Personal Defs"] = "Personal Defs"
+L["Import the most imporant personal defensive cooldowns for all classes."] = "Import the most imporant personal defensive cooldowns for all classes."

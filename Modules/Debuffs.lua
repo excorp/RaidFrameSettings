@@ -11,6 +11,8 @@ local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
 
+local AuraFilter = addon:GetModule("AuraFilter")
+
 local fontObj = CreateFont("RaidFrameSettingsFont")
 
 --Debuffframe size
@@ -71,6 +73,8 @@ local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuf
 end
 
 function Debuffs:OnEnable()
+    AuraFilter:reloadConf()
+    
     local debuffColors = {
         Curse   = { r = 0.6, g = 0.0, b = 1.0 },
         Disease = { r = 0.6, g = 0.4, b = 0.0 },
@@ -116,12 +120,8 @@ function Debuffs:OnEnable()
     Aura.Opt.Debuff.stackOpt = stackOpt
 
     --aura filter
-    local filteredAuras = {}
-    if addon.db.profile.Module.AuraFilter and addon.db.profile.AuraFilter.Debuffs then
-        for spellId, value in pairs(addon.db.profile.AuraFilter.Debuffs) do
-            filteredAuras[tonumber(spellId)] = value
-        end
-    end
+    local filteredAuras = addon.filteredAuras
+
     --increase
     local increase = {}
     for spellId, value in pairs(addon.db.profile.Debuffs.Increase) do

@@ -10,4 +10,5 @@
     <Script file="Modules\Debuffs_Classic.lua"/>
     <Script file="Modules\AuraHighlight.lua"/>
     <Script file="Modules\Solo_Classic.lua"/>
+    <Script file="Modules\FrameColorSkin.lua"/>
 </Ui>

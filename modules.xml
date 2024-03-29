@@ -15,4 +15,5 @@
   <Script file="Modules\AuraHighlight.lua"/>
   <Script file="Modules\Solo.lua"/>
   <Script file="Modules\Sort.lua"/>
+  <Script file="Modules\FrameColorSkin.lua"/>
 </Ui>

@@ -1233,19 +1233,26 @@ options = {
                                             desc = "",
                                             type = "input",
                                             width = 1.5,
-                                            pattern = "^%d+$",
-                                            usage = L["please enter a number"],
+                                            -- pattern = "^%d+$",
+                                            -- usage = L["please enter a number"],
                                             set = function(_, value)
-                                                RaidFrameSettings.db.profile.AuraFilter.default.Buffs[value] = {
-                                                    spellId = tonumber(value),
-                                                    show = false,
-                                                    other = false,
-                                                    hideInCombat = false,
-                                                    priority = 0,
-                                                    glow = false,
-                                                    alpha = 1,
-                                                }
-                                                RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
+                                                local spellId = RaidFrameSettings:SafeToNumber(value)
+                                                local spellIds = { spellId }
+                                                if not spellId then
+                                                    spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                                end
+                                                for spellId, iconId in pairs(spellIds) do
+                                                    RaidFrameSettings.db.profile.AuraFilter.default.Buffs[tostring(spellId)] = {
+                                                        spellId = spellId,
+                                                        show = false,
+                                                        other = false,
+                                                        hideInCombat = false,
+                                                        priority = 0,
+                                                        glow = false,
+                                                        alpha = 1,
+                                                    }
+                                                    RaidFrameSettings:CreateAuraFilterEntry(tostring(spellId), "Buffs")
+                                                end
                                                 RaidFrameSettings:LoadUserInputEntrys()
                                                 RaidFrameSettings:UpdateModule("AuraFilter")
                                             end,
@@ -1305,19 +1312,27 @@ options = {
                                             desc = "",
                                             type = "input",
                                             width = 1.5,
-                                            pattern = "^%d+$",
-                                            usage = L["please enter a number"],
+                                            -- pattern = "^%d+$",
+                                            -- usage = L["please enter a number"],
                                             set = function(_, value)
-                                                RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value] = {
-                                                    spellId = tonumber(value),
-                                                    show = false,
-                                                    other = false,
-                                                    hideInCombat = false,
-                                                    priority = 0,
-                                                    glow = false,
-                                                    alpha = 1,
-                                                }
-                                                RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
+                                                local spellId = RaidFrameSettings:SafeToNumber(value)
+                                                local spellIds = { spellId }
+                                                if not spellId then
+                                                    spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                                end
+                                                for spellId, iconId in pairs(spellIds) do
+                                                    value = tostring(spellId)
+                                                    RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value] = {
+                                                        spellId = tonumber(value),
+                                                        show = false,
+                                                        other = false,
+                                                        hideInCombat = false,
+                                                        priority = 0,
+                                                        glow = false,
+                                                        alpha = 1,
+                                                    }
+                                                    RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
+                                                end
                                                 RaidFrameSettings:UpdateModule("AuraFilter")
                                             end,
                                         },
@@ -1743,11 +1758,19 @@ options = {
                                     desc = "",
                                     type = "input",
                                     width = 1.5,
-                                    pattern = "^%d+$",
-                                    usage = L["please enter a number"],
+                                    -- pattern = "^%d+$",
+                                    -- usage = L["please enter a number"],
                                     set = function(_, value)
-                                        RaidFrameSettings.db.profile.Buffs.Increase[value] = true
-                                        RaidFrameSettings:CreateIncreaseEntry(value, "Buffs")
+                                        local spellId = RaidFrameSettings:SafeToNumber(value)
+                                        local spellIds = { spellId }
+                                        if not spellId then
+                                            spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                        end
+                                        for spellId, iconId in pairs(spellIds) do
+                                            value = tostring(spellId)
+                                            RaidFrameSettings.db.profile.Buffs.Increase[value] = true
+                                            RaidFrameSettings:CreateIncreaseEntry(value, "Buffs")
+                                        end
                                         RaidFrameSettings:UpdateModule("Buffs")
                                     end,
                                 },
@@ -2073,35 +2096,43 @@ options = {
                                             order = 1,
                                             name = L["Enter spellId:"],
                                             type = "input",
-                                            pattern = "^%d+$",
-                                            usage = L["please enter a number"],
+                                            -- pattern = "^%d+$",
+                                            -- usage = L["please enter a number"],
                                             set = function(_, value)
-                                                local filter = RaidFrameSettings.db.profile.AuraFilter.default.Buffs[value]
-                                                if not filter then
-                                                    for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs) do
-                                                        if auraGroup.auraList[value] then
-                                                            filter = auraGroup.auraList[value]
-                                                            break
+                                                local spellId = RaidFrameSettings:SafeToNumber(value)
+                                                local spellIds = { spellId }
+                                                if not spellId then
+                                                    spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                                end
+                                                for spellId, iconId in pairs(spellIds) do
+                                                    value = tostring(spellId)
+                                                    local filter = RaidFrameSettings.db.profile.AuraFilter.default.Buffs[value]
+                                                    if not filter then
+                                                        for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs) do
+                                                            if auraGroup.auraList[value] then
+                                                                filter = auraGroup.auraList[value]
+                                                                break
+                                                            end
                                                         end
                                                     end
+                                                    RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
+                                                        ["spellId"] = tonumber(value),
+                                                        point = 1,
+                                                        relativePoint = 1,
+                                                        frame = 1,
+                                                        frameNo = 0,
+                                                        frameSelect = 1,
+                                                        frameManualSelect = 1,
+                                                        xOffset = 0,
+                                                        yOffset = 0,
+                                                        setSize = false,
+                                                        width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                        height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                        glow = filter and filter.glow,
+                                                        alpha = filter and filter.alpha or 1,
+                                                    }
+                                                    RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
                                                 end
-                                                RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
-                                                    ["spellId"] = tonumber(value),
-                                                    point = 1,
-                                                    relativePoint = 1,
-                                                    frame = 1,
-                                                    frameNo = 0,
-                                                    frameSelect = 1,
-                                                    frameManualSelect = 1,
-                                                    xOffset = 0,
-                                                    yOffset = 0,
-                                                    setSize = false,
-                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
-                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
-                                                    glow = filter and filter.glow,
-                                                    alpha = filter and filter.alpha or 1,
-                                                }
-                                                RaidFrameSettings:CreateAuraPositionEntry(value, "Buffs")
                                                 RaidFrameSettings:UpdateModule("Buffs")
                                             end
                                         },
@@ -2476,11 +2507,19 @@ options = {
                                     desc = "",
                                     type = "input",
                                     width = 1.5,
-                                    pattern = "^%d+$",
-                                    usage = L["please enter a number"],
+                                    -- pattern = "^%d+$",
+                                    -- usage = L["please enter a number"],
                                     set = function(_, value)
-                                        RaidFrameSettings.db.profile.Debuffs.Increase[value] = true
-                                        RaidFrameSettings:CreateIncreaseEntry(value, "Debuffs")
+                                        local spellId = RaidFrameSettings:SafeToNumber(value)
+                                        local spellIds = { spellId }
+                                        if not spellId then
+                                            spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                        end
+                                        for spellId, iconId in pairs(spellIds) do
+                                            value = tostring(spellId)
+                                            RaidFrameSettings.db.profile.Debuffs.Increase[value] = true
+                                            RaidFrameSettings:CreateIncreaseEntry(value, "Debuffs")
+                                        end
                                         RaidFrameSettings:UpdateModule("Debuffs")
                                     end,
                                 },
@@ -2542,35 +2581,43 @@ options = {
                                             order = 1,
                                             name = L["Enter spellId:"],
                                             type = "input",
-                                            pattern = "^%d+$",
-                                            usage = L["please enter a number"],
+                                            -- pattern = "^%d+$",
+                                            -- usage = L["please enter a number"],
                                             set = function(_, value)
-                                                local filter = RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value]
-                                                if not filter then
-                                                    for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Debuffs) do
-                                                        if auraGroup.auraList[value] then
-                                                            filter = auraGroup.auraList[value]
-                                                            break
+                                                local spellId = RaidFrameSettings:SafeToNumber(value)
+                                                local spellIds = { spellId }
+                                                if not spellId then
+                                                    spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                                end
+                                                for spellId, iconId in pairs(spellIds) do
+                                                    value = tostring(spellId)
+                                                    local filter = RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value]
+                                                    if not filter then
+                                                        for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Debuffs) do
+                                                            if auraGroup.auraList[value] then
+                                                                filter = auraGroup.auraList[value]
+                                                                break
+                                                            end
                                                         end
                                                     end
+                                                    RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
+                                                        ["spellId"] = tonumber(value),
+                                                        point = 1,
+                                                        relativePoint = 1,
+                                                        frame = 1,
+                                                        frameNo = 0,
+                                                        frameSelect = 1,
+                                                        frameManualSelect = 1,
+                                                        xOffset = 0,
+                                                        yOffset = 0,
+                                                        setSize = false,
+                                                        width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
+                                                        height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
+                                                        glow = filter and filter.glow,
+                                                        alpha = filter and filter.alpha or 1,
+                                                    }
+                                                    RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
                                                 end
-                                                RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
-                                                    ["spellId"] = tonumber(value),
-                                                    point = 1,
-                                                    relativePoint = 1,
-                                                    frame = 1,
-                                                    frameNo = 0,
-                                                    frameSelect = 1,
-                                                    frameManualSelect = 1,
-                                                    xOffset = 0,
-                                                    yOffset = 0,
-                                                    setSize = false,
-                                                    width = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.width,
-                                                    height = RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.height,
-                                                    glow = filter and filter.glow,
-                                                    alpha = filter and filter.alpha or 1,
-                                                }
-                                                RaidFrameSettings:CreateAuraPositionEntry(value, "Debuffs")
                                                 RaidFrameSettings:UpdateModule("Debuffs")
                                             end
                                         },
@@ -4211,19 +4258,27 @@ function RaidFrameSettings:CreateFilterGroup(groupNo, category)
                 order = 5,
                 name = L["Enter spellId:"],
                 type = "input",
-                pattern = "^%d+$",
-                usage = L["please enter a number"],
+                -- pattern = "^%d+$",
+                -- usage = L["please enter a number"],
                 set = function(_, value)
-                    RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category][groupNo].auraList[value] = {
-                        spellId = tonumber(value),
-                        show = false,
-                        other = false,
-                        hideInCombat = false,
-                        priority = 0,
-                        glow = false,
-                        alpha = 1,
-                    }
-                    RaidFrameSettings:CreateAuraFilterEntry(value, category, groupNo)
+                    local spellId = RaidFrameSettings:SafeToNumber(value)
+                    local spellIds = { spellId }
+                    if not spellId then
+                        spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                    end
+                    for spellId, iconId in pairs(spellIds) do
+                        value = tostring(spellId)
+                        RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category][groupNo].auraList[value] = {
+                            spellId = tonumber(value),
+                            show = false,
+                            other = false,
+                            hideInCombat = false,
+                            priority = 0,
+                            glow = false,
+                            alpha = 1,
+                        }
+                        RaidFrameSettings:CreateAuraFilterEntry(value, category, groupNo)
+                    end
                     RaidFrameSettings:UpdateModule("AuraFilter")
                 end
             },
@@ -5197,25 +5252,33 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 order = 13,
                 name = L["Enter spellId:"],
                 type = "input",
-                pattern = "^%d+$",
-                usage = L["please enter a number"],
+                -- pattern = "^%d+$",
+                -- usage = L["please enter a number"],
                 set = function(_, value)
-                    local filter = RaidFrameSettings.db.profile.AuraFilter.default[category][value] and self.db.profile.AuraFilter.default[category][value]
-                    if not filter then
-                        for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category]) do
-                            if auraGroup.auraList[value] then
-                                filter = auraGroup.auraList[value]
-                                break
+                    local spellId = RaidFrameSettings:SafeToNumber(value)
+                    local spellIds = { spellId }
+                    if not spellId then
+                        spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                    end
+                    for spellId, iconId in pairs(spellIds) do
+                        value = tostring(spellId)
+                        local filter = RaidFrameSettings.db.profile.AuraFilter.default[category][value] and self.db.profile.AuraFilter.default[category][value]
+                        if not filter then
+                            for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category]) do
+                                if auraGroup.auraList[value] then
+                                    filter = auraGroup.auraList[value]
+                                    break
+                                end
                             end
                         end
+                        dbObj.auraList[value] = {
+                            spellId = tonumber(value),
+                            priority = 0,
+                            glow = filter and filter.glow,
+                            alpha = filter and filter.alpha or 1,
+                        }
+                        RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     end
-                    dbObj.auraList[value] = {
-                        spellId = tonumber(value),
-                        priority = 0,
-                        glow = filter and filter.glow,
-                        alpha = filter and filter.alpha or 1,
-                    }
-                    RaidFrameSettings:CreateAuraGroupEntry(value, groupNo, category)
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule(category)
                 end

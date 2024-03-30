@@ -423,3 +423,16 @@ function addon:GetHealerSpellPreset(type)
     end
     return spells
 end
+
+function addon:GetSpellIdsByName(name)
+    local loaded, reason = LoadAddOn("WeakAurasOptions")
+    if not loaded then
+        return false
+    end
+    return WeakAuras.spellCache.GetSpellsMatching(WeakAuras.spellCache.CorrectAuraName(name))
+end
+
+function addon:SafeToNumber(input)
+    local nr = tonumber(input)
+    return nr and (nr < 2147483648 and nr > -2147483649) and nr or nil
+end

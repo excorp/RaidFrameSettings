@@ -53,13 +53,26 @@ function AuraFilter:reloadConf()
     for k in pairs(filteredAuras) do
         filteredAuras[k] = nil
     end
-    for spellId, value in pairs(addon.db.profile.AuraFilter.Buffs) do
+    for spellId, value in pairs(addon.db.profile.AuraFilter.default.Buffs) do
         value.debuff = false
-        filteredAuras[tonumber(spellId)] = value
+        filteredAuras[tonumber(spellId)] = filteredAuras[tonumber(spellId)] or value
     end
-    for spellId, value in pairs(addon.db.profile.AuraFilter.Debuffs) do
+    for spellId, value in pairs(addon.db.profile.AuraFilter.default.Debuffs) do
         value.debuff = true
-        filteredAuras[tonumber(spellId)] = value
+        filteredAuras[tonumber(spellId)] = filteredAuras[tonumber(spellId)] or value
+    end
+
+    for _, groupInfo in pairs(addon.db.profile.AuraFilter.FilterGroup.Buffs) do
+        for spellId, value in pairs(groupInfo.auraList) do
+            value.debuff = false
+            filteredAuras[tonumber(spellId)] = filteredAuras[tonumber(spellId)] or value
+        end
+    end
+    for _, groupInfo in pairs(addon.db.profile.AuraFilter.FilterGroup.Buffs) do
+        for spellId, value in pairs(groupInfo.auraList) do
+            value.debuff = false
+            filteredAuras[tonumber(spellId)] = filteredAuras[tonumber(spellId)] or value
+        end
     end
 
     if addon:IsModuleEnabled("Buffs") then

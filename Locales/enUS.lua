@@ -386,3 +386,8 @@ L["Toggle the minimap icon on or off."] = "Toggle the minimap icon on or off."
 L["If you want to show the minimap icon again, enable it in the \"Enabled Modules\" section of the addon."] = "If you want to show the minimap icon again, enable it in the \"Enabled Modules\" section of the addon."
 L["Left click: Open settings."] = "Left click: Open settings."
 L["Middle click: Hide minmap icon."] = "Middle click: Hide minmap icon."
+
+L["Healer Spells"] = "Healer Spells"
+L["External Defs."] = "External Defs."
+L["Defensive Spells"] = "Defensive Spells"
+L["Tank Spells"] = "Tank Spells"

@@ -384,3 +384,8 @@ L["Toggle the minimap icon on or off."] = "미니맵에 아이콘을 켜거나 �
 L["If you want to show the minimap icon again, enable it in the \"Enabled Modules\" section of the addon."] = "미니맵 아이콘을 다시 표시하려면, 설정 > 모듈 활성화에서 켤수 있습니다."
 L["Left click: Open settings."] = "왼쪽 클릭: 설정 열기"
 L["Middle click: Hide minmap icon."] = "가운데 클릭: 미니맵 아이콘 숨김"
+
+L["Healer Spells"] = "힐러 주문"
+L["External Defs."] = "외생기"
+L["Defensive Spells"] = "생존기"
+L["Tank Spells"] = "탱커 뎀감기"

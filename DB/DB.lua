@@ -79,8 +79,14 @@ local defaults = {
             },
         },
         AuraFilter = {
-            Buffs = {},
-            Debuffs = {},
+            default = {
+                Buffs = {},
+                Debuffs = {},
+            },
+            FilterGroup = {
+                Buffs = {},
+                Debuffs = {},
+            },
         },
         Blacklist = {
             ["206151"] = true, -- Challanger's Burden

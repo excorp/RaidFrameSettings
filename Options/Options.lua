@@ -1008,29 +1008,24 @@ options = {
                     order = 1,
                     name = L["Buffs"],
                     type = "group",
+                    childGroups = "tab",
                     args = {
-                        addAura = {
-                            order = 1,
-                            name = L["Enter spellId:"],
-                            desc = "",
-                            type = "input",
-                            width = 1.5,
-                            pattern = "^%d+$",
-                            usage = L["please enter a number"],
-                            set = function(_, value)
-                                RaidFrameSettings.db.profile.AuraFilter.Buffs[value] = {
-                                    spellId = tonumber(value),
-                                    show = false,
-                                    other = false,
-                                    hideInCombat = false,
-                                    priority = 0,
-                                    glow = false,
-                                    alpha = 1,
-                                }
-                                RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
-                                RaidFrameSettings:LoadUserInputEntrys()
+                        addGroup = {
+                            order = 2,
+                            name = L["New Group"],
+                            type = "execute",
+                            func = function()
+                                local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs
+                                tinsert(dbObjGroup, {
+                                    name = "",
+                                    auraList = {},
+                                })
+                                local groupNo = #dbObjGroup
+                                dbObjGroup[groupNo].name = L["Group "] .. groupNo
+                                RaidFrameSettings:CreateFilterGroup(groupNo, "Buffs")
                                 RaidFrameSettings:UpdateModule("Buffs")
                             end,
+                            width = 1,
                         },
                         importOptions = {
                             order = 2,
@@ -1045,11 +1040,19 @@ options = {
                                     desc = L["Import the most imporant personal defensive cooldowns for all classes."],
                                     type = "execute",
                                     func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs
+                                        tinsert(dbObjGroup, {
+                                            name = L["Personal Defs"],
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        RaidFrameSettings:CreateFilterGroup(groupNo, "Buffs")
+
                                         local defensives = RaidFrameSettings:GetPersonalCooldowns()
                                         for i = 1, #defensives do
                                             local spellId = defensives[i]
-                                            if not RaidFrameSettings.db.profile.AuraFilter.Buffs[spellId] then
-                                                RaidFrameSettings.db.profile.AuraFilter.Buffs[spellId] = {
+                                            if not RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] then
+                                                RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] = {
                                                     spellId = tonumber(spellId),
                                                     show = true,
                                                     other = true,
@@ -1058,23 +1061,206 @@ options = {
                                                     glow = false,
                                                     alpha = 1,
                                                 }
-                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs")
+                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs", groupNo)
                                             end
                                         end
                                         RaidFrameSettings:LoadUserInputEntrys()
-                                        RaidFrameSettings:UpdateModule("Buffs")
+                                        RaidFrameSettings:UpdateModule("AuraFilter")
+                                    end,
+                                    width = 0.8,
+                                },
+
+                                healer = {
+                                    order = 2,
+                                    hidden = not isRetail,
+                                    name = L["Healer Spells"],
+                                    desc = "",
+                                    type = "execute",
+                                    func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs
+                                        tinsert(dbObjGroup, {
+                                            name = L["Healer Spells"],
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        RaidFrameSettings:CreateFilterGroup(groupNo, "Buffs")
+
+                                        local spells = RaidFrameSettings:GetHealerSpellPreset("healer") -- externalDefs,defensives,tank
+                                        for i = 1, #spells do
+                                            local spellId = spells[i]
+                                            if not RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] then
+                                                RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] = {
+                                                    spellId = tonumber(spellId),
+                                                    show = true,
+                                                    other = true,
+                                                    hideInCombat = false,
+                                                    priority = 0,
+                                                    glow = false,
+                                                    alpha = 1,
+                                                }
+                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs", groupNo)
+                                            end
+                                        end
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("AuraFilter")
+                                    end,
+                                    width = 0.8,
+                                },
+                                externalDefs = {
+                                    order = 3,
+                                    hidden = not isRetail,
+                                    name = L["External Defs."],
+                                    desc = "",
+                                    type = "execute",
+                                    func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs
+                                        tinsert(dbObjGroup, {
+                                            name = L["External Defs."],
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        RaidFrameSettings:CreateFilterGroup(groupNo, "Buffs")
+
+                                        local spells = RaidFrameSettings:GetHealerSpellPreset("externalDefs")
+                                        for i = 1, #spells do
+                                            local spellId = spells[i]
+                                            if not RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] then
+                                                RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] = {
+                                                    spellId = tonumber(spellId),
+                                                    show = true,
+                                                    other = true,
+                                                    hideInCombat = false,
+                                                    priority = 0,
+                                                    glow = false,
+                                                    alpha = 1,
+                                                }
+                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs", groupNo)
+                                            end
+                                        end
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("AuraFilter")
+                                    end,
+                                    width = 0.8,
+                                },
+                                defensives = {
+                                    order = 4,
+                                    hidden = not isRetail,
+                                    name = L["Defensive Spells"],
+                                    desc = "",
+                                    type = "execute",
+                                    func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs
+                                        tinsert(dbObjGroup, {
+                                            name = L["Defensive Spells"],
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        RaidFrameSettings:CreateFilterGroup(groupNo, "Buffs")
+
+                                        local spells = RaidFrameSettings:GetHealerSpellPreset("defensives")
+                                        for i = 1, #spells do
+                                            local spellId = spells[i]
+                                            if not RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] then
+                                                RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] = {
+                                                    spellId = tonumber(spellId),
+                                                    show = true,
+                                                    other = true,
+                                                    hideInCombat = false,
+                                                    priority = 0,
+                                                    glow = false,
+                                                    alpha = 1,
+                                                }
+                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs", groupNo)
+                                            end
+                                        end
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("AuraFilter")
+                                    end,
+                                    width = 0.8,
+                                },
+                                tank = {
+                                    order = 5,
+                                    hidden = not isRetail,
+                                    name = L["Tank Spells"],
+                                    desc = "",
+                                    type = "execute",
+                                    func = function()
+                                        local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs
+                                        tinsert(dbObjGroup, {
+                                            name = L["Tank Spells"],
+                                            auraList = {},
+                                        })
+                                        local groupNo = #dbObjGroup
+                                        RaidFrameSettings:CreateFilterGroup(groupNo, "Buffs")
+
+                                        local spells = RaidFrameSettings:GetHealerSpellPreset("tank")
+                                        for i = 1, #spells do
+                                            local spellId = spells[i]
+                                            if not RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] then
+                                                RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs[groupNo].auraList[spellId] = {
+                                                    spellId = tonumber(spellId),
+                                                    show = true,
+                                                    other = true,
+                                                    hideInCombat = false,
+                                                    priority = 0,
+                                                    glow = false,
+                                                    alpha = 1,
+                                                }
+                                                RaidFrameSettings:CreateAuraFilterEntry(spellId, "Buffs", groupNo)
+                                            end
+                                        end
+                                        RaidFrameSettings:LoadUserInputEntrys()
+                                        RaidFrameSettings:UpdateModule("AuraFilter")
                                     end,
                                     width = 0.8,
                                 },
                             },
                         },
                         FilteredAuras = {
-                            order = 4,
-                            name = L["Filtered Auras:"],
+                            order = 3,
                             type = "group",
-                            inline = true,
+                            name = L["Filtered Auras:"],
+                            childGroups = "tab",
                             args = {
+                                default = {
+                                    order = 1,
+                                    name = L["Default"],
+                                    type = "group",
+                                    args = {
+                                        addAura = {
+                                            order = 1,
+                                            name = L["Enter spellId:"],
+                                            desc = "",
+                                            type = "input",
+                                            width = 1.5,
+                                            pattern = "^%d+$",
+                                            usage = L["please enter a number"],
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.AuraFilter.default.Buffs[value] = {
+                                                    spellId = tonumber(value),
+                                                    show = false,
+                                                    other = false,
+                                                    hideInCombat = false,
+                                                    priority = 0,
+                                                    glow = false,
+                                                    alpha = 1,
+                                                }
+                                                RaidFrameSettings:CreateAuraFilterEntry(value, "Buffs")
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                        },
+                                        auraList = {
+                                            order = 2,
+                                            name = "",
+                                            type = "group",
+                                            inline = true,
+                                            args = {
 
+                                            },
+                                        },
+                                    },
+                                }
                             },
                         },
                     },
@@ -1083,36 +1269,69 @@ options = {
                     order = 2,
                     name = L["Debuffs"],
                     type = "group",
+                    childGroups = "tab",
                     args = {
-                        addAura = {
-                            order = 1,
-                            name = L["Enter spellId:"],
-                            desc = "",
-                            type = "input",
-                            width = 1.5,
-                            pattern = "^%d+$",
-                            usage = L["please enter a number"],
-                            set = function(_, value)
-                                RaidFrameSettings.db.profile.AuraFilter.Debuffs[value] = {
-                                    spellId = tonumber(value),
-                                    show = false,
-                                    other = false,
-                                    hideInCombat = false,
-                                    priority = 0,
-                                    glow = false,
-                                    alpha = 1,
-                                }
-                                RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
-                                RaidFrameSettings:UpdateModule("Debuffs")
+                        addGroup = {
+                            order = 2,
+                            name = L["New Group"],
+                            type = "execute",
+                            func = function()
+                                local dbObjGroup = RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Debuffs
+                                tinsert(dbObjGroup, {
+                                    name = "",
+                                    auraList = {},
+                                })
+                                local groupNo = #dbObjGroup
+                                dbObjGroup[groupNo].name = L["Group "] .. groupNo
+                                RaidFrameSettings:CreateFilterGroup(groupNo, "Debuffs")
+                                RaidFrameSettings:UpdateModule("AuraFilter")
                             end,
+                            width = 1,
                         },
                         FilteredAuras = {
                             order = 4,
                             name = L["Filtered Auras:"],
                             type = "group",
-                            inline = true,
+                            childGroups = "tab",
                             args = {
+                                default = {
+                                    order = 1,
+                                    name = L["Default"],
+                                    type = "group",
+                                    args = {
+                                        addAura = {
+                                            order = 1,
+                                            name = L["Enter spellId:"],
+                                            desc = "",
+                                            type = "input",
+                                            width = 1.5,
+                                            pattern = "^%d+$",
+                                            usage = L["please enter a number"],
+                                            set = function(_, value)
+                                                RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value] = {
+                                                    spellId = tonumber(value),
+                                                    show = false,
+                                                    other = false,
+                                                    hideInCombat = false,
+                                                    priority = 0,
+                                                    glow = false,
+                                                    alpha = 1,
+                                                }
+                                                RaidFrameSettings:CreateAuraFilterEntry(value, "Debuffs")
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                        },
+                                        auraList = {
+                                            order = 2,
+                                            name = "",
+                                            type = "group",
+                                            inline = true,
+                                            args = {
 
+                                            },
+                                        },
+                                    },
+                                },
                             },
                         },
                     },
@@ -1549,8 +1768,272 @@ options = {
                             type = "group",
                             childGroups = "tab",
                             args = {
-                                addGroup = {
+                                importOptions = {
                                     order = 1,
+                                    name = L["Import presets:"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        retailDefensiveCooldowns = {
+                                            order = 1,
+                                            hidden = not isRetail,
+                                            name = L["Personal Defs"],
+                                            desc = L["Import the most imporant personal defensive cooldowns for all classes."],
+                                            type = "execute",
+                                            func = function()
+                                                local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
+                                                tinsert(dbObjGroup, {
+                                                    name = L["Personal Defs"],
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    orientation = 2,
+                                                    gap = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                    auraList = {},
+                                                })
+                                                local groupNo = #dbObjGroup
+                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
+
+                                                local spells = RaidFrameSettings:GetPersonalCooldowns()
+                                                for i = 1, #spells do
+                                                    local spellId = spells[i]
+                                                    if not dbObjGroup[groupNo].auraList[spellId] then
+                                                        dbObjGroup[groupNo].auraList[spellId] = {
+                                                            spellId = tonumber(spellId),
+                                                            show = true,
+                                                            other = true,
+                                                            hideInCombat = false,
+                                                            priority = 0,
+                                                            glow = false,
+                                                            alpha = 1,
+                                                        }
+                                                        RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, "Buffs")
+                                                    end
+                                                end
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                            width = 0.8,
+                                        },
+
+                                        healer = {
+                                            order = 2,
+                                            hidden = not isRetail,
+                                            name = L["Healer Spells"],
+                                            desc = "",
+                                            type = "execute",
+                                            func = function()
+                                                local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
+                                                tinsert(dbObjGroup, {
+                                                    name = L["Healer Spells"],
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    orientation = 2,
+                                                    gap = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                    auraList = {},
+                                                })
+                                                local groupNo = #dbObjGroup
+                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
+
+                                                local spells = RaidFrameSettings:GetHealerSpellPreset("healer")
+                                                for i = 1, #spells do
+                                                    local spellId = spells[i]
+                                                    if not dbObjGroup[groupNo].auraList[spellId] then
+                                                        dbObjGroup[groupNo].auraList[spellId] = {
+                                                            spellId = tonumber(spellId),
+                                                            show = true,
+                                                            other = true,
+                                                            hideInCombat = false,
+                                                            priority = 0,
+                                                            glow = false,
+                                                            alpha = 1,
+                                                        }
+                                                        RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, "Buffs")
+                                                    end
+                                                end
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                        externalDefs = {
+                                            order = 3,
+                                            hidden = not isRetail,
+                                            name = L["External Defs."],
+                                            desc = "",
+                                            type = "execute",
+                                            func = function()
+                                                local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
+                                                tinsert(dbObjGroup, {
+                                                    name = L["External Defs."],
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    orientation = 2,
+                                                    gap = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                    auraList = {},
+                                                })
+                                                local groupNo = #dbObjGroup
+                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
+
+                                                local spells = RaidFrameSettings:GetHealerSpellPreset("externalDefs")
+                                                for i = 1, #spells do
+                                                    local spellId = spells[i]
+                                                    if not dbObjGroup[groupNo].auraList[spellId] then
+                                                        dbObjGroup[groupNo].auraList[spellId] = {
+                                                            spellId = tonumber(spellId),
+                                                            show = true,
+                                                            other = true,
+                                                            hideInCombat = false,
+                                                            priority = 0,
+                                                            glow = false,
+                                                            alpha = 1,
+                                                        }
+                                                        RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, "Buffs")
+                                                    end
+                                                end
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                        defensives = {
+                                            order = 4,
+                                            hidden = not isRetail,
+                                            name = L["Defensive Spells"],
+                                            desc = "",
+                                            type = "execute",
+                                            func = function()
+                                                local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
+                                                tinsert(dbObjGroup, {
+                                                    name = L["Defensive Spells"],
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    orientation = 2,
+                                                    gap = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                    auraList = {},
+                                                })
+                                                local groupNo = #dbObjGroup
+                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
+
+                                                local spells = RaidFrameSettings:GetHealerSpellPreset("defensives")
+                                                for i = 1, #spells do
+                                                    local spellId = spells[i]
+                                                    if not dbObjGroup[groupNo].auraList[spellId] then
+                                                        dbObjGroup[groupNo].auraList[spellId] = {
+                                                            spellId = tonumber(spellId),
+                                                            show = true,
+                                                            other = true,
+                                                            hideInCombat = false,
+                                                            priority = 0,
+                                                            glow = false,
+                                                            alpha = 1,
+                                                        }
+                                                        RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, "Buffs")
+                                                    end
+                                                end
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                        tank = {
+                                            order = 5,
+                                            hidden = not isRetail,
+                                            name = L["Tank Spells"],
+                                            desc = "",
+                                            type = "execute",
+                                            func = function()
+                                                local dbObjGroup = RaidFrameSettings.db.profile["Buffs"].AuraGroup
+                                                tinsert(dbObjGroup, {
+                                                    name = L["Tank Spells"],
+                                                    point = 1,
+                                                    relativePoint = 1,
+                                                    frame = 1,
+                                                    frameNo = 0,
+                                                    frameSelect = 1,
+                                                    frameManualSelect = 1,
+                                                    unlimitAura = true,
+                                                    maxAuras = 1,
+                                                    xOffset = 0,
+                                                    yOffset = 0,
+                                                    orientation = 2,
+                                                    gap = 0,
+                                                    setSize = false,
+                                                    width = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.width,
+                                                    height = RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.height,
+                                                    auraList = {},
+                                                })
+                                                local groupNo = #dbObjGroup
+                                                RaidFrameSettings:CreateAuraGroup(groupNo, "Buffs")
+
+                                                local spells = RaidFrameSettings:GetHealerSpellPreset("tank")
+                                                for i = 1, #spells do
+                                                    local spellId = spells[i]
+                                                    if not dbObjGroup[groupNo].auraList[spellId] then
+                                                        dbObjGroup[groupNo].auraList[spellId] = {
+                                                            spellId = tonumber(spellId),
+                                                            show = true,
+                                                            other = true,
+                                                            hideInCombat = false,
+                                                            priority = 0,
+                                                            glow = false,
+                                                            alpha = 1,
+                                                        }
+                                                        RaidFrameSettings:CreateAuraGroupEntry(spellId, groupNo, "Buffs")
+                                                    end
+                                                end
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("AuraFilter")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                    },
+                                },
+                                addGroup = {
+                                    order = 2,
                                     name = L["New Group"],
                                     type = "execute",
                                     func = function()
@@ -1582,7 +2065,7 @@ options = {
                                     width = 1,
                                 },
                                 auraGroup = {
-                                    order = 2,
+                                    order = 3,
                                     name = L["Aura Position"],
                                     type = "group",
                                     args = {
@@ -1593,7 +2076,15 @@ options = {
                                             pattern = "^%d+$",
                                             usage = L["please enter a number"],
                                             set = function(_, value)
-                                                local filter = RaidFrameSettings.db.profile.AuraFilter.Buffs[value]
+                                                local filter = RaidFrameSettings.db.profile.AuraFilter.default.Buffs[value]
+                                                if not filter then
+                                                    for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Buffs) do
+                                                        if auraGroup.auraList[value] then
+                                                            filter = auraGroup.auraList[value]
+                                                            break
+                                                        end
+                                                    end
+                                                end
                                                 RaidFrameSettings.db.profile.Buffs.AuraPosition[value] = {
                                                     ["spellId"] = tonumber(value),
                                                     point = 1,
@@ -2054,7 +2545,15 @@ options = {
                                             pattern = "^%d+$",
                                             usage = L["please enter a number"],
                                             set = function(_, value)
-                                                local filter = RaidFrameSettings.db.profile.AuraFilter.Debuffs[value]
+                                                local filter = RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value]
+                                                if not filter then
+                                                    for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup.Debuffs) do
+                                                        if auraGroup.auraList[value] then
+                                                            filter = auraGroup.auraList[value]
+                                                            break
+                                                        end
+                                                    end
+                                                end
                                                 RaidFrameSettings.db.profile.Debuffs.AuraPosition[value] = {
                                                     ["spellId"] = tonumber(value),
                                                     point = 1,
@@ -3499,9 +3998,16 @@ function RaidFrameSettings:GetOptionsTable()
     return options, blizoptions
 end
 
-function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
-    local dbObj = self.db.profile.AuraFilter[category][spellId]
-    local auraFilterOptions = options.args.AuraFilter.args[category].args.FilteredAuras.args
+function RaidFrameSettings:CreateAuraFilterEntry(spellId, category, groupNo)
+    local dbObj
+    local auraFilterOptions
+    if groupNo and groupNo > 0 then
+        dbObj = self.db.profile.AuraFilter.FilterGroup[category][groupNo].auraList[spellId]
+        auraFilterOptions = options.args.AuraFilter.args[category].args.FilteredAuras.args["group" .. groupNo].args.auraList.args
+    else
+        dbObj = self.db.profile.AuraFilter.default[category][spellId]
+        auraFilterOptions = options.args.AuraFilter.args[category].args.FilteredAuras.args.default.args.auraList.args
+    end
     local spellName, _, icon
     if #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
         spellName, _, icon = GetSpellInfo(spellId)
@@ -3561,7 +4067,11 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
                 name = L["remove"],
                 type = "execute",
                 func = function()
-                    self.db.profile.AuraFilter[category][spellId] = nil
+                    if groupNo then
+                        self.db.profile.AuraFilter.FilterGroup[category][groupNo].auraList[spellId] = nil
+                    else
+                        self.db.profile.AuraFilter.default[category][spellId] = nil
+                    end
                     auraFilterOptions[spellId] = nil
                     RaidFrameSettings:LoadUserInputEntrys()
                     RaidFrameSettings:UpdateModule("AuraFilter")
@@ -3637,6 +4147,98 @@ function RaidFrameSettings:CreateAuraFilterEntry(spellId, category)
         },
     }
     auraFilterOptions[spellId] = aurafilter_entry
+end
+
+function RaidFrameSettings:CreateFilterGroup(groupNo, category)
+    local dbObj = self.db.profile.AuraFilter.FilterGroup[category][groupNo]
+    local groupOptions = options.args.AuraFilter.args[category].args.FilteredAuras.args
+    local auragroup_entry = {
+        order = 2 + groupNo,
+        name = "<" .. groupNo .. "> " .. dbObj.name,
+        type = "group",
+        args = {
+            groupname = {
+                order = 1,
+                name = L["Groupname"],
+                type = "input",
+                get = function()
+                    return dbObj.name
+                end,
+                set = function(_, value)
+                    dbObj.name = value
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                width = 0.7,
+            },
+            groupNo = {
+                order = 2,
+                name = L["Order"],
+                type = "input",
+                get = function()
+                    return tostring(groupNo)
+                end,
+                set = function(_, value)
+                    local newGroupNo = tonumber(value) or groupNo
+                    if newGroupNo == groupNo or newGroupNo < 1 or newGroupNo > #self.db.profile.AuraFilter.FilterGroup[category] then
+                        return
+                    end
+                    local info = self.db.profile.AuraFilter.FilterGroup[category][groupNo]
+                    table.remove(self.db.profile.AuraFilter.FilterGroup[category], groupNo)
+                    table.insert(self.db.profile.AuraFilter.FilterGroup[category], newGroupNo, info)
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                width = 0.3,
+            },
+            remove = {
+                order = 3,
+                name = L["remove"],
+                type = "execute",
+                func = function()
+                    table.remove(self.db.profile.AuraFilter.FilterGroup[category], groupNo)
+                    RaidFrameSettings:LoadUserInputEntrys()
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end,
+                width = 0.5,
+            },
+            newline2 = {
+                order = 4,
+                type = "description",
+                name = "",
+            },
+            addAura = {
+                order = 5,
+                name = L["Enter spellId:"],
+                type = "input",
+                pattern = "^%d+$",
+                usage = L["please enter a number"],
+                set = function(_, value)
+                    RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category][groupNo].auraList[value] = {
+                        spellId = tonumber(value),
+                        show = false,
+                        other = false,
+                        hideInCombat = false,
+                        priority = 0,
+                        glow = false,
+                        alpha = 1,
+                    }
+                    RaidFrameSettings:CreateAuraFilterEntry(value, category, groupNo)
+                    RaidFrameSettings:UpdateModule("AuraFilter")
+                end
+            },
+            auraList = {
+                order = 6,
+                name = L["Auras:"],
+                type = "group",
+                inline = true,
+                args = {
+
+                },
+            },
+        },
+    }
+    groupOptions["group" .. groupNo] = auragroup_entry
 end
 
 function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
@@ -4235,7 +4837,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
     local dbObj = self.db.profile[category].AuraGroup[groupNo]
     local groupOptions = options.args.Auras.args[category].args.AuraPosition.args
     local auragroup_entry = {
-        order = 2 + groupNo,
+        order = 3 + groupNo,
         name = "<" .. groupNo .. "> " .. dbObj.name,
         type = "group",
         args = {
@@ -4262,7 +4864,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 end,
                 set = function(_, value)
                     local newGroupNo = tonumber(value) or groupNo
-                    if newGroupNo == groupNo or newGroupNo < 0 or newGroupNo > #self.db.profile[category].AuraGroup then
+                    if newGroupNo == groupNo or newGroupNo < 1 or newGroupNo > #self.db.profile[category].AuraGroup then
                         return
                     end
                     local info = self.db.profile[category].AuraGroup[groupNo]
@@ -4598,7 +5200,15 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 pattern = "^%d+$",
                 usage = L["please enter a number"],
                 set = function(_, value)
-                    local filter = RaidFrameSettings.db.profile.AuraFilter[category][value] and self.db.profile.AuraFilter[category][value]
+                    local filter = RaidFrameSettings.db.profile.AuraFilter.default[category][value] and self.db.profile.AuraFilter.default[category][value]
+                    if not filter then
+                        for _, auraGroup in pairs(RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category]) do
+                            if auraGroup.auraList[value] then
+                                filter = auraGroup.auraList[value]
+                                break
+                            end
+                        end
+                    end
                     dbObj.auraList[value] = {
                         spellId = tonumber(value),
                         priority = 0,
@@ -4680,10 +5290,17 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end
 
         --aura filter
-        options.args.AuraFilter.args[category].args.FilteredAuras.args = {}
+        -- for backward compatibility
+        if self.db.profile.AuraFilter[category] then
+            for spellId, v in pairs(self.db.profile.AuraFilter[category]) do
+                self.db.profile.AuraFilter.default[category][spellId] = v
+                self.db.profile.AuraFilter[category][spellId] = nil
+            end
+        end
+        options.args.AuraFilter.args[category].args.FilteredAuras.args.default.args.auraList.args = {}
         -- sort
         local sorted = {}
-        for spellId, v in pairs(self.db.profile.AuraFilter[category]) do
+        for spellId, v in pairs(self.db.profile.AuraFilter.default[category]) do
             if not v.spellId then
                 v.spellId = tonumber(spellId)
             end
@@ -4697,6 +5314,32 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end)
         for _, v in pairs(sorted) do
             self:CreateAuraFilterEntry(tostring(v.spellId), category)
+        end
+
+        for k in pairs(options.args.AuraFilter.args[category].args.FilteredAuras.args) do
+            if k:match("^group") then
+                options.args.AuraFilter.args[category].args.FilteredAuras.args[k] = nil
+            end
+        end
+        for groupNo, groupInfo in pairs(self.db.profile.AuraFilter.FilterGroup[category]) do
+            self:CreateFilterGroup(groupNo, category)
+            -- sort
+            sorted = {}
+            for spellId, v in pairs(groupInfo.auraList) do
+                if not v.spellId then
+                    v.spellId = tonumber(spellId)
+                end
+                if not v.priority then
+                    v.priority = 0
+                end
+                tinsert(sorted, v)
+            end
+            table.sort(sorted, function(a, b)
+                return a.priority == b.priority and self:compareSpell(a.spellId, b.spellId) or a.priority > b.priority
+            end)
+            for _, v in pairs(sorted) do
+                self:CreateAuraFilterEntry(tostring(v.spellId), category, groupNo)
+            end
         end
 
         --aura increase

@@ -17,7 +17,6 @@ L["Role Icon"]           = "Role Icon"
 L["Raid Mark"]           = "Raid Mark"
 L["Range"]               = "Range"
 L["Aura Filter"]         = "Aura Filter"
-L["Auras"]               = "Auras"
 L["Auras:"]              = "Auras:"
 L["Buffs"]               = "Buffs"
 L["Debuffs"]             = "Debuffs"
@@ -26,6 +25,10 @@ L["Aura Highlight"]      = "Aura Highlight"
 L["Custom Scale"]        = "Custom Scale"
 L["Solo"]                = "Solo"
 L["Profiles"]            = "Profiles"
+
+
+L["Auraframe Settings"]   = "Auraframe Settings"
+L["Buff & Debuff Frames"] = "Buff & Debuff Frames"
 
 
 L["Choose colors and textures for Health Bars.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"] = "Choose colors and textures for Health Bars.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"

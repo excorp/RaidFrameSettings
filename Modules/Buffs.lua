@@ -646,7 +646,7 @@ function Buffs:OnDisable()
     roster_changed = true
     local restoreBuffFrames = function(frame)
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
-            extraBuffFrame:Hide()
+            extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)
         end
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then

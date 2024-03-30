@@ -708,7 +708,7 @@ function Debuffs:OnDisable()
     roster_changed = true
     local restoreDebuffFrames = function(frame)
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
-            extraDebuffFrame:Hide()
+            extraDebuffFrame:UnsetAura()
             self:Glow(extraDebuffFrame, false)
         end
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then

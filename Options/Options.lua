@@ -1355,7 +1355,8 @@ options = {
         },
         Auras = {
             order = 5,
-            name = L["Auras"],
+            name = L["Auraframe Settings"],
+            desc = L["Buff & Debuff Frames"],
             type = "group",
             childGroups = "select",
             hidden = function()

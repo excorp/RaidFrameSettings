@@ -28,6 +28,10 @@ L["Solo"]                = "솔로"
 L["Profiles"]            = "프로필"
 
 
+L["Auraframe Settings"]   = "오라프레임 설정"
+L["Buff & Debuff Frames"] = "버프와 디버프 프레임"
+
+
 L["Choose colors and textures for Health Bars.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"] = "체력바의 색상과 텍스처를 선택합니다.\n|cffF4A460CPU 영향: |r|cff00ff00낮음|r ~ |cffFFFF00중간|r"
 L["Adjust the Font, Font Size, Font Color as well as the position for the Names and Status Texts.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"] = "글꼴, 크기, 색상은 물론 이름과 상태 텍스트의 위치를 조정할 수 있습니다.\n|cffF4A460CPU 영향: |r|cff00ff00낮음|r ~ |cffFFFF00중간|r"
 L["Position the Role Icon.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"] = "역할 아이콘을 재배치합니다.\n|cffF4A460CPU 영향: |r|cff00ff00낮음|r"

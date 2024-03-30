@@ -1,7 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Excorp_Fork", "koKR")
 if not L then return end
 
-L["RaidFrameSettings"]                    = "RaidFrameSettings 변하지롱 수정판"
+L["RaidFrameSettings"]                    = "RaidFrameSettings"
+L["RaidFrameSettings_Excorp_Fork"]        = "RaidFrameSettings 변하지롱 수정판"
 L["Options will show after combat ends."] = "옵션창은 전투 종료후 표시 됩니다."
 
 
@@ -292,14 +293,7 @@ L["Scale"]                    = "비율"
 L["Start Animation"]          = "시작 애니메이션"
 
 
--- minimap icon
-L["Minimap Icon"]                      = "미니맵 아이콘"
-L["Displays the icon in the minimap."] = "미니맵에 아이콘을 표시 합니다."
-
-
 L["You can also open the options window with the /rfs command.\n\n"] = "설정창은 /rfs 명령으로도 열수 있습니다.\n\n"
-L["left button - Toggles the options window."]                       = "왼쪽 버튼 - 옵션창 보임/숨김."
-L["right button - Hides the minimap icon."]                          = "오른쪽 버튼 - 미니맵 아이콘 숨김."
 
 
 L["Sort"]                                                                      = "정렬"
@@ -379,6 +373,14 @@ L["Show the Mastery Stack for Restoration Druid."] = "회복 드루이드의 특
 L["Tooltip Position"] = "툴팁 위치"
 L["Displays a tooltip at the mouse position."] = "툴팁을 마우스 위치에 표시 합니다"
 
-L["Import presets:"] = "Import presets:"
-L["Personal Defs"] = "Personal Defs"
-L["Import the most imporant personal defensive cooldowns for all classes."] = "Import the most imporant personal defensive cooldowns for all classes."
+L["Import presets:"] = "사전 설정 가져오기:"
+L["Personal Defs"] = "개인 방어기재"
+L["Import the most imporant personal defensive cooldowns for all classes."] = "각 클래스별 주요 방어기재를 등록합니다."
+
+
+L["Minimap Icon"] = "미니맵 아이콘"
+L["Toggle the minimap icon on or off."] = "미니맵에 아이콘을 켜거나 끕니다."
+
+L["If you want to show the minimap icon again, enable it in the \"Enabled Modules\" section of the addon."] = "미니맵 아이콘을 다시 표시하려면, 설정 > 모듈 활성화에서 켤수 있습니다."
+L["Left click: Open settings."] = "왼쪽 클릭: 설정 열기"
+L["Middle click: Hide minmap icon."] = "가운데 클릭: 미니맵 아이콘 숨김"

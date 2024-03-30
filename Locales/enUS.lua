@@ -2,6 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Excorp_Fork", "e
 if not L then return end
 
 L["RaidFrameSettings"]                    = "RaidFrameSettings"
+L["RaidFrameSettings_Excorp_Fork"]        = "RaidFrameSettings Excorp Fork"
 L["Options will show after combat ends."] = "Options will show after combat ends."
 
 
@@ -295,15 +296,7 @@ L["Scale"]                    = "Scale"
 L["Start Animation"]          = "Start Animation"
 
 
--- minimap icon
-L["Minimap Icon"]                      = "Minimap Icon"
-L["Displays the icon in the minimap."] = "Displays the icon in the minimap."
-
-
-L["You can also open the options window with the /rfs command.\n\n"] = "You can also open the options window with the /rfs command.\n\n"
-L["left button - Toggles the options window."]                       = "left button - Toggles the options window."
-L["right button - Hides the minimap icon."]                          = "right button - Hides the minimap icon."
-
+L["You can also open the options window with the /rfs command.\n\n"]           = "You can also open the options window with the /rfs command.\n\n"
 
 L["Sort"]                                                                      = "Sort"
 L["Sort the order of group members.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"] = "Sort the order of group members.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"
@@ -385,3 +378,11 @@ L["Displays a tooltip at the mouse position."] = "Displays a tooltip at the mous
 L["Import presets:"] = "Import presets:"
 L["Personal Defs"] = "Personal Defs"
 L["Import the most imporant personal defensive cooldowns for all classes."] = "Import the most imporant personal defensive cooldowns for all classes."
+
+
+L["Minimap Icon"] = "Minimap Icon"
+L["Toggle the minimap icon on or off."] = "Toggle the minimap icon on or off."
+
+L["If you want to show the minimap icon again, enable it in the \"Enabled Modules\" section of the addon."] = "If you want to show the minimap icon again, enable it in the \"Enabled Modules\" section of the addon."
+L["Left click: Open settings."] = "Left click: Open settings."
+L["Middle click: Hide minmap icon."] = "Middle click: Hide minmap icon."

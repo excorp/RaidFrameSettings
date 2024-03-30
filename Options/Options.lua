@@ -2,6 +2,8 @@
     Created by Slothpala
     Options:
     Create an options table for the GUI
+    I know it's a bit messy, but I'm planning to create a new, more intuitive UI for The War Within, so I won't be spending any time cleaning this up.
+    The same goes for localisation. I don't want to waste people's time translating it, only to have to redo it a few months later.
 --]]
 local addonName, addonTable                   = ...
 local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
@@ -462,6 +464,19 @@ options = {
                             desc = L["Sort the order of group members.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
+                        },
+                        MinimapButton = {
+                            order = 12,
+                            type = "toggle",
+                            name = L["Minimap Icon"],
+                            desc = L["Toggle the minimap icon on or off."],
+                            get = function()
+                                return RaidFrameSettings.db.global.MinimapButton.enabled
+                            end,
+                            set = function(_, value)
+                                RaidFrameSettings.db.global.MinimapButton.enabled = value
+                                RaidFrameSettings:UpdateModule("MinimapButton")
+                            end,
                         },
                     },
                 },
@@ -2719,24 +2734,6 @@ options = {
             name = L["Module Settings"],
             type = "group",
             args = {
-                Minimap = {
-                    order = 0,
-                    type = "toggle",
-                    name = L["Minimap Icon"],
-                    desc = L["Displays the icon in the minimap."],
-                    get = function()
-                        return not RaidFrameSettings.db.profile.MinorModules.minimapIcon.hide
-                    end,
-                    set = function(info, value)
-                        RaidFrameSettings.db.profile.MinorModules.minimapIcon.hide = not value
-                        RaidFrameSettings:ShowMinimapIcon(value)
-                    end,
-                },
-                newline = {
-                    order = 0.1,
-                    type = "description",
-                    name = "\n",
-                },
                 RoleIcon = {
                     hidden = isVanilla or RoleIcon_disabled,
                     order = 1,
@@ -3701,7 +3698,7 @@ function RaidFrameSettings:CreateSortUserEntry(keyword)
                 name = L["Priority"],
                 type = "input",
                 pattern = "^%d+$",
-                L["please enter a number"],
+                usage = L["please enter a number"],
                 get = function()
                     return tostring(dbObj.priority)
                 end,

@@ -25,7 +25,6 @@ local SetSize = SetSize
 local SetTexCoord = SetTexCoord
 local ClearAllPoints = ClearAllPoints
 local SetPoint = SetPoint
-local Hide = Hide
 local SetFont = SetFont
 local SetTextColor = SetTextColor
 local SetShadowColor = SetShadowColor
@@ -33,8 +32,10 @@ local SetShadowOffset = SetShadowOffset
 local SetDrawSwipe = SetDrawSwipe
 local SetReverse = SetReverse
 local SetDrawEdge = SetDrawEdge
---Lua
+local SetScale = SetScale
+-- Lua
 local next = next
+local pairs = pairs
 local select = select
 
 local frame_registry = {}
@@ -68,7 +69,7 @@ function Buffs:OnEnable()
     durationOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(durationOpt.outlinemode)
     durationOpt.point = addon:ConvertDbNumberToPosition(durationOpt.point)
     durationOpt.relativePoint = addon:ConvertDbNumberToPosition(durationOpt.relativePoint)
-    --Stack
+    -- Stack display options
     local stackOpt = CopyTable(addon.db.profile.Buffs.StacksDisplay)
     stackOpt.font = Media:Fetch("font", stackOpt.font)
     stackOpt.outlinemode = addon:ConvertDbNumberToOutlinemode(stackOpt.outlinemode)

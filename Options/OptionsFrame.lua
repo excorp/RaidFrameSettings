@@ -36,17 +36,9 @@ local function createAceContainer()
 end
 
 frame:Hide()
-local r, g, b = PANEL_BACKGROUND_COLOR:GetRGB()
-frame.Bg:SetColorTexture(r, g, b, 0.9)
-frame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_REGEN_DISABLED" then
-        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        frame:Hide()
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-        frame:Show()
-    end
-end)
+local r,g,b = PANEL_BACKGROUND_COLOR:GetRGB()
+frame.Bg:SetColorTexture(r,g,b,0.9)
+frame:SetScript("OnEvent", frame.Hide)
 tinsert(UISpecialFrames, frame:GetName())
 frame.title = _G["RaidFrameSettingsOptionsTitleText"]
 frame.title:SetText(L["RaidFrameSettings"])
@@ -75,7 +67,17 @@ RaidFrameSettingsOptionsPortrait:SetTexture(addonTable.texturePaths.PortraitIcon
 addResizeButton()
 local container = createAceContainer()
 frame.container = container
-frame:HookScript("OnShow", function()
+frame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_REGEN_DISABLED" then
+        frame:Hide()
+        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+        RaidFrameSettings:Print("Options will open after combat ends.")
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        frame:Show()
+        frame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    end
+end)
+frame:HookScript("OnShow",function()
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     ACD:Open("RaidFrameSettings_options", container)
 end)

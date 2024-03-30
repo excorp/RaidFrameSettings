@@ -318,9 +318,6 @@ local defaults = {
             },
         },
         MinorModules = {
-            minimapIcon = {
-                hide = false,
-            },
             RoleIcon = {
                 position    = 1,
                 x_offset    = 0,
@@ -398,6 +395,9 @@ local defaults = {
             arena = "Default",
             battleground = "Default",
         },
+        MinimapButton = {
+            enabled = true,
+        },
     },
 }
 
@@ -466,8 +466,6 @@ function RaidFrameSettings:SetStatus(info, value)
         if self:IsModuleEnabled("Debuffs") then
             self:UpdateModule("Debuffs")
         end
-    elseif module_name == "minimapIcon" then
-        self:ShowMinimapIcon(value)
     else
         self:UpdateModule(module_name)
     end

@@ -158,7 +158,7 @@ L["Icon Height"]                = "Icon Height"
 
 L["SpellId"]                    = "SpellId"
 L["Enter spellIDs"]             = "Enter spellIDs"
-L["Enter spellId:"]             = "Enter spellId:"
+L["Enter spellId:"]             = "Enter spellId or spellName:"
 L["Filtered Auras:"]            = "Filtered Auras:"
 L["|cffff0000aura not found|r"] = "|cffff0000aura not found|r"
 

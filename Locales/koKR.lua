@@ -158,7 +158,7 @@ L["Icon Height"]                = "아이콘 세로크기"
 
 L["SpellId"]                    = "주문ID"
 L["Enter spellIDs"]             = "주문ID를 입력 하세요"
-L["Enter spellId:"]             = "주문ID 입력:"
+L["Enter spellId:"]             = "주문ID 또는 주문명을 입력:"
 L["Filtered Auras:"]            = "오라 필터:"
 L["|cffff0000aura not found|r"] = "|cffff0000주문을 찾을수 없습니다|r"
 

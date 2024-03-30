@@ -30,7 +30,7 @@ function RaidFrameSettings:OnInitialize()
     --register options as option table to create a gui based on it
     AC:RegisterOptionsTable("RaidFrameSettings_options", options)
     AC:RegisterOptionsTable("RaidFrameSettings_blizoptions", blizoptions)
-    ACD:AddToBlizOptions("RaidFrameSettings_blizoptions", L["RaidFrameSettings"])
+    ACD:AddToBlizOptions("RaidFrameSettings_blizoptions", L[addonName])
 
     self:RegisterChatCommand("rfs", "SlashCommand")
     self:RegisterChatCommand("raidframesettings", "SlashCommand")

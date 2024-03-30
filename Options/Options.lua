@@ -1469,7 +1469,6 @@ options = {
                                             width = 0.6,
                                         },
                                         tooltip = {
-                                            hidden = function() return isClassic end,
                                             order = 2.3,
                                             type = "toggle",
                                             name = L["Show Tooltip"],
@@ -1478,7 +1477,7 @@ options = {
                                             width = 0.5,
                                         },
                                         tooltipPosition = {
-                                            hidden = function() return isClassic or not RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.tooltip end,
+                                            hidden = function() return not RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.tooltip end,
                                             order = 2.4,
                                             type = "toggle",
                                             name = L["Tooltip Position"],
@@ -2228,7 +2227,6 @@ options = {
                                             width = 0.6,
                                         },
                                         tooltip = {
-                                            hidden = function() return isClassic end,
                                             order = 2.3,
                                             type = "toggle",
                                             name = L["Show Tooltip"],
@@ -2237,7 +2235,7 @@ options = {
                                             width = 0.5,
                                         },
                                         tooltipPosition = {
-                                            hidden = function() return isClassic or not RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.tooltip end,
+                                            hidden = function() return not RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.tooltip end,
                                             order = 2.4,
                                             type = "toggle",
                                             name = L["Tooltip Position"],

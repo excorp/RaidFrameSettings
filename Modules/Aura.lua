@@ -306,24 +306,38 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         if category == "Buff" then
             function auraFrame:UpdateTooltip()
                 if auraFrame:IsShown() then
-                    if auraFrame.auraInstanceID > 0 then
-                        GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                    if isClassic then
+                        local caster, spellId = strmatch(auraFrame.auraInstanceID, "(.-)_(%d+)")
+                        if spellId then
+                            GameTooltip:SetSpellByID(spellId)
+                        end
                     else
-                        GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
+                        if auraFrame.auraInstanceID > 0 then
+                            GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                        else
+                            GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
+                        end
                     end
                 end
             end
         else
             function auraFrame:UpdateTooltip()
                 if auraFrame:IsShown() then
-                    if self.auraInstanceID > 0 then
-                        if (self.isBossBuff) then
-                            GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
-                        else
-                            GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                    if isClassic then
+                        local caster, spellId = strmatch(auraFrame.auraInstanceID, "(.-)_(%d+)")
+                        if spellId then
+                            GameTooltip:SetSpellByID(spellId)
                         end
                     else
-                        GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
+                        if self.auraInstanceID > 0 then
+                            if (self.isBossBuff) then
+                                GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                            else
+                                GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                            end
+                        else
+                            GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
+                        end
                     end
                 end
             end

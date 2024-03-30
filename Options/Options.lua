@@ -1028,6 +1028,7 @@ options = {
                             width = 1,
                         },
                         importOptions = {
+                            hidden = not isRetail,
                             order = 2,
                             name = L["Import presets:"],
                             type = "group",
@@ -1241,7 +1242,7 @@ options = {
                                                 if not spellId then
                                                     spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                                                 end
-                                                for spellId, iconId in pairs(spellIds) do
+                                                for _, spellId in pairs(spellIds) do
                                                     RaidFrameSettings.db.profile.AuraFilter.default.Buffs[tostring(spellId)] = {
                                                         spellId = spellId,
                                                         show = false,
@@ -1253,8 +1254,6 @@ options = {
                                                     }
                                                     RaidFrameSettings:CreateAuraFilterEntry(tostring(spellId), "Buffs")
                                                 end
-                                                RaidFrameSettings:LoadUserInputEntrys()
-                                                RaidFrameSettings:UpdateModule("AuraFilter")
                                             end,
                                         },
                                         auraList = {
@@ -1320,7 +1319,7 @@ options = {
                                                 if not spellId then
                                                     spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                                                 end
-                                                for spellId, iconId in pairs(spellIds) do
+                                                for _, spellId in pairs(spellIds) do
                                                     value = tostring(spellId)
                                                     RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value] = {
                                                         spellId = tonumber(value),
@@ -1767,7 +1766,7 @@ options = {
                                         if not spellId then
                                             spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                                         end
-                                        for spellId, iconId in pairs(spellIds) do
+                                        for _, spellId in pairs(spellIds) do
                                             value = tostring(spellId)
                                             RaidFrameSettings.db.profile.Buffs.Increase[value] = true
                                             RaidFrameSettings:CreateIncreaseEntry(value, "Buffs")
@@ -1793,6 +1792,7 @@ options = {
                             childGroups = "tab",
                             args = {
                                 importOptions = {
+                                    hidden = not isRetail,
                                     order = 1,
                                     name = L["Import presets:"],
                                     type = "group",
@@ -2105,7 +2105,7 @@ options = {
                                                 if not spellId then
                                                     spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                                                 end
-                                                for spellId, iconId in pairs(spellIds) do
+                                                for _, spellId in pairs(spellIds) do
                                                     value = tostring(spellId)
                                                     local filter = RaidFrameSettings.db.profile.AuraFilter.default.Buffs[value]
                                                     if not filter then
@@ -2516,7 +2516,7 @@ options = {
                                         if not spellId then
                                             spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                                         end
-                                        for spellId, iconId in pairs(spellIds) do
+                                        for _, spellId in pairs(spellIds) do
                                             value = tostring(spellId)
                                             RaidFrameSettings.db.profile.Debuffs.Increase[value] = true
                                             RaidFrameSettings:CreateIncreaseEntry(value, "Debuffs")
@@ -2590,7 +2590,7 @@ options = {
                                                 if not spellId then
                                                     spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                                                 end
-                                                for spellId, iconId in pairs(spellIds) do
+                                                for _, spellId in pairs(spellIds) do
                                                     value = tostring(spellId)
                                                     local filter = RaidFrameSettings.db.profile.AuraFilter.default.Debuffs[value]
                                                     if not filter then
@@ -4267,7 +4267,7 @@ function RaidFrameSettings:CreateFilterGroup(groupNo, category)
                     if not spellId then
                         spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                     end
-                    for spellId, iconId in pairs(spellIds) do
+                    for _, spellId in pairs(spellIds) do
                         value = tostring(spellId)
                         RaidFrameSettings.db.profile.AuraFilter.FilterGroup[category][groupNo].auraList[value] = {
                             spellId = tonumber(value),
@@ -5261,7 +5261,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     if not spellId then
                         spellIds = RaidFrameSettings:GetSpellIdsByName(value)
                     end
-                    for spellId, iconId in pairs(spellIds) do
+                    for _, spellId in pairs(spellIds) do
                         value = tostring(spellId)
                         local filter = RaidFrameSettings.db.profile.AuraFilter.default[category][value] and self.db.profile.AuraFilter.default[category][value]
                         if not filter then

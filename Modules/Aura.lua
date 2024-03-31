@@ -307,10 +307,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             function auraFrame:UpdateTooltip()
                 if auraFrame:IsShown() then
                     if isClassic then
-                        local caster, spellId = strmatch(auraFrame.auraInstanceID, "(.-)_(%d+)")
-                        if spellId then
-                            GameTooltip:SetSpellByID(spellId)
-                        end
+                        GameTooltip:SetUnitBuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
                     else
                         if auraFrame.auraInstanceID > 0 then
                             GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
@@ -324,9 +321,10 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             function auraFrame:UpdateTooltip()
                 if auraFrame:IsShown() then
                     if isClassic then
-                        local caster, spellId = strmatch(auraFrame.auraInstanceID, "(.-)_(%d+)")
-                        if spellId then
-                            GameTooltip:SetSpellByID(spellId)
+                        if self.isBossBuff then
+                            GameTooltip:SetUnitBuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
+                        else
+                            GameTooltip:SetUnitDebuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
                         end
                     else
                         if self.auraInstanceID > 0 then

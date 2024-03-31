@@ -157,7 +157,8 @@ function Buffs:OnEnable()
         if not parent or not frame_registry[parent] then
             return
         end
-
+        buffFrame:SetID(index)
+        buffFrame.filter = filter
         local name, icon, applications, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId, canApplyAura = UnitBuff(unit, index, filter)
         if GetClassicExpansionLevel() < LE_EXPANSION_BURNING_CRUSADE and not frameOpt.baricon then
             CompactUnitFrame_UpdateCooldownFrame(buffFrame, expirationTime, duration, false)

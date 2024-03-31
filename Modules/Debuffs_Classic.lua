@@ -172,7 +172,9 @@ function Debuffs:OnEnable()
         if not parent or not frame_registry[parent] then
             return
         end
-
+        debuffFrame:SetID(index)
+        debuffFrame.filter = filter
+        debuffFrame.isBossBuff = isBossBuff
         local name, icon, applications, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId
         if isBossBuff then
             name, icon, applications, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitBuff(unit, index, filter)

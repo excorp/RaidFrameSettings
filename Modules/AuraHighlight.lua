@@ -62,7 +62,7 @@ local function toDebuffColor(frame, dispelName)
 end
 
 local function updateColor(frame)
-    if not frame or frame.unit:match("na") or not frame:IsVisible() or frame:IsForbidden() then --this will exclude nameplates and arena
+    if not frame or frame.unit:match("pet") or frame.unit:match("na") or not frame:IsVisible() or frame:IsForbidden() or not UnitIsPlayer(frame.unit) then --this will exclude nameplates and arena
         return
     end
     for auraInstanceID, dispelName in next, auraMap[frame].debuffs do
@@ -317,9 +317,6 @@ function module:OnEnable()
         if frame.unit:match("pet") or frame.unit:match("na") then --this will exclude nameplates and arena
             return
         end
-        if not UnitIsPlayer(frame.unit) then --exclude pet/vehicle frame
-            return
-        end
         self:HookFrame(frame)
         updateAurasFull(frame)
     end)
@@ -331,19 +328,11 @@ function module:OnEnable()
         end
     end
 
-    --[[
     self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
-        if not unit or unit:match("nameplate") then
+        if not unit or unit:match("pet") or unit:match("na") then
             return
         end
         updateAurasFull(frame)
-    end)
-    ]]
-
-    self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        RaidFrameSettings:IterateRoster(function(frame)
-            updateAurasFull(frame)
-        end)
     end)
 
     --[[
@@ -351,6 +340,7 @@ function module:OnEnable()
         If this happens while the frame has a debuff color, we will need to update it again.
     ]]
     self:HookFuncFiltered("CompactUnitFrame_UpdateHealthColor", onUpdateHealthColor)
+
     RaidFrameSettings:IterateRoster(function(frame)
         self:HookFrame(frame)
         updateAurasFull(frame)
@@ -359,7 +349,6 @@ end
 
 function module:OnDisable()
     self:DisableHooks()
-    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     RaidFrameSettings:IterateRoster(function(frame)
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color

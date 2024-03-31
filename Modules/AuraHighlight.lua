@@ -328,13 +328,6 @@ function module:OnEnable()
         end
     end
 
-    self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
-        if not unit or unit:match("pet") or unit:match("na") then
-            return
-        end
-        updateAurasFull(frame)
-    end)
-
     --[[
         CompactUnitFrame_UpdateHealthColor checks the current healthbar color value and restores it to the designated color if it differs from it.
         If this happens while the frame has a debuff color, we will need to update it again.

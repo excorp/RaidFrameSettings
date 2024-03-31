@@ -36,8 +36,8 @@ local function createAceContainer()
 end
 
 frame:Hide()
-local r,g,b = PANEL_BACKGROUND_COLOR:GetRGB()
-frame.Bg:SetColorTexture(r,g,b,0.9)
+local r, g, b = PANEL_BACKGROUND_COLOR:GetRGB()
+frame.Bg:SetColorTexture(r, g, b, 0.9)
 frame:SetScript("OnEvent", frame.Hide)
 tinsert(UISpecialFrames, frame:GetName())
 frame.title = _G["RaidFrameSettingsOptionsTitleText"]
@@ -67,6 +67,25 @@ RaidFrameSettingsOptionsPortrait:SetTexture(addonTable.texturePaths.PortraitIcon
 addResizeButton()
 local container = createAceContainer()
 frame.container = container
+
+local function initSpellCache()
+    if RaidFrameSettings.spellCache.build then
+        return
+    end
+    if not IsAddOnLoaded("WeakAurasOptions") then
+        local loaded, reason = LoadAddOn("WeakAurasOptions")
+        if loaded then
+            local weakauraCache = WeakAuras.spellCache.Get()
+            RaidFrameSettings.spellCache.Set(weakauraCache)
+            if next(weakauraCache) == nil then
+                RaidFrameSettings.spellCache.Build()
+            end
+        else
+            RaidFrameSettings.spellCache.Build()
+        end
+    end
+end
+
 frame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_REGEN_DISABLED" then
         frame:Hide()
@@ -77,8 +96,9 @@ frame:SetScript("OnEvent", function(self, event)
         frame:UnregisterEvent("PLAYER_REGEN_ENABLED")
     end
 end)
-frame:HookScript("OnShow",function()
+frame:HookScript("OnShow", function()
     frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+    initSpellCache()
     ACD:Open("RaidFrameSettings_options", container)
 end)
 frame:HookScript("OnHide", function()

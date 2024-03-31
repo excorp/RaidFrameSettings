@@ -33,9 +33,7 @@ Utils\Glow.lua
 Utils\Helper.lua
 Utils\HookRegistry.lua
 Utils\Scheduler.lua
+Utils\SpellCache.lua
 
 #Modules
 modules.xml
-
-
-

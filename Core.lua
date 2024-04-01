@@ -62,6 +62,7 @@ function RaidFrameSettings:OnEnable()
             module:Enable()
         end
     end
+    addonTable.isFirstLoad = false
     self:RegisterEvent("GROUP_ROSTER_UPDATE", "CheckGroupType") --GroupType.lua
 end
 

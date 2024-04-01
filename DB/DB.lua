@@ -30,9 +30,9 @@ local defaults = {
         },
         HealthBars = {
             Textures = {
-                statusbar  = "Solid",
-                powerbar   = "Blizzard Raid Bar",
-                background = "Solid",
+                statusbar  = "Blizzard",
+                powerbar   = "Blizzard",
+                background = "Blizzard Raid Bar",
                 border     = "Solid",
             },
             Colors = {
@@ -133,6 +133,7 @@ local defaults = {
                 outlinemode = 2,
                 fontSize = 11,
                 debuffColor = true,
+                durationByDebuffColor = true,
                 fontColor = { r = 0.8274, g = 0.8274, b = 0.8274, a = 1 },
                 shadowColor = { r = 0, g = 0, b = 0, a = 1 },
                 xOffsetShadow = 1,

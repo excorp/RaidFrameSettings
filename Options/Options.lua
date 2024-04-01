@@ -2484,7 +2484,7 @@ options = {
                                     order = 2,
                                     name = L["Duration"],
                                     type = "group",
-                                    args = getDebuffDurationOptions()
+                                    args = getDebuffDurationOptions(),
                                 },
                                 StacksDisplay = {
                                     order = 3,

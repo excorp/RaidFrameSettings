@@ -534,13 +534,19 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     GameTooltip:Hide()
                     local parent = self:GetParent()
                     if parent:IsMouseOver() then
-                        if parent.UpdateTooltip then
-                            if self.tooltipPosition then
-                                GameTooltip:SetOwner(parent, "ANCHOR_RIGHT", 0, 0)
+                        if isClassic then
+                            if parent.tooltip then
+                                GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+                                GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+                                GameTooltip:Show()
                             else
-                                GameTooltip:SetOwner(parent, "ANCHOR_PRESERVE")
+                                self:GetParent():GetScript("OnEnter")(self:GetParent(), false)
                             end
-                            C_Timer.After(0, function() if parent.UpdateTooltip then parent:UpdateTooltip() end end)
+                        else
+                            if parent.UpdateTooltip then
+                                GameTooltip:SetOwner(parent, "ANCHOR_PRESERVE")
+                                C_Timer.After(0, function() if parent.UpdateTooltip then parent:UpdateTooltip() end end)
+                            end
                         end
                     end
                 end

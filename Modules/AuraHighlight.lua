@@ -62,9 +62,6 @@ local function toDebuffColor(frame, dispelName)
 end
 
 local function updateColor(frame)
-    if not frame or frame.unit:match("pet") or frame.unit:match("na") or not frame:IsVisible() or frame:IsForbidden() or not UnitIsPlayer(frame.unit) then --this will exclude nameplates and arena
-        return
-    end
     for auraInstanceID, dispelName in next, auraMap[frame].debuffs do
         if auraInstanceID then
             toDebuffColor(frame, dispelName)
@@ -212,9 +209,6 @@ end
 
 function module:SetUpdateHealthColor()
     local function hasMissingAura(frame)
-        if not frame.unit or frame.unit:match("pet") or not UnitIsConnected(frame.unit) or not UnitIsVisible(frame.unit) or UnitIsDeadOrGhost(frame.unit) then
-            return false
-        end
         if next(aura_missing_list) == nil then
             return false
         end
@@ -253,9 +247,6 @@ function module:SetUpdateHealthColor()
     end
 
     updateHealthColor = function(frame)
-        if not frame or frame.unit:match("na") or not frame:IsVisible() or frame:IsForbidden() then --this will exclude nameplates and arena
-            return
-        end
         blockColorUpdate[frame] = false
         if hasMissingAura(frame) then
             if useHealthBarColor then
@@ -266,7 +257,13 @@ function module:SetUpdateHealthColor()
             end
         else
             if useClassColors then
-                r, g, b, a = 0, 1, 0, 1
+                local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
+                if selected == 2 then
+                    r, g, b, a = 0, 1, 0, 1
+                elseif selected == 3 then
+                    local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
+                    r, g, b, a = color.r, color.g, color.b, color.a
+                end
                 if frame.unit and frame.unitExists and not frame.unit:match("pet") then
                     local _, englishClass = UnitClass(frame.unit)
                     r, g, b = GetClassColor(englishClass)
@@ -315,6 +312,9 @@ function module:OnEnable()
     self:GetDebuffColors()
     self:HookFunc("CompactUnitFrame_RegisterEvents", function(frame)
         if frame.unit:match("pet") or frame.unit:match("na") then --this will exclude nameplates and arena
+            return
+        end
+        if not UnitIsPlayer(frame.unit) then --exclude pet/vehicle frame
             return
         end
         self:HookFrame(frame)

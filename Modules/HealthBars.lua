@@ -132,7 +132,13 @@ function HealthBars:OnEnable()
             return
         end
         if useClassColors then
-            r, g, b, a = 0, 1, 0, 1
+            local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
+            if selected == 2 then
+                r, g, b, a = 0, 1, 0, 1
+            elseif selected == 3 then
+                local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
+                r, g, b, a = color.r, color.g, color.b, color.a
+            end
             if frame.unit and frame.unitExists and not frame.unit:match("pet") then
                 local _, englishClass = UnitClass(frame.unit)
                 r, g, b = GetClassColor(englishClass)

@@ -215,7 +215,7 @@ function Debuffs:OnEnable()
         end
         debuffFrame:SetBorderColor(color.r, color.g, color.b, color.a)
 
-        if not durationOpt.debuffColor then
+        if not durationOpt.durationByDebuffColor then
             color = durationOpt.fontColor
         end
         local cooldownText = CDT:CreateOrGetCooldownFontString(debuffFrame.cooldown)

@@ -158,7 +158,7 @@ end
 
 local function getDebuffDurationOptions()
     local options = getFontOptions()
-    options.debuffColor = {
+    options.durationByDebuffColor = {
         order = 4.1,
         name = L["Debuff Colored"],
         type = "toggle",

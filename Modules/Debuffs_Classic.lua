@@ -339,6 +339,9 @@ function Debuffs:OnEnable()
         for i = frameNum, frame_registry[frame].maxDebuffs do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
             self:Glow(debuffFrame, false)
+            if not debuffFrame:IsShown() then
+                break
+            end
             debuffFrame:UnsetAura()
             if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
                 frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
@@ -369,6 +372,9 @@ function Debuffs:OnEnable()
             for i = groupFrameNum[groupNo] or 1, groupSize do
                 local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                 local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                if not debuffFrame:IsShown() then
+                    break
+                end
                 self:Glow(debuffFrame, false)
                 debuffFrame:UnsetAura()
                 if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then

@@ -133,9 +133,8 @@ function HealthBars:OnEnable()
         end
         if useClassColors then
             local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
-            if selected == 2 then
-                r, g, b, a = 0, 1, 0, 1
-            elseif selected == 3 then
+            r, g, b, a = 0, 1, 0, 1
+            if selected == 3 then
                 local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
                 r, g, b, a = color.r, color.g, color.b, color.a
             end

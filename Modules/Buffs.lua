@@ -388,6 +388,9 @@ function Buffs:OnEnable()
         end
         for i = frameNum, frame_registry[frame].maxBuffs do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
+            if not buffFrame:IsShown() then
+                break
+            end
             self:Glow(buffFrame, false)
             buffFrame:UnsetAura()
         end
@@ -416,6 +419,9 @@ function Buffs:OnEnable()
             for i = groupFrameNum[groupNo] or 1, groupSize do
                 local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                 local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                if not buffFrame:IsShown() then
+                    break
+                end
                 self:Glow(buffFrame, false)
                 buffFrame:UnsetAura()
             end

@@ -209,7 +209,7 @@ end
 
 function module:SetUpdateHealthColor()
     local function hasMissingAura(frame)
-        if not UnitIsVisible(frame.unit) or next(aura_missing_list) == nil then
+        if not UnitIsPlayer(frame.unit) or not UnitIsVisible(frame.unit) or next(aura_missing_list) == nil then
             return false
         end
         if not auraMap[frame] then
@@ -258,9 +258,8 @@ function module:SetUpdateHealthColor()
         else
             if useClassColors then
                 local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
-                if selected == 2 then
-                    r, g, b, a = 0, 1, 0, 1
-                elseif selected == 3 then
+                r, g, b, a = 0, 1, 0, 1
+                if selected == 3 then
                     local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
                     r, g, b, a = color.r, color.g, color.b, color.a
                 end
@@ -328,18 +327,19 @@ function module:OnEnable()
         end
     end
 
+    --[[
+        CompactUnitFrame_UpdateHealthColor checks the current healthbar color value and restores it to the designated color if it differs from it.
+        If this happens while the frame has a debuff color, we will need to update it again.
+    ]]
+    self:HookFuncFiltered("CompactUnitFrame_UpdateHealthColor", onUpdateHealthColor)
+
+
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         RaidFrameSettings:IterateRoster(function(frame)
             self:HookFrame(frame)
             updateAurasFull(frame)
         end)
     end)
-
-    --[[
-        CompactUnitFrame_UpdateHealthColor checks the current healthbar color value and restores it to the designated color if it differs from it.
-        If this happens while the frame has a debuff color, we will need to update it again.
-    ]]
-    self:HookFuncFiltered("CompactUnitFrame_UpdateHealthColor", onUpdateHealthColor)
 
     RaidFrameSettings:IterateRoster(function(frame)
         self:HookFrame(frame)

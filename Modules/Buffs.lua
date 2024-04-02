@@ -33,6 +33,10 @@ local SetDrawSwipe = SetDrawSwipe
 local SetReverse = SetReverse
 local SetDrawEdge = SetDrawEdge
 local SetScale = SetScale
+local AuraUtil_ForEachAura = AuraUtil.ForEachAura
+local C_UnitAuras_GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
+local AuraUtil_ShouldDisplayBuff = AuraUtil.ShouldDisplayBuff
+--local CompactUnitFrame_UtilSetBuff = CompactUnitFrame_UtilSetBuff -- don't do this
 -- Lua
 local next = next
 

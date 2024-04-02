@@ -209,7 +209,7 @@ end
 
 function module:SetUpdateHealthColor()
     local function hasMissingAura(frame)
-        if next(aura_missing_list) == nil then
+        if not UnitIsVisible(frame.unit) or next(aura_missing_list) == nil then
             return false
         end
         if not auraMap[frame] then
@@ -328,6 +328,13 @@ function module:OnEnable()
         end
     end
 
+    self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+        RaidFrameSettings:IterateRoster(function(frame)
+            self:HookFrame(frame)
+            updateAurasFull(frame)
+        end)
+    end)
+
     --[[
         CompactUnitFrame_UpdateHealthColor checks the current healthbar color value and restores it to the designated color if it differs from it.
         If this happens while the frame has a debuff color, we will need to update it again.
@@ -342,6 +349,7 @@ end
 
 function module:OnDisable()
     self:DisableHooks()
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     RaidFrameSettings:IterateRoster(function(frame)
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color

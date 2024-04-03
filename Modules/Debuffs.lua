@@ -286,6 +286,10 @@ function Debuffs:OnEnable()
             return
         end
 
+        if debuffFrame.aura == aura then
+            return
+        end
+
         local aurastored = frame_registry[parent].aura
         if frameOpt.refreshAni and aurastored[aura.auraInstanceID] then
             if math.abs(aura.expirationTime - aurastored[aura.auraInstanceID].expirationTime) > 1 or aurastored[aura.auraInstanceID].applications ~= aura.applications then
@@ -373,6 +377,7 @@ function Debuffs:OnEnable()
         local sorted = {
             [0] = {},
         }
+        local userPlacedShown = {}
         for _, debuffs in pairs({ frame.debuffs, frame_registry[frame].debuffs }) do
             debuffs:Iterate(function(auraInstanceID, aura)
                 if userPlaced[aura.spellId] then
@@ -380,6 +385,7 @@ function Debuffs:OnEnable()
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     local placed = userPlaced[aura.spellId]
                     onSetDebuff(debuffFrame, aura, placed)
+                    userPlacedShown[debuffFrame] = true
                     return false
                 end
                 if auraGroupList[aura.spellId] then
@@ -438,14 +444,17 @@ function Debuffs:OnEnable()
         end
 
         -- hide left aura frames
-        for i = 1, maxUserPlaced do
-            local idx = frame_registry[frame].placedAuraStart + i - 1
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
-                self:Glow(debuffFrame, false)
-                debuffFrame:UnsetAura()
+        for debuffFrame in pairs(frame_registry[frame].userPlacedShown) do
+            if not userPlacedShown[debuffFrame] then
+                if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
+                    self:Glow(debuffFrame, false)
+                    debuffFrame:UnsetAura()
+                else
+                    userPlacedShown[debuffFrame] = true
+                end
             end
         end
+        frame_registry[frame].userPlacedShown = userPlacedShown
         for i = frameNum, frame_registry[frame].maxDebuffs do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
             if not debuffFrame:IsShown() then
@@ -491,6 +500,22 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_HideAllDebuffs", onHideAllDebuffs)
 
+    local function initRegistry(frame)
+        frame_registry[frame] = {
+            maxDebuffs        = frameOpt.maxdebuffs,
+            placedAuraStart   = 0,
+            auraGroupStart    = {},
+            auraGroupEnd      = {},
+            extraDebuffFrames = {},
+            reanchor          = {},
+            debuffs           = nil,
+            dispels           = {},
+            aura              = {},
+            userPlacedShown   = {},
+            dirty             = true,
+        }
+    end
+
     local function onFrameSetup(frame)
         if not frameOpt.petframe then
             local fname = frame:GetName()
@@ -499,18 +524,7 @@ function Debuffs:OnEnable()
             end
         end
         if not frame_registry[frame] then
-            frame_registry[frame] = {
-                maxDebuffs        = frameOpt.maxdebuffs,
-                placedAuraStart   = 0,
-                auraGroupStart    = {},
-                auraGroupEnd      = {},
-                extraDebuffFrames = {},
-                reanchor          = {},
-                debuffs           = nil,
-                dispels           = {},
-                aura              = {},
-                dirty             = true,
-            }
+            initRegistry(frame)
             for type, _ in pairs(AuraUtil.DispellableDebuffTypes) do
                 frame_registry[frame].dispels[type] = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable)
             end
@@ -655,18 +669,7 @@ function Debuffs:OnEnable()
                 end
             end
             if not frame_registry[frame] then
-                frame_registry[frame] = {
-                    maxDebuffs        = frameOpt.maxdebuffs,
-                    placedAuraStart   = 0,
-                    auraGroupStart    = {},
-                    auraGroupEnd      = {},
-                    extraDebuffFrames = {},
-                    reanchor          = {},
-                    debuffs           = nil,
-                    dispels           = {},
-                    aura              = {},
-                    dirty             = true,
-                }
+                initRegistry(frame)
                 for type, _ in pairs(AuraUtil.DispellableDebuffTypes) do
                     frame_registry[frame].dispels[type] = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable)
                 end

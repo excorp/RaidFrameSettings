@@ -184,24 +184,32 @@ function Debuffs:OnEnable()
         local aurastored = frame_registry[parent].aura
         local auraInstanceID = (unitCaster or "X") .. "_" .. spellId
         local refresh
-        if frameOpt.refreshAni and aurastored[auraInstanceID] then
-            if math.abs(expirationTime - aurastored[auraInstanceID].expirationTime) > 1 or aurastored[auraInstanceID].applications ~= applications then
-                refresh = true
+        if aurastored[auraInstanceID] then
+            if frameOpt.refreshAni then
+                if math.abs(expirationTime - aurastored[auraInstanceID].expirationTime) > 1 or aurastored[auraInstanceID].applications ~= applications then
+                    refresh = true
+                end
             end
+            local obj          = aurastored[auraInstanceID]
+            obj.applications   = applications
+            obj.duration       = duration
+            obj.expirationTime = expirationTime
+            obj.refresh        = refresh
+        else
+            aurastored[auraInstanceID] = {
+                name            = name,
+                icon            = icon,
+                applications    = applications,
+                debuffType      = debuffType,
+                duration        = duration,
+                expirationTime  = expirationTime,
+                unitCaster      = unitCaster,
+                canStealOrPurge = canStealOrPurge,
+                spellId         = spellId,
+                auraInstanceID  = auraInstanceID,
+                refresh         = refresh,
+            }
         end
-        aurastored[auraInstanceID] = {
-            name            = name,
-            icon            = icon,
-            applications    = applications,
-            debuffType      = debuffType,
-            duration        = duration,
-            expirationTime  = expirationTime,
-            unitCaster      = unitCaster,
-            canStealOrPurge = canStealOrPurge,
-            spellId         = spellId,
-            auraInstanceID  = auraInstanceID,
-            refresh         = refresh,
-        }
 
         -- icon, stack, cooldown(duration) start
         debuffFrame:SetAura(aurastored[auraInstanceID])
@@ -253,6 +261,7 @@ function Debuffs:OnEnable()
         local sorted = {
             [0] = {},
         }
+        local userPlacedShown = {}
         while true do
             local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(frame.displayedUnit, index, filter)
             if not debuffName then
@@ -266,6 +275,7 @@ function Debuffs:OnEnable()
                     local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
                     local placed = userPlaced[spellId]
                     onSetDebuff(debuffFrame, frame.displayedUnit, index, filter, isBossAura, isBossBuff, placed)
+                    userPlacedShown[debuffFrame] = true
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
                     local auraList = auraGroup[groupNo].auraList
@@ -323,19 +333,18 @@ function Debuffs:OnEnable()
         end
 
         -- hide left aura frames
-        for i = 1, maxUserPlaced do
-            local idx = frame_registry[frame].placedAuraStart + i - 1
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            index = debuffFrame:GetID()
-            local debuffName = UnitDebuff(frame.displayedUnit, index, filter)
-            if not debuffName then
-                self:Glow(debuffFrame, false)
-                debuffFrame:UnsetAura()
-                if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
+        for debuffFrame in pairs(frame_registry[frame].userPlacedShown) do
+            if not userPlacedShown[debuffFrame] then
+                if not debuffFrame.auraInstanceID or not (frame.buffs[debuffFrame.auraInstanceID] or frame_registry[frame].buffs[debuffFrame.auraInstanceID]) then
+                    self:Glow(debuffFrame, false)
+                    debuffFrame:UnsetAura()
                     frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
+                else
+                    userPlacedShown[debuffFrame] = true
                 end
             end
         end
+        frame_registry[frame].userPlacedShown = userPlacedShown
         for i = frameNum, frame_registry[frame].maxDebuffs do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
             self:Glow(debuffFrame, false)
@@ -385,6 +394,20 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdateDebuffs", onUpdateDebuffs)
 
+    local function initRegistry(frame)
+        frame_registry[frame] = {
+            maxDebuffs        = frameOpt.maxdebuffs,
+            placedAuraStart   = 0,
+            auraGroupStart    = {},
+            auraGroupEnd      = {},
+            extraDebuffFrames = {},
+            reanchor          = {},
+            aura              = {},
+            userPlacedShown   = {},
+            dirty             = true,
+        }
+    end
+
     local function onFrameSetup(frame)
         if not frameOpt.petframe then
             local fname = frame:GetName()
@@ -394,16 +417,7 @@ function Debuffs:OnEnable()
         end
 
         if not frame_registry[frame] then
-            frame_registry[frame] = {
-                maxDebuffs        = frameOpt.maxdebuffs,
-                placedAuraStart   = 0,
-                auraGroupStart    = {},
-                auraGroupEnd      = {},
-                extraDebuffFrames = {},
-                reanchor          = {},
-                aura              = {},
-                dirty             = true,
-            }
+            initRegistry(frame)
         end
 
         if frame_registry[frame].dirty then
@@ -537,16 +551,7 @@ function Debuffs:OnEnable()
                 return
             end
             if not frame_registry[frame] then
-                frame_registry[frame] = {
-                    maxDebuffs        = frameOpt.maxdebuffs,
-                    placedAuraStart   = 0,
-                    auraGroupStart    = {},
-                    auraGroupEnd      = {},
-                    extraDebuffFrames = {},
-                    reanchor          = {},
-                    aura              = {},
-                    dirty             = true,
-                }
+                initRegistry(frame)
             end
         end)
     end

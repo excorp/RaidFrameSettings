@@ -268,6 +268,10 @@ function Buffs:OnEnable()
             return
         end
 
+        if buffFrame.aura == aura then
+            return
+        end
+
         local aurastored = frame_registry[parent].aura
         local oldAura = aurastored[aura.auraInstanceID]
         if frameOpt.refreshAni and oldAura then
@@ -317,6 +321,7 @@ function Buffs:OnEnable()
         local sorted = {
             [0] = {},
         }
+        local userPlacedShown = {}
         for _, buffs in pairs({ frame.buffs, frame_registry[frame].buffs }) do
             buffs:Iterate(function(auraInstanceID, aura)
                 if userPlaced[aura.spellId] then
@@ -324,6 +329,7 @@ function Buffs:OnEnable()
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     local placed = userPlaced[aura.spellId]
                     onSetBuff(buffFrame, aura, placed)
+                    userPlacedShown[buffFrame] = true
                     return false
                 end
                 if auraGroupList[aura.spellId] then
@@ -382,14 +388,17 @@ function Buffs:OnEnable()
         end
 
         -- hide left aura frames
-        for i = 1, maxUserPlaced do
-            local idx = frame_registry[frame].placedAuraStart + i - 1
-            local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-            if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
-                self:Glow(buffFrame, false)
-                buffFrame:UnsetAura()
+        for buffFrame in pairs(frame_registry[frame].userPlacedShown) do
+            if not userPlacedShown[buffFrame] then
+                if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
+                    self:Glow(buffFrame, false)
+                    buffFrame:UnsetAura()
+                else
+                    userPlacedShown[buffFrame] = true
+                end
             end
         end
+        frame_registry[frame].userPlacedShown = userPlacedShown
         for i = frameNum, frame_registry[frame].maxBuffs do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
             if not buffFrame:IsShown() then
@@ -433,6 +442,22 @@ function Buffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
 
+    local function initRegistry(frame)
+        frame_registry[frame] = {
+            maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
+            placedAuraStart = 0,
+            auraGroupStart  = {},
+            auraGroupEnd    = {},
+            extraBuffFrames = {},
+            reanchor        = {},
+            buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
+            aura            = {},
+            empowered       = {},
+            userPlacedShown = {},
+            dirty           = true,
+        }
+    end
+
     local function onFrameSetup(frame)
         if not frameOpt.petframe then
             local fname = frame:GetName()
@@ -442,18 +467,7 @@ function Buffs:OnEnable()
         end
 
         if not frame_registry[frame] then
-            frame_registry[frame] = {
-                maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
-                placedAuraStart = 0,
-                auraGroupStart  = {},
-                auraGroupEnd    = {},
-                extraBuffFrames = {},
-                reanchor        = {},
-                buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
-                aura            = {},
-                empowered       = {},
-                dirty           = true,
-            }
+            initRegistry(frame)
         end
 
         if frame_registry[frame].dirty then
@@ -589,18 +603,7 @@ function Buffs:OnEnable()
                 end
             end
             if not frame_registry[frame] then
-                frame_registry[frame] = {
-                    maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
-                    placedAuraStart = 0,
-                    auraGroupStart  = {},
-                    auraGroupEnd    = {},
-                    extraBuffFrames = {},
-                    reanchor        = {},
-                    buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
-                    aura            = {},
-                    empowered       = {},
-                    dirty           = true,
-                }
+                initRegistry(frame)
             end
         end)
     end

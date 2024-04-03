@@ -167,25 +167,33 @@ function Buffs:OnEnable()
         local aurastored = frame_registry[parent].aura
         local auraInstanceID = (unitCaster or "X") .. "_" .. spellId
         local refresh
-        if frameOpt.refreshAni and aurastored[auraInstanceID] then
-            if math.abs(expirationTime - aurastored[auraInstanceID].expirationTime) > 1 or aurastored[auraInstanceID].applications ~= applications then
-                refresh = true
+        if aurastored[auraInstanceID] then
+            if frameOpt.refreshAni then
+                if math.abs(expirationTime - aurastored[auraInstanceID].expirationTime) > 1 or aurastored[auraInstanceID].applications ~= applications then
+                    refresh = true
+                end
             end
+            local obj          = aurastored[auraInstanceID]
+            obj.applications   = applications
+            obj.duration       = duration
+            obj.expirationTime = expirationTime
+            obj.refresh        = refresh
+        else
+            aurastored[auraInstanceID] = {
+                name            = name,
+                icon            = icon,
+                applications    = applications,
+                debuffType      = debuffType,
+                duration        = duration,
+                expirationTime  = expirationTime,
+                unitCaster      = unitCaster,
+                canStealOrPurge = canStealOrPurge,
+                spellId         = spellId,
+                canApplyAura    = canApplyAura,
+                auraInstanceID  = auraInstanceID,
+                refresh         = refresh,
+            }
         end
-        aurastored[auraInstanceID] = {
-            name            = name,
-            icon            = icon,
-            applications    = applications,
-            debuffType      = debuffType,
-            duration        = duration,
-            expirationTime  = expirationTime,
-            unitCaster      = unitCaster,
-            canStealOrPurge = canStealOrPurge,
-            spellId         = spellId,
-            canApplyAura    = canApplyAura,
-            auraInstanceID  = auraInstanceID,
-            refresh         = refresh,
-        }
 
         -- icon, stack, cooldown(duration) start
         buffFrame:SetAura(aurastored[auraInstanceID])
@@ -223,6 +231,7 @@ function Buffs:OnEnable()
         local sorted = {
             [0] = {},
         }
+        local userPlacedShown = {}
         while true do
             local buffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId, canApplyAura = UnitBuff(frame.displayedUnit, index, filter)
             if not buffName then
@@ -234,6 +243,7 @@ function Buffs:OnEnable()
                     local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                     local placed = userPlaced[spellId]
                     onSetBuff(buffFrame, frame.displayedUnit, index, filter, placed)
+                    userPlacedShown[buffFrame] = true
                 elseif auraGroupList[spellId] then
                     local groupNo = auraGroupList[spellId]
                     local auraList = auraGroup[groupNo].auraList
@@ -292,19 +302,18 @@ function Buffs:OnEnable()
         end
 
         -- hide left aura frames
-        for i = 1, maxUserPlaced do
-            local idx = frame_registry[frame].placedAuraStart + i - 1
-            local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-            index = buffFrame:GetID()
-            local buffName = UnitBuff(frame.displayedUnit, index, filter)
-            if not buffName then
-                self:Glow(buffFrame, false)
-                buffFrame:UnsetAura()
+        for buffFrame in pairs(frame_registry[frame].userPlacedShown) do
+            if not userPlacedShown[buffFrame] then
                 if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
+                    self:Glow(buffFrame, false)
+                    buffFrame:UnsetAura()
                     frame_registry[frame].aura[buffFrame.auraInstanceID] = nil
+                else
+                    userPlacedShown[buffFrame] = true
                 end
             end
         end
+        frame_registry[frame].userPlacedShown = userPlacedShown
         for i = frameNum, frame_registry[frame].maxBuffs do
             local buffFrame = frame_registry[frame].extraBuffFrames[i]
             if not buffFrame:IsShown() then
@@ -354,6 +363,20 @@ function Buffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdateBuffs", onUpdateBuffs)
 
+    local function initRegistry(frame)
+        frame_registry[frame] = {
+            maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
+            placedAuraStart = 0,
+            auraGroupStart  = {},
+            auraGroupEnd    = {},
+            extraBuffFrames = {},
+            reanchor        = {},
+            aura            = {},
+            userPlacedShown = {},
+            dirty           = true,
+        }
+    end
+
     local function onFrameSetup(frame)
         if not frameOpt.petframe then
             local fname = frame:GetName()
@@ -363,16 +386,7 @@ function Buffs:OnEnable()
         end
 
         if not frame_registry[frame] then
-            frame_registry[frame] = {
-                maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
-                placedAuraStart = 0,
-                auraGroupStart  = {},
-                auraGroupEnd    = {},
-                extraBuffFrames = {},
-                reanchor        = {},
-                aura            = {},
-                dirty           = true,
-            }
+            initRegistry(frame)
         end
 
         if frame_registry[frame].dirty then
@@ -507,16 +521,7 @@ function Buffs:OnEnable()
                 return
             end
             if not frame_registry[frame] then
-                frame_registry[frame] = {
-                    maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
-                    placedAuraStart = 0,
-                    auraGroupStart  = {},
-                    auraGroupEnd    = {},
-                    extraBuffFrames = {},
-                    reanchor        = {},
-                    aura            = {},
-                    dirty           = true,
-                }
+                initRegistry(frame)
             end
         end)
     end

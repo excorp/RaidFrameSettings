@@ -146,11 +146,13 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 auraFrame.auraInstanceID = aura.auraInstanceID
                 self.cooldown:_SetCooldown(aura)
                 auraFrame:Show()
+                auraFrame.aura = aura
             end
 
             function auraFrame:UnsetAura()
                 self.cooldown:_SetCooldown()
                 self:Hide()
+                auraFrame.aura = nil
             end
 
             function auraFrame:SetBorderColor(r, g, b, a)
@@ -277,11 +279,13 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 auraFrame.auraInstanceID = aura.auraInstanceID
                 self.cooldown:_SetCooldown(aura)
                 auraFrame:Show()
+                auraFrame.aura = aura
             end
 
             function auraFrame:UnsetAura()
                 self.cooldown:_SetCooldown()
                 self:Hide()
+                auraFrame.aura = nil
             end
 
             function auraFrame:SetBorderColor(r, g, b, a)

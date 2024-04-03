@@ -505,15 +505,15 @@ function Debuffs:OnEnable()
                 self:Glow(debuffFrame, false)
                 debuffFrame:UnsetAura()
             end
+        end
 
-            if frameOpt.showDispel then
-                for i = dispelFrameNum, frame.maxDispelDebuffs do
-                    local dispelFrame = frame.dispelDebuffFrames[i]
-                    if not dispelFrame:IsShown() then
-                        break
-                    end
-                    dispelFrame:Hide()
+        if frameOpt.showDispel then
+            for i = dispelFrameNum, frame.maxDispelDebuffs do
+                local dispelFrame = frame.dispelDebuffFrames[i]
+                if not dispelFrame:IsShown() then
+                    break
                 end
+                dispelFrame:Hide()
             end
         end
 

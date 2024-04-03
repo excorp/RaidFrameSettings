@@ -257,7 +257,7 @@ function module:SetUpdateHealthColor()
             end
         else
             if useClassColors then
-                local selected = RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
+                local selected = RaidFrameSettings.db.profile.HealthBars.Colors and RaidFrameSettings.db.profile.HealthBars.Colors.statusbarmode
                 r, g, b, a = 0, 1, 0, 1
                 if selected == 3 then
                     local color = RaidFrameSettings.db.profile.HealthBars.Colors.statusbar
@@ -351,6 +351,7 @@ function module:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     RaidFrameSettings:IterateRoster(function(frame)
+        frame:RemoveHandler(frame, "OnEvent")
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
             local r, g, b, a = 0, 1, 0, 1

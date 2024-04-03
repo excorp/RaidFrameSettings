@@ -128,6 +128,13 @@ local defaults = {
                 timerText = true,
                 maxdebuffs = 5,
                 framestrata = 1,
+                showDispel = false,
+                dispelPoint = 3,
+                dispelOrientation = 1,
+                dispelXOffset = -3,
+                dispelYOffset = -2,
+                dispelWidth = 12,
+                dispelHeight = 12,
             },
             DurationDisplay = {
                 font = "Friz Quadrata TT",

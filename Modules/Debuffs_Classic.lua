@@ -76,6 +76,7 @@ function Debuffs:OnEnable()
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
+    frameOpt.dispelPoint = addon:ConvertDbNumberToPosition(frameOpt.dispelPoint)
 
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Debuffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
@@ -245,7 +246,9 @@ function Debuffs:OnEnable()
         debuffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    local onUpdateDebuffs = function(frame)
+    local dispellableDebuffTypes = { Magic = true, Curse = true, Disease = true, Poison = true }
+
+    local onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -262,6 +265,8 @@ function Debuffs:OnEnable()
             [0] = {},
         }
         local userPlacedShown = {}
+        local dispelFrameNum = 1
+        local dispelDisplayed = {}
         while true do
             local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(frame.displayedUnit, index, filter)
             if not debuffName then
@@ -269,6 +274,14 @@ function Debuffs:OnEnable()
             end
             local isBossAura = CompactUnitFrame_UtilIsBossAura(frame.displayedUnit, index, filter, false)
             local isBossBuff = CompactUnitFrame_UtilIsBossAura(frame.displayedUnit, index, filter, true)
+
+            if frameOpt.showDispel and debuffType and dispellableDebuffTypes[debuffType] and not dispelDisplayed[debuffType] and dispelFrameNum <= frame.maxDispelDebuffs then
+                local dispelFrame = frame.dispelDebuffFrames[dispelFrameNum]
+                CompactUnitFrame_UtilSetDispelDebuff(dispelFrame, debuffType, index)
+                dispelDisplayed[debuffType] = true
+                dispelFrameNum = dispelFrameNum + 1
+            end
+
             if CompactUnitFrame_UtilShouldDisplayDebuff(frame.displayedUnit, index, filter) then
                 if userPlaced[spellId] then
                     local idx = frame_registry[frame].placedAuraStart + userPlaced[spellId].idx - 1
@@ -391,8 +404,18 @@ function Debuffs:OnEnable()
                 end
             end
         end
+
+        if frameOpt.showDispel then
+            for i = dispelFrameNum, frame.maxDispelDebuffs do
+                local dispelFrame = frame.dispelDebuffFrames[i]
+                if not dispelFrame:IsShown() then
+                    break
+                end
+                dispelFrame:Hide()
+            end
+        end
     end
-    self:HookFunc("CompactUnitFrame_UpdateDebuffs", onUpdateDebuffs)
+    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
     local function initRegistry(frame)
         frame_registry[frame] = {
@@ -537,6 +560,17 @@ function Debuffs:OnEnable()
             end
             frame_registry[frame].auraGroupEnd[k] = idx
         end
+
+        frame.dispelDebuffFrames[1]:ClearAllPoints()
+        frame.dispelDebuffFrames[1]:SetPoint(frameOpt.dispelPoint, frame, frameOpt.dispelPoint, frameOpt.dispelXOffset, frameOpt.dispelYOffset)
+        local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.dispelOrientation)
+        for i = 1, #frame.dispelDebuffFrames do
+            if (i > 1) then
+                frame.dispelDebuffFrames[i]:ClearAllPoints()
+                frame.dispelDebuffFrames[i]:SetPoint(followPoint, frame.dispelDebuffFrames[i - 1], followRelativePoint)
+            end
+            frame.dispelDebuffFrames[i]:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
     if frameOpt.petframe then
@@ -578,6 +612,17 @@ function Debuffs:OnDisable()
             extraDebuffFrame:Hide()
             self:Glow(extraDebuffFrame, false)
         end
+
+        frame.dispelDebuffFrames[1]:SetPoint("TOPRIGHT", -3, -2)
+        frame.dispelDebuffFrames[1]:ClearAllPoints()
+        for i = 1, #frame.dispelDebuffFrames do
+            if (i > 1) then
+                frame.dispelDebuffFrames[i]:ClearAllPoints()
+                frame.dispelDebuffFrames[i]:SetPoint("RIGHT", frame.dispelDebuffFrames[i - 1], "LEFT", 0, 0)
+            end
+            frame.dispelDebuffFrames[i]:SetSize(12, 12)
+        end
+
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end

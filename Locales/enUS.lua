@@ -394,3 +394,5 @@ L["Healer Spells"] = "Healer Spells"
 L["External Defs."] = "External Defs."
 L["Defensive Spells"] = "Defensive Spells"
 L["Tank Spells"] = "Tank Spells"
+
+L["Show Dispel Type"] = "Show Dispel Type"

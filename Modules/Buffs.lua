@@ -45,7 +45,7 @@ local unitFrame = {}
 local roster_changed = true
 local glowOpt
 
-local onHideAllBuffs
+local onUpdateAuras
 
 if not classMod then
     classMod = {
@@ -64,7 +64,7 @@ if not classMod then
     }
 end
 
-classMod:initMod(Buffs, frame_registry, onHideAllBuffs)
+classMod:initMod(Buffs, frame_registry, onUpdateAuras)
 
 
 local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
@@ -253,7 +253,7 @@ function Buffs:OnEnable()
                 end
 
                 if buffsChanged then
-                    onHideAllBuffs(srcframe)
+                    onUpdateAuras(srcframe)
                 end
             end
         end
@@ -305,7 +305,7 @@ function Buffs:OnEnable()
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    onHideAllBuffs = function(frame)
+    onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -440,7 +440,7 @@ function Buffs:OnEnable()
             end
         end
     end
-    self:HookFunc("CompactUnitFrame_HideAllBuffs", onHideAllBuffs)
+    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
     local function initRegistry(frame)
         frame_registry[frame] = {

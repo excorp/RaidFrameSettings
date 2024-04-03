@@ -393,3 +393,5 @@ L["Healer Spells"] = "힐러 주문"
 L["External Defs."] = "외생기"
 L["Defensive Spells"] = "생존기"
 L["Tank Spells"] = "탱커 뎀감기"
+
+L["Show Dispel Type"] = "디버프 해제종류 표시"

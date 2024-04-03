@@ -215,7 +215,7 @@ function Buffs:OnEnable()
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    local onUpdateBuffs = function(frame)
+    local onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -361,7 +361,7 @@ function Buffs:OnEnable()
             end
         end
     end
-    self:HookFunc("CompactUnitFrame_UpdateBuffs", onUpdateBuffs)
+    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
     local function initRegistry(frame)
         frame_registry[frame] = {

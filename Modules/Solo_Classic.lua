@@ -4,7 +4,19 @@ local addon = addonTable.RaidFrameSettings
 local Solo = addon:NewModule("Solo")
 Mixin(Solo, addonTable.hooks)
 
-local secureframe
+local secureframe = CreateFrame("FRAME", nil, UIParent, "SecureHandlerStateTemplate")
+secureframe:SetAttribute("_onstate-combatstate", [[
+    if newstate == "ignore" then return end
+
+    local CompactRaidFrameManager = self:GetFrameRef("CompactRaidFrameManager")
+    if not CompactRaidFrameManager:IsShown() then
+        CompactRaidFrameManager:Show()
+        local CompactRaidFrameManagerContainer = self:GetFrameRef("CompactRaidFrameManagerContainer")
+        CompactRaidFrameManagerContainer:Show()
+    end
+
+    self:SetAttribute("state-combatstate", "ignore")
+]])
 
 local last = false
 function Solo:OnEnable()
@@ -30,21 +42,9 @@ function Solo:OnEnable()
     end
     self:HookFunc("CompactRaidFrameManager_UpdateContainerVisibility", onUpdateVisibility);
 
-    secureframe = CreateFrame("FRAME", nil, UIParent, "SecureHandlerStateTemplate")
-    secureframe:SetAttribute("_onstate-combatstate", [[
-        if newstate == "ignore" then return end
-
-        local CompactRaidFrameManager = self:GetFrameRef("CompactRaidFrameManager")
-        if not CompactRaidFrameManager:IsShown() then
-            CompactRaidFrameManager:Show()
-            local CompactRaidFrameManagerContainer = self:GetFrameRef("CompactRaidFrameManagerContainer")
-            CompactRaidFrameManagerContainer:Show()
-        end
-
-        self:SetAttribute("state-combatstate", "ignore")
-    ]])
     secureframe:SetFrameRef("CompactRaidFrameManager", CompactRaidFrameManager)
     secureframe:SetFrameRef("CompactRaidFrameManagerContainer", CompactRaidFrameManager.container)
+
     RegisterAttributeDriver(secureframe, "state-combatstate", "[combat] true")
 
     if not IsInGroup() or not IsInRaid() then

@@ -89,7 +89,7 @@ local last_showSeparateGroups = ShowSeparateGroups() -- An event or cvar would b
 local function CheckRosterCache()
     local current_showSeparateGroups = ShowSeparateGroups()
     if needsUpdate or (last_showSeparateGroups ~= current_showSeparateGroups) then
-        UpdateRoster()
+        UpdateRosterCache()
     end
     last_showSeparateGroups = current_showSeparateGroups
 end

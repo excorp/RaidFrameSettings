@@ -51,6 +51,8 @@ local glowOpt = {
     border    = true,
 }
 
+local frame_registry = {}
+
 local function toDebuffColor(frame, dispelName)
     blockColorUpdate[frame] = true
     if useHealthBarColor then
@@ -180,6 +182,10 @@ function module:Glow(frame, rgb)
 end
 
 function module:HookFrame(frame)
+    if not frame_registry[frame] then
+        frame_registry[frame] = true
+    end
+
     auraMap[frame] = {}
     auraMap[frame].debuffs = {}
     auraMap[frame].missing_list = {}
@@ -350,8 +356,8 @@ end
 function module:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    RaidFrameSettings:IterateRoster(function(frame)
-        frame:RemoveHandler(frame, "OnEvent")
+    for frame in pairs(frame_registry) do
+        self:RemoveHandler(frame, "OnEvent")
         if frame.unit and frame.unitExists and frame:IsVisible() and not frame:IsForbidden() then
             -- restore healthbar color
             local r, g, b, a = 0, 1, 0, 1
@@ -362,5 +368,5 @@ function module:OnDisable()
             frame.healthBar:SetStatusBarColor(r, g, b, a)
         end
         module:Glow(frame, false)
-    end)
+    end
 end

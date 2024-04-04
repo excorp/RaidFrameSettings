@@ -311,6 +311,9 @@ function Buffs:OnEnable()
         end
         if frame.buffFrames then
             for _, v in pairs(frame.buffFrames) do
+                if not v:IsShown() then
+                    break
+                end
                 v:Hide()
             end
         end

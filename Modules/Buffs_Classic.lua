@@ -220,6 +220,9 @@ function Buffs:OnEnable()
             return
         end
         for _, v in pairs(frame.buffFrames) do
+            if not v:IsShown() then
+                break
+            end
             v:Hide()
         end
 

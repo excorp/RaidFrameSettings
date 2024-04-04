@@ -253,6 +253,9 @@ function Debuffs:OnEnable()
             return
         end
         for _, v in pairs(frame.debuffFrames) do
+            if not v:IsShown() then
+                break
+            end
             v:Hide()
         end
 

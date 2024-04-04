@@ -275,6 +275,7 @@ function Buffs:OnEnable()
         local aurastored = frame_registry[parent].aura
         local oldAura = aurastored[aura.auraInstanceID]
         if frameOpt.refreshAni and oldAura then
+            if aura.applications == 0 then aura.applications = 1 end
             if math.abs(aura.expirationTime - oldAura.expirationTime) > 1 or oldAura.applications ~= aura.applications then
                 aura.refresh = true
             end

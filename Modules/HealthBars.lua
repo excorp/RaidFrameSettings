@@ -195,8 +195,10 @@ function HealthBars:OnEnable()
     ]]
 
     RaidFrameSettings:IterateRoster(function(frame)
-        updateTextures(frame)
-        updateHealthColor(frame)
+        C_Timer.After(0, function()
+            updateTextures(frame)
+            updateHealthColor(frame)
+        end)
     end)
 end
 

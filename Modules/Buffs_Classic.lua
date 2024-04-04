@@ -392,6 +392,8 @@ function Buffs:OnEnable()
             initRegistry(frame)
         end
 
+        CompactUnitFrame_SetMaxBuffs(frame, 1)
+
         if frame_registry[frame].dirty then
             frame_registry[frame].maxBuffs = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs
             frame_registry[frame].dirty = false
@@ -547,6 +549,8 @@ function Buffs:OnDisable()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     roster_changed = true
     local restoreBuffFrames = function(frame)
+        CompactUnitFrame_SetMaxBuffs(frame, 3)
+
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)

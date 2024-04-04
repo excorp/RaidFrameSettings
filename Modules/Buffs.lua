@@ -474,6 +474,8 @@ function Buffs:OnEnable()
             initRegistry(frame)
         end
 
+        CompactUnitFrame_SetMaxBuffs(frame, 1)
+
         if frame_registry[frame].dirty then
             frame_registry[frame].maxBuffs = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs
             frame_registry[frame].dirty = false
@@ -661,7 +663,30 @@ function Buffs:OnDisable()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("UNIT_AURA")
     roster_changed = true
+
+    NATIVE_UNIT_FRAME_HEIGHT = 36
+    NATIVE_UNIT_FRAME_WIDTH = 72
+
+    CUF_NAME_SECTION_SIZE = 15
+    CUF_AURA_BOTTOM_OFFSET = 2
+
     local restoreBuffFrames = function(frame)
+        local frameWidth = frame.GetWidth()
+        local frameHeight = frame.GetHeight()
+        local isPowerBarShowing = frame.powerBar and frame.powerBar:IsShown()
+        local powerBarUsedHeight = isPowerBarShowing and 8 or 0
+        local componentScale = min(frameHeight / NATIVE_UNIT_FRAME_HEIGHT, frameWidth / NATIVE_UNIT_FRAME_WIDTH)
+
+        local buffSize = math.min(15, 11 * componentScale)
+        local maxDebuffSize = math.min(20, frameHeight - powerBarUsedHeight - CUF_AURA_BOTTOM_OFFSET - CUF_NAME_SECTION_SIZE)
+        local buffSpace = frame:GetWidth() - (#frame.debuffFrames * maxDebuffSize)
+        local maxBuffs = buffSpace / buffSize
+        maxBuffs = math.floor(maxBuffs)
+        maxBuffs = math.max(3, maxBuffs)
+        maxBuffs = math.min(#frame.buffFrames, maxBuffs)
+
+        CompactUnitFrame_SetMaxBuffs(frame, maxBuffs)
+
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)

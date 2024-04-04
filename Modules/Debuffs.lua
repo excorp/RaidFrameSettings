@@ -554,6 +554,8 @@ function Debuffs:OnEnable()
             end
         end
 
+        CompactUnitFrame_SetMaxDebuffs(frame, 1)
+
         if frame_registry[frame].dirty then
             frame_registry[frame].maxDebuffs = frameOpt.maxdebuffs
             frame_registry[frame].dirty = false
@@ -755,6 +757,8 @@ function Debuffs:OnDisable()
     self:UnregisterEvent("UNIT_AURA")
     roster_changed = true
     local restoreDebuffFrames = function(frame)
+        CompactUnitFrame_SetMaxDebuffs(frame, 3)
+
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
             extraDebuffFrame:UnsetAura()
             self:Glow(extraDebuffFrame, false)

@@ -194,9 +194,11 @@ function module:HookFrame(frame)
         Interface/FrameXML/CompactUnitFrame.lua
     ]]
     --
-    self:RemoveHandler(frame, "OnEvent") --remove the registry key for frame["OnEvent"] so that it actually gets hooked again and not just stores a callback for an non existing hook
     self:HookScript(frame, "OnEvent", function(frame, event, unit, updateInfo)
         if event ~= "UNIT_AURA" or not RaidFrameSettings:IsModuleEnabled("AuraHighlight") then
+            return
+        end
+        if not UnitIsPlayer(frame.unit) then
             return
         end
         if isClassic or updateInfo.isFullUpdate then

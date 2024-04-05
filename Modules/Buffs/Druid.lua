@@ -332,7 +332,7 @@ initMember = function(GUID)
         end
     end
 
-    if not player.GUIDS[GUID].unit then
+    if not player.GUIDS[GUID].unit or (not frameOpt.petframe and player.GUIDS[GUID].unit:match("pet")) then
         player.GUIDS[GUID] = nil
         return
     end
@@ -454,7 +454,7 @@ local trackEmpowered = function()
     end
 end
 
-function mod:initMod(buffs_mod, buffs_frame_registry, displayAura)
+function mod:initMod(buffs_mod, buffs_frame_registry)
     Buffs = buffs_mod
     frame_registry = buffs_frame_registry
 end

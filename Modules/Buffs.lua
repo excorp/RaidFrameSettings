@@ -8,6 +8,7 @@ local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
+-- local Aura = addon:GetModule("Aura")
 local Aura = addonTable.Aura
 local classMod = addonTable.classMod
 local Media = LibStub("LibSharedMedia-3.0")
@@ -41,7 +42,6 @@ local AuraUtil_ShouldDisplayBuff = AuraUtil.ShouldDisplayBuff
 local next = next
 
 local frame_registry = {}
-local unitFrame = {}
 local roster_changed = true
 local glowOpt
 
@@ -64,28 +64,7 @@ if not classMod then
     }
 end
 
-classMod:initMod(Buffs, frame_registry, onUpdateAuras)
-
-
-local function CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-    if not frame.debuffs then
-        frame.debuffs = TableUtil.CreatePriorityTable(AuraUtil.UnitFrameDebuffComparator, TableUtil.Constants.AssociativePriorityTable)
-    else
-        frame.debuffs:Clear()
-    end
-    frame.buffs:Clear()
-
-    local batchCount = nil
-    local usePackedAura = true
-    local function HandleAura(aura)
-        local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-
-        if type == AuraUtil.AuraUpdateChangedType.Buff then
-            frame.buffs[aura.auraInstanceID] = aura
-        end
-    end
-    AuraUtil.ForEachAura(frame.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), batchCount, HandleAura, usePackedAura)
-end
+classMod:initMod(Buffs, frame_registry)
 
 function Buffs:Glow(frame, onoff)
     if onoff then
@@ -194,70 +173,6 @@ function Buffs:OnEnable()
     end
 
     classMod:onEnable(frameOpt)
-
-    local onUnitAuraPet = function(unit, unitAuraUpdateInfo)
-        if not unit:match("pet") then
-            return
-        end
-        if not unitFrame[unit] then
-            return
-        end
-        for srcframe in pairs(unitFrame[unit]) do
-            local frame = frame_registry[srcframe]
-            if frame then
-                local buffsChanged = false
-
-                local displayOnlyDispellableDebuffs = false
-                local ignoreBuffs = false
-                local ignoreDebuffs = true
-                local ignoreDispelDebuffs = true
-
-                frame.unit = srcframe.unit
-                frame.displayedUnit = srcframe.displayedUnit
-
-                if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate or frame.debuffs == nil then
-                    CompactUnitFrame_ParseAllAuras(frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-                    buffsChanged = true
-                else
-                    if unitAuraUpdateInfo.addedAuras ~= nil then
-                        for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                            local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-                            if type == AuraUtil.AuraUpdateChangedType.Buff then
-                                frame.buffs[aura.auraInstanceID] = aura
-                                buffsChanged = true
-                            end
-                        end
-                    end
-
-                    if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
-                        for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                            if frame.buffs[auraInstanceID] ~= nil then
-                                local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(frame.displayedUnit, auraInstanceID)
-                                if newAura ~= nil then
-                                    newAura.isBuff = true
-                                end
-                                frame.buffs[auraInstanceID] = newAura
-                                buffsChanged = true
-                            end
-                        end
-                    end
-
-                    if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
-                        for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                            if frame.buffs[auraInstanceID] ~= nil then
-                                frame.buffs[auraInstanceID] = nil
-                                buffsChanged = true
-                            end
-                        end
-                    end
-                end
-
-                if buffsChanged then
-                    onUpdateAuras(srcframe)
-                end
-            end
-        end
-    end
 
     local onSetBuff = function(buffFrame, aura, opt)
         if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
@@ -590,7 +505,12 @@ function Buffs:OnEnable()
                 buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
             end
         end
+
+        -- frame_registry[frame].displayBuffs = frame.optionTable.displayBuffs
+        -- frame.optionTable.displayBuffs = false
+        -- Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
     end
+
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
     if frameOpt.petframe then
         self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
@@ -614,12 +534,12 @@ function Buffs:OnEnable()
         v.dirty = true
         onFrameSetup(frame)
         if frame.unit then
-            if not unitFrame[frame.unit] then unitFrame[frame.unit] = {} end
-            unitFrame[frame.unit][frame] = true
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
                 CompactUnitFrame_UpdateAuras(frame)
             end
-            onUnitAuraPet(frame.unit)
+            if frameOpt.petframe and frame.unit:match("pet") then
+                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
+            end
         end
         classMod:init(frame)
     end
@@ -633,22 +553,10 @@ function Buffs:OnEnable()
 
     if frameOpt.petframe then
         self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
-            if not unit or not unit:match("pet") then
+            if not unit or not unit:match("pet") or not frame_registry[frame] then
                 return
             end
-            if not unitFrame[frame.unit] then unitFrame[frame.unit] = {} end
-            unitFrame[frame.unit][frame] = true
-            for srcframe in pairs(unitFrame[unit]) do
-                if srcframe.unit ~= unit then
-                    unitFrame[unit][srcframe] = nil
-                end
-            end
-        end)
-    end
-
-    if frameOpt.petframe then
-        self:RegisterEvent("UNIT_AURA", function(event, unit, unitAuraUpdateInfo)
-            onUnitAuraPet(unit, unitAuraUpdateInfo)
+            Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
         end)
     end
 end
@@ -658,10 +566,11 @@ function Buffs:OnDisable()
     classMod:onDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    self:UnregisterEvent("UNIT_AURA")
     roster_changed = true
 
     local restoreBuffFrames = function(frame)
+        -- frame.optionTable.displayDebuffs = frame_registry[frame].displayBuffs
+        Aura:SetAuraVar(frame, "buffs")
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)

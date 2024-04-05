@@ -1,8 +1,12 @@
 local _, addonTable = ...
 local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
 local addon = addonTable.RaidFrameSettings
+
+-- local Aura = addon:NewModule("Aura")
 addonTable.Aura = {}
 local Aura = addonTable.Aura
+Mixin(Aura, addonTable.hooks)
+
 local CDT = addonTable.cooldownText
 
 local fontObj = CreateFont("RaidFrameSettingsFont")
@@ -660,4 +664,129 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     end
 
     return auraFrame, dirty
+end
+
+local frame_registry = {}
+
+local function processAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+    local type = AuraUtil.ProcessAura(aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+
+    -- Can't dispell debuffs on pvp frames
+    if type == AuraUtil.AuraUpdateChangedType.Dispel and CompactUnitFrame_IsPvpFrame(frame) then
+        type = AuraUtil.AuraUpdateChangedType.Debuff
+    end
+
+    return type
+end
+
+
+local function parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+    local batchCount = nil
+    local usePackedAura = true
+    local function HandleAura(aura)
+        local type = processAura(srcframe, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+        if type == AuraUtil.AuraUpdateChangedType.Buff then
+            frame.buffs[aura.auraInstanceID] = aura
+        elseif type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
+            frame.debuffs[aura.auraInstanceID] = aura
+        end
+    end
+    if frame.buffs then
+        frame.buffs:Clear()
+        AuraUtil.ForEachAura(srcframe.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), batchCount, HandleAura, usePackedAura)
+    end
+    if frame.debuffs then
+        frame.debuffs:Clear()
+        AuraUtil.ForEachAura(srcframe.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful), batchCount, HandleAura, usePackedAura)
+        AuraUtil.ForEachAura(srcframe.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful, AuraUtil.AuraFilters.Raid), batchCount, HandleAura, usePackedAura)
+    end
+end
+
+local function updateAuras(srcframe, unitAuraUpdateInfo)
+    local frame = frame_registry[srcframe]
+
+    if not srcframe.displayedUnit or not frame.buffs and not frame.debuffs then
+        return
+    end
+
+    local buffsChanged = false
+    local debuffsChanged = false
+
+    local displayOnlyDispellableDebuffs = CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(srcframe, srcframe.optionTable)
+    local ignoreBuffs = not frame.buffs
+    local ignoreDebuffs = not frame.debuffs
+    local ignoreDispelDebuffs = true
+
+    if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate then
+        parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+        buffsChanged = true
+        debuffsChanged = true
+    else
+        if unitAuraUpdateInfo.addedAuras ~= nil then
+            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                if type == AuraUtil.AuraUpdateChangedType.Buff then
+                    frame.buffs[aura.auraInstanceID] = aura
+                    buffsChanged = true
+                elseif type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
+                    frame.debuffs[aura.auraInstanceID] = aura
+                    debuffsChanged = true
+                end
+            end
+        end
+
+        if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
+            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
+                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
+                    if newAura ~= nil then
+                        newAura.isBuff = true
+                    end
+                    frame.buffs[auraInstanceID] = newAura
+                    buffsChanged = true
+                elseif frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
+                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
+                    local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
+                    if newAura ~= nil then
+                        newAura.debuffType = oldDebuffType
+                    end
+                    frame.debuffs[auraInstanceID] = newAura
+                    debuffsChanged = true
+                end
+            end
+        end
+
+        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
+                    frame.buffs[auraInstanceID] = nil
+                    buffsChanged = true
+                end
+                if frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
+                    frame.debuffs[auraInstanceID] = nil
+                    debuffsChanged = true
+                end
+            end
+        end
+    end
+
+    if buffsChanged or debuffsChanged then
+        CompactUnitFrame_UpdateAuras(srcframe)
+    end
+end
+
+function Aura:SetAuraVar(srcframe, type, var)
+    frame_registry[srcframe] = frame_registry[srcframe] or {}
+    local frame = frame_registry[srcframe]
+    frame[type] = var
+    if not frame.buffs and not frame.debuffs then
+        return
+    end
+    self:HookScript(srcframe, "OnEvent", function(srcframe, event, unit, unitAuraUpdateInfo)
+        if event ~= "UNIT_AURA" then
+            return
+        end
+        updateAuras(srcframe, unitAuraUpdateInfo)
+    end)
+    updateAuras(srcframe)
 end

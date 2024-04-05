@@ -252,12 +252,6 @@ function Debuffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        for _, v in pairs(frame.debuffFrames) do
-            if not v:IsShown() then
-                break
-            end
-            v:Hide()
-        end
 
         -- set placed aura / other aura
         local index = 1
@@ -574,8 +568,13 @@ function Debuffs:OnEnable()
             end
             frame.dispelDebuffFrames[i]:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
         end
+
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+
     if frameOpt.petframe then
         self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
     end

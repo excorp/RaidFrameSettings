@@ -224,14 +224,6 @@ function Buffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        if frame.buffFrames then
-            for _, v in pairs(frame.buffFrames) do
-                if not v:IsShown() then
-                    break
-                end
-                v:Hide()
-            end
-        end
 
         -- set placed aura / other aura
         local frameNum = 1
@@ -506,6 +498,10 @@ function Buffs:OnEnable()
             end
         end
 
+        for _, v in pairs(frame.buffFrames) do
+            v:ClearAllPoints()
+        end
+
         -- frame_registry[frame].displayBuffs = frame.optionTable.displayBuffs
         -- frame.optionTable.displayBuffs = false
         -- Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
@@ -575,6 +571,17 @@ function Buffs:OnDisable()
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)
         end
+
+        local isPowerBarShowing = frame.powerBar and frame.powerBar:IsShown()
+        local powerBarUsedHeight = isPowerBarShowing and 8 or 0
+        local buffPos, buffRelativePoint, buffOffset = "BOTTOMRIGHT", "BOTTOMLEFT", CUF_AURA_BOTTOM_OFFSET + powerBarUsedHeight
+        frame.buffFrames[1]:SetPoint(buffPos, frame, "BOTTOMRIGHT", -3, buffOffset)
+        for i = 1, #frame.buffFrames do
+            if i > 1 then
+                frame.buffFrames[i]:SetPoint(buffPos, frame.buffFrames[i - 1], buffRelativePoint, 0, 0)
+            end
+        end
+
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end

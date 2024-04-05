@@ -251,14 +251,6 @@ function Debuffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        if frame.debuffFrames then
-            for _, v in pairs(frame.debuffFrames) do
-                if not v:IsShown() then
-                    break
-                end
-                v:Hide()
-            end
-        end
 
         -- set placed aura / other aura
         local frameNum = 1
@@ -574,6 +566,10 @@ function Debuffs:OnEnable()
             frame.dispelDebuffFrames[i]:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
         end
 
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+        end
+
         -- frame_registry[frame].displayDebuffs = frame.optionTable.displayDebuffs
         -- frame.optionTable.displayDebuffs = false
         -- Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs)
@@ -639,6 +635,16 @@ function Debuffs:OnDisable()
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
             extraDebuffFrame:UnsetAura()
             self:Glow(extraDebuffFrame, false)
+        end
+
+        local isPowerBarShowing = frame.powerBar and frame.powerBar:IsShown()
+        local powerBarUsedHeight = isPowerBarShowing and 8 or 0
+        local debuffPos, debuffRelativePoint, debuffOffset = "BOTTOMLEFT", "BOTTOMRIGHT", CUF_AURA_BOTTOM_OFFSET + powerBarUsedHeight
+        frame.debuffFrames[1]:SetPoint(debuffPos, frame, "BOTTOMLEFT", 3, debuffOffset)
+        for i = 1, #frame.debuffFrames do
+            if i > 1 then
+                frame.debuffFrames[i]:SetPoint(debuffPos, frame.debuffFrames[i - 1], debuffRelativePoint, 0, 0)
+            end
         end
 
         frame.dispelDebuffFrames[1]:ClearAllPoints()

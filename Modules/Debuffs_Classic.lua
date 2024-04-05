@@ -252,6 +252,14 @@ function Debuffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
+        if addonTable.isWrath then
+            for _, v in pairs(frame.debuffFrames) do
+                if not v:IsShown() then
+                    break
+                end
+                v:Hide()
+            end
+        end
 
         -- set placed aura / other aura
         local index = 1

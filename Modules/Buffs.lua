@@ -177,7 +177,7 @@ function Buffs:OnEnable()
             return
         end
 
-        if buffFrame.aura == aura then
+        if buffFrame.aura == aura and buffFrame:IsShown() then
             return
         end
 

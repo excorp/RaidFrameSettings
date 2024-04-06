@@ -172,7 +172,7 @@ function Debuffs:OnEnable()
             return
         end
 
-        if debuffFrame.aura == aura then
+        if debuffFrame.aura == aura and debuffFrame:IsShown() then
             return
         end
 

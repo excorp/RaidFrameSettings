@@ -82,9 +82,7 @@ function CooldownText:StartCooldownText(Cooldown)
         CooldownQueue[Cooldown] = true
         CooldownOnUpdateFrame.count = CooldownOnUpdateFrame.count + 1
     end
-    if next(CooldownQueue) ~= nil then
-        CooldownOnUpdateFrame:SetScript("OnUpdate", updateFontStrings)
-    end
+    CooldownOnUpdateFrame:SetScript("OnUpdate", updateFontStrings)
 end
 
 function CooldownText:StopCooldownText(Cooldown)

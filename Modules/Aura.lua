@@ -130,8 +130,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         ps.duration = aura.duration
                         CDT:StartCooldownText(self)
                     end
+                    self:SetDrawSwipe(self.swipe)
                     self:SetDrawEdge(self.edge)
-
                     if aura.refresh then
                         auraFrame.ag:Play()
                         aura.refresh = nil
@@ -162,8 +162,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             function auraFrame:UnsetAura()
                 self.cooldown:_SetCooldown()
-                self:Hide()
                 auraFrame.aura = nil
+                self:Hide()
             end
 
             function auraFrame:SetBorderColor(r, g, b, a)
@@ -317,8 +317,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
 
             function auraFrame:UnsetAura()
-                self.cooldown:_SetCooldown()
-                auraFrame.aura = nil
+                -- self.cooldown:_SetCooldown()
+                -- auraFrame.aura = nil
                 self:Hide()
             end
 
@@ -460,6 +460,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     local mask = auraFrame.mask
     if type == "blizzard" then
         cooldown:SetReverse(frameOpt.inverse)
+        cooldown.swipe = frameOpt.swipe
+        cooldown.edge = frameOpt.edge
     elseif type == "baricon" then
         if not cooldown.swipe and cooldown.edge then
             auraFrame.maskIcon:Hide()
@@ -668,13 +670,17 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 end
                 onLeave(self)
 
-                self.cooldown:_SetCooldown()
+                if self.cooldown then
+                    self.cooldown:_SetCooldown()
+                end
                 auraFrame.aura = nil
             end)
         else
             auraFrame:SetScript("OnShow", nil)
             auraFrame:SetScript("OnHide", function()
-                self.cooldown:_SetCooldown()
+                if self.cooldown then
+                    self.cooldown:_SetCooldown()
+                end
                 auraFrame.aura = nil
             end)
         end

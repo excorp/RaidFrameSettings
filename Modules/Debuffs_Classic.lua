@@ -236,11 +236,13 @@ function Debuffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        for _, v in pairs(frame.debuffFrames) do
-            if not v:IsShown() then
-                break
+        if addonTable.isWrath then
+            for _, v in pairs(frame.debuffFrames) do
+                if not v:IsShown() then
+                    break
+                end
+                v:Hide()
             end
-            v:Hide()
         end
 
         -- set placed aura / other aura
@@ -604,6 +606,17 @@ function Debuffs:OnDisable()
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
             extraDebuffFrame:Hide()
             self:Glow(extraDebuffFrame, false)
+        end
+
+        local isPowerBarShowing = frame.powerBar and frame.powerBar:IsShown()
+        local powerBarUsedHeight = isPowerBarShowing and 8 or 0
+        local debuffPos, debuffRelativePoint, debuffOffset = "BOTTOMLEFT", "BOTTOMRIGHT", CUF_AURA_BOTTOM_OFFSET + powerBarUsedHeight
+        frame.debuffFrames[1]:SetPoint(debuffPos, frame, "BOTTOMLEFT", 3, debuffOffset)
+        for i = 1, #frame.debuffFrames do
+            if i > 1 then
+                frame.debuffFrames[i]:SetPoint(debuffPos, frame.debuffFrames[i - 1], debuffRelativePoint, 0, 0)
+            end
+            frame.debuffFrames[i].cooldown:SetDrawSwipe(true)
         end
 
         frame.dispelDebuffFrames[1]:SetPoint("TOPRIGHT", -3, -2)

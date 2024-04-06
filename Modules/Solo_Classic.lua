@@ -18,6 +18,8 @@ secureframe:SetAttribute("_onstate-combatstate", [[
     self:SetAttribute("state-combatstate", "ignore")
 ]])
 
+local ticker
+
 local last = false
 function Solo:OnEnable()
     local function onUpdateVisibility()
@@ -42,10 +44,14 @@ function Solo:OnEnable()
     end
     self:HookFunc("CompactRaidFrameManager_UpdateContainerVisibility", onUpdateVisibility);
 
-    secureframe:SetFrameRef("CompactRaidFrameManager", CompactRaidFrameManager)
-    secureframe:SetFrameRef("CompactRaidFrameManagerContainer", CompactRaidFrameManager.container)
+    ticker = C_Timer.NewTimer(0, function()
+        ticker = nil
 
-    RegisterAttributeDriver(secureframe, "state-combatstate", "[combat] true")
+        secureframe:SetFrameRef("CompactRaidFrameManager", CompactRaidFrameManager)
+        secureframe:SetFrameRef("CompactRaidFrameManagerContainer", CompactRaidFrameManager.container)
+
+        RegisterAttributeDriver(secureframe, "state-combatstate", "[combat] true")
+    end)
 
     if not IsInGroup() or not IsInRaid() then
         CompactRaidFrameManager:Show()
@@ -55,6 +61,9 @@ end
 
 function Solo:OnDisable()
     self:DisableHooks()
+    if ticker and not ticker:IsCancelled() then
+        ticker:Cancel()
+    end
     UnregisterAttributeDriver(secureframe, "state-combatstate")
     if not IsInGroup() or IsInRaid() then
         CompactRaidFrameManager:Hide()

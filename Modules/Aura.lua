@@ -99,7 +99,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     -- Create Aura Frame
     if not auraFrame then
         if type == "blizzard" then
-            auraFrame = CreateFrame("Button", name, frame, "Compact" .. category .. "Template")
+            auraFrame = CreateFrame("Button", name, addonTable.isClassic and UIParent or nil, "Compact" .. category .. "Template") -- Specifying a "frame" as parent will automatically add it to frame.buffFrames, so set it to nil and set the parent later.
+            auraFrame:SetParent(frame)
             auraFrame:Hide()
             auraFrame.cooldown:SetHideCountdownNumbers(true)
 

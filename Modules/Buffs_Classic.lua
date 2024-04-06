@@ -11,32 +11,11 @@ local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
 
-local fontObj = CreateFont("RaidFrameSettingsFont")
-
---[[
-    --TODO local references here
-]]
---They don't exist in classic
-local NATIVE_UNIT_FRAME_HEIGHT = 36
-local NATIVE_UNIT_FRAME_WIDTH = 72
 --WoW Api
 local UnitBuff = UnitBuff
-local SetSize = SetSize
-local SetTexCoord = SetTexCoord
-local ClearAllPoints = ClearAllPoints
-local SetPoint = SetPoint
-local SetFont = SetFont
-local SetTextColor = SetTextColor
-local SetShadowColor = SetShadowColor
-local SetShadowOffset = SetShadowOffset
-local SetDrawSwipe = SetDrawSwipe
-local SetReverse = SetReverse
-local SetDrawEdge = SetDrawEdge
-local SetScale = SetScale
+
 -- Lua
-local next = next
 local pairs = pairs
-local select = select
 
 local frame_registry = {}
 local roster_changed = true
@@ -538,7 +517,7 @@ function Buffs:OnEnable()
         v.dirty = true
         onFrameSetup(frame)
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-            CompactUnitFrame_UpdateAuras(frame)
+            onUpdateAuras(frame)
         end
     end
 

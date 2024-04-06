@@ -8,38 +8,14 @@ local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
 local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
--- local Aura = addon:GetModule("Aura")
 local Aura = addonTable.Aura
 local classMod = addonTable.classMod
 local Media = LibStub("LibSharedMedia-3.0")
 
 local AuraFilter = addon:GetModule("AuraFilter")
 
-local fontObj = CreateFont("RaidFrameSettingsFont")
+-- WoW Api
 
---[[
-    --TODO local references here
-]]
---WoW Api
-local GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
-local SetSize = SetSize
-local SetTexCoord = SetTexCoord
-local ClearAllPoints = ClearAllPoints
-local SetPoint = SetPoint
-local SetFont = SetFont
-local SetTextColor = SetTextColor
-local SetShadowColor = SetShadowColor
-local SetShadowOffset = SetShadowOffset
-local SetDrawSwipe = SetDrawSwipe
-local SetReverse = SetReverse
-local SetDrawEdge = SetDrawEdge
-local SetScale = SetScale
-local IsVisible = IsVisible
-local Hide = Hide
-local AuraUtil_ForEachAura = AuraUtil.ForEachAura
-local C_UnitAuras_GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
-local AuraUtil_ShouldDisplayBuff = AuraUtil.ShouldDisplayBuff
---local CompactUnitFrame_UtilSetBuff = CompactUnitFrame_UtilSetBuff -- don't do this
 -- Lua
 local next = next
 
@@ -523,7 +499,7 @@ function Buffs:OnEnable()
         onFrameSetup(frame)
         if frame.unit then
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                CompactUnitFrame_UpdateAuras(frame)
+                onUpdateAuras(frame)
             end
             if frameOpt.petframe and frame.unit:match("pet") then
                 Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)

@@ -31,6 +31,8 @@ local SetDrawSwipe = SetDrawSwipe
 local SetReverse = SetReverse
 local SetDrawEdge = SetDrawEdge
 local SetScale = SetScale
+local IsVisible = IsVisible
+local Hide = Hide
 local AuraUtil_ForEachAura = AuraUtil.ForEachAura
 local C_UnitAuras_GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDataByAuraInstanceID
 local AuraUtil_ShouldDisplayDebuff = AuraUtil.ShouldDisplayDebuff
@@ -418,12 +420,10 @@ function Debuffs:OnEnable()
     end
 
     local function onFrameSetup(frame)
-        if not frameOpt.petframe then
-            local fname = frame:GetName()
-            if not fname or fname:match("Pet") then
-                return
-            end
+        if not (frame.unit:match("pet") and frameOpt.petframe) and not UnitIsPlayer(frame.unit) and not UnitInPartyIsAI(frame.unit) then
+            return
         end
+
         if not frame_registry[frame] then
             initRegistry(frame)
             for type, _ in pairs(AuraUtil.DispellableDebuffTypes) do

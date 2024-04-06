@@ -252,13 +252,11 @@ function Debuffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        if addonTable.isWrath then
-            for _, v in pairs(frame.debuffFrames) do
-                if not v:IsShown() then
-                    break
-                end
-                v:Hide()
+        for _, v in pairs(frame.debuffFrames) do
+            if not v:IsShown() then
+                break
             end
+            v:Hide()
         end
 
         -- set placed aura / other aura
@@ -512,6 +510,11 @@ function Debuffs:OnEnable()
             end
         end
 
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+
         -- set anchor and resize
         local anchorSet, prevFrame
         for i = 1, frame_registry[frame].maxDebuffs do
@@ -575,11 +578,6 @@ function Debuffs:OnEnable()
                 frame.dispelDebuffFrames[i]:SetPoint(followPoint, frame.dispelDebuffFrames[i - 1], followRelativePoint)
             end
             frame.dispelDebuffFrames[i]:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
-        end
-
-        for _, v in pairs(frame.debuffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)

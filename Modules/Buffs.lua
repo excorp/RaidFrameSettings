@@ -437,6 +437,11 @@ function Buffs:OnEnable()
             end
         end
 
+        for _, v in pairs(frame.buffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+
         -- set anchor and resize
         local anchorSet, prevFrame
         for i = 1, frame_registry[frame].maxBuffs do
@@ -490,11 +495,6 @@ function Buffs:OnEnable()
                 buffFrame:SetCoord(width, height)
                 buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
             end
-        end
-
-        for _, v in pairs(frame.buffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
         end
 
         -- frame_registry[frame].displayBuffs = frame.optionTable.displayBuffs

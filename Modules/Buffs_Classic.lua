@@ -219,13 +219,11 @@ function Buffs:OnEnable()
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
-        if addonTable.isWrath then
-            for _, v in pairs(frame.buffFrames) do
-                if not v:IsShown() then
-                    break
-                end
-                v:Hide()
+        for _, v in pairs(frame.buffFrames) do
+            if not v:IsShown() then
+                break
             end
+            v:Hide()
         end
 
         -- set placed aura / other aura
@@ -459,6 +457,11 @@ function Buffs:OnEnable()
             end
         end
 
+        for _, v in pairs(frame.buffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+
         -- set anchor and resize
         local anchorSet, prevFrame
         for i = 1, frame_registry[frame].maxBuffs do
@@ -511,11 +514,6 @@ function Buffs:OnEnable()
                 buffFrame:SetCoord(width, height)
             end
             frame_registry[frame].auraGroupEnd[k] = idx
-        end
-
-        for _, v in pairs(frame.buffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)

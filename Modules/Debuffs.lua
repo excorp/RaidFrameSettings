@@ -495,6 +495,11 @@ function Debuffs:OnEnable()
             end
         end
 
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+
         -- set anchor and resize
         local anchorSet, prevFrame
         for i = 1, frame_registry[frame].maxDebuffs do
@@ -564,11 +569,6 @@ function Debuffs:OnEnable()
                 frame.dispelDebuffFrames[i]:SetPoint(followPoint, frame.dispelDebuffFrames[i - 1], followRelativePoint)
             end
             frame.dispelDebuffFrames[i]:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
-        end
-
-        for _, v in pairs(frame.debuffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
         end
 
         -- frame_registry[frame].displayDebuffs = frame.optionTable.displayDebuffs

@@ -1629,7 +1629,7 @@ options = {
                                             width = 0.7,
                                         },
                                         inverse = {
-                                            hidden = function() return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baricon end,
+                                            hidden = function() return RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.baricon or not RaidFrameSettings.db.profile.Buffs.BuffFramesDisplay.swipe end,
                                             order = 13,
                                             type = "toggle",
                                             name = L["Inverse"],
@@ -2387,7 +2387,7 @@ options = {
                                             width = 0.7,
                                         },
                                         inverse = {
-                                            hidden = function() return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baricon end,
+                                            hidden = function() return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baricon or not RaidFrameSettings.db.profile.Buffs.DebuffFramesDisplay.swipe end,
                                             order = 13,
                                             type = "toggle",
                                             name = L["Inverse"],

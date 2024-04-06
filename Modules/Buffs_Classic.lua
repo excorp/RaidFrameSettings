@@ -15,7 +15,13 @@ local Media = LibStub("LibSharedMedia-3.0")
 local UnitBuff = UnitBuff
 
 -- Lua
+local math = math
+local table = table
 local pairs = pairs
+local CopyTable = CopyTable
+local tonumber = tonumber
+local tinsert = tinsert
+
 
 local frame_registry = {}
 local roster_changed = true

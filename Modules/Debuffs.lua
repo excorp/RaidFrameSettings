@@ -15,12 +15,31 @@ local AuraFilter = addon:GetModule("AuraFilter")
 
 --Debuffframe size
 --WoW Api
+local UnitIsPlayer = UnitIsPlayer
+local UnitInPartyIsAI = UnitInPartyIsAI
+local GetSpellInfo = GetSpellInfo
 
 -- Lua
+local CreateFrame = CreateFrame
+local math = math
+local AuraUtil = AuraUtil
+local TableUtil = TableUtil
+local C_Timer = C_Timer
+local CopyTable = CopyTable
+local pairs = pairs
+local ipairs = ipairs
+local tonumber = tonumber
+local tinsert = tinsert
+local table = table
+local GetTime = GetTime
+local random = random
+
 
 local frame_registry = {}
 local roster_changed = true
 local glowOpt
+local testmodeTicker
+local onUpdateAuras
 
 function Debuffs:Glow(frame, onoff)
     if onoff then
@@ -227,7 +246,7 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
-    local onUpdateAuras = function(frame)
+    onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -640,11 +659,169 @@ function Debuffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-        frame_registry[frame].debuffs = nil
+        frame_registry[frame] = nil
     end
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)
     end
     CDT:DisableCooldownText()
     Aura:reset()
+end
+
+function Debuffs:test()
+    local aura = {
+        [243237] = {
+            duration = 10,
+            maxstack = 10,
+            dispelName = false,
+        },
+        [198904] = {
+            duration = 12,
+            maxstack = 1,
+            dispelName = "Poison",
+        },
+        [201365] = {
+            duration = 15,
+            maxstack = 1,
+            dispelName = "Disease",
+        },
+        [265880] = {
+            duration = 0,
+            maxstack = 1,
+            dispelName = "Curse",
+        },
+        [225908] = {
+            duration = 16,
+            maxstack = 1,
+            dispelName = "Magic",
+        },
+        [206151] = {
+            duration = 0,
+            maxstack = 1,
+            dispelName = false,
+        },
+        [57723] = {
+            duration = 600,
+            maxstack = 1,
+            dispelName = false,
+        },
+    }
+
+    if testmodeTicker then
+        testmodeTicker:Cancel()
+        testmodeTicker = nil
+        -- 테스트 버프 삭제
+
+        for frame, registry in pairs(frame_registry) do
+            if registry.debuffs then
+                for spellId, v in pairs(aura) do
+                    local auraInstanceID = -spellId
+                    if registry.debuffs[auraInstanceID] then
+                        registry.debuffs[auraInstanceID] = nil
+                    end
+                end
+                onUpdateAuras(frame)
+
+                local fname = frame:GetName() .. "PrivateAuraTest"
+                local indicator = _G[fname]
+                if indicator then
+                    indicator:Hide()
+                end
+            end
+        end
+
+        return
+    end
+    local fakeaura = function()
+        local now = GetTime()
+        for frame, registry in pairs(frame_registry) do
+            if registry.debuffs then
+                for spellId, v in pairs(aura) do
+                    local auraInstanceID = -spellId
+                    local spellName, _, icon = GetSpellInfo(spellId)
+                    if registry.debuffs[auraInstanceID] then
+                        if registry.debuffs[auraInstanceID].expirationTime < now then
+                            registry.debuffs[auraInstanceID] = nil
+                        end
+                    end
+                    if not registry.debuffs[auraInstanceID] then
+                        registry.debuffs[auraInstanceID] = {
+                            applications            = random(1, v.maxstack),                      --number	
+                            applicationsp           = nil,                                        --string? force show applications evenif it is 1
+                            auraInstanceID          = auraInstanceID,                             --number	
+                            canApplyAura            = false,                                      -- boolean	Whether or not the player can apply this aura.
+                            charges                 = 1,                                          --number	
+                            dispelName              = v.dispelName,                               --string?	
+                            duration                = v.duration,                                 --number	
+                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
+                            icon                    = icon,                                       --number	
+                            isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
+                            isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
+                            isHarmful               = false,                                      --boolean	Whether or not this aura is a debuff.
+                            isHelpful               = true,                                       --boolean	Whether or not this aura is a buff.
+                            isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
+                            isRaid                  = false,                                      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
+                            isStealable             = false,                                      --boolean	
+                            maxCharges              = 1,                                          --number	
+                            name                    = spellName,                                  --string	The name of the aura.
+                            nameplateShowAll        = false,                                      --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
+                            nameplateShowPersonal   = false,                                      --boolean	
+                            points                  = {},                                         --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
+                            sourceUnit              = "player",                                   --string?	Token of the unit that applied the aura.
+                            spellId                 = spellId,                                    --number	The spell ID of the aura.
+                            timeMod                 = 1,                                          --number	
+                        }
+                    end
+                end
+                onUpdateAuras(frame)
+
+                local fname = frame:GetName() .. "PrivateAuraTest"
+                local indicator = _G[fname]
+                if indicator then
+                    if not indicator:IsShown() then
+                        indicator:Show()
+                    end
+                else
+                    indicator = CreateFrame("Frame", fname)
+                    indicator:SetAllPoints(frame.PrivateAuraAnchor1)
+
+                    indicator.mask = indicator:CreateMaskTexture()
+                    indicator.mask:SetTexture("interface/framegeneral/uiframeiconmask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                    indicator.mask:SetAllPoints(indicator)
+
+                    indicator.icon = indicator:CreateTexture(nil, "ARTWORK")
+                    indicator.icon:SetAllPoints(indicator)
+                    indicator.icon:SetTexture(237555)
+                    indicator.icon:AddMaskTexture(indicator.mask)
+
+                    indicator.border = indicator:CreateTexture(nil, "BORDER")
+                    indicator.border:SetPoint("TOPLEFT", indicator.icon, -1, 0)
+                    indicator.border:SetPoint("BOTTOMRIGHT", indicator.icon, 1, 0)
+                    indicator.border:SetTexture([[Interface\Buttons\UI-Debuff-Overlays]])
+                    indicator.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+                    indicator.border:SetVertexColor(0.8, 0, 0)
+
+                    indicator.cooldown = CreateFrame("Cooldown", nil, indicator, "CooldownFrameTemplate")
+                    indicator.cooldown:SetAllPoints(indicator)
+                    indicator.cooldown:SetReverse(true)
+                    indicator.cooldown:SetDrawEdge(false)
+                    indicator.cooldown:SetDrawBling(false)
+
+                    local timer
+                    indicator:HookScript("OnShow", function()
+                        if timer then timer:Cancel() end
+                        indicator.cooldown:SetCooldown(GetTime(), 15)
+                        timer = C_Timer.NewTicker(15, function()
+                            indicator.cooldown:SetCooldown(GetTime(), 15)
+                        end)
+                    end)
+                    indicator:HookScript("OnHide", function()
+                        if timer then timer:Cancel() end
+                    end)
+                end
+            end
+        end
+    end
+    testmodeTicker = C_Timer.NewTicker(1, fakeaura)
+    fakeaura()
 end

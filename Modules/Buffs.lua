@@ -15,13 +15,29 @@ local Media = LibStub("LibSharedMedia-3.0")
 local AuraFilter = addon:GetModule("AuraFilter")
 
 -- WoW Api
+local UnitIsPlayer = UnitIsPlayer
+local UnitInPartyIsAI = UnitInPartyIsAI
+local GetSpellInfo = GetSpellInfo
 
 -- Lua
-local next = next
+local TableUtil = TableUtil
+local AuraUtil = AuraUtil
+local C_Timer = C_Timer
+local CopyTable = CopyTable
+local pairs = pairs
+local tonumber = tonumber
+local tinsert = tinsert
+local math = math
+local table = table
+local random = random
+local GetTime = GetTime
+
 
 local frame_registry = {}
 local roster_changed = true
 local glowOpt
+local testmodeTicker
+local onUpdateAuras
 
 if not classMod then
     classMod = {
@@ -190,7 +206,7 @@ function Buffs:OnEnable()
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    local onUpdateAuras = function(frame)
+    onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -554,12 +570,143 @@ function Buffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-        frame_registry[frame].buffs:Clear()
-        frame_registry[frame].debuffs = nil
+        frame_registry[frame] = nil
     end
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)
     end
     CDT:DisableCooldownText()
     Aura:reset()
+end
+
+function Buffs:test()
+    local aura = {
+        [774] = {
+            duration = 15,
+            maxstack = 1,
+        },
+        [8936] = {
+            duration = 12,
+            maxstack = 1,
+        },
+        [188550] = {
+            duration = 15,
+            maxstack = 1,
+        },
+        [391891] = {
+            duration = 12,
+            maxstack = 3,
+        },
+    }
+
+    for k, v in pairs(addon.filteredAuras) do
+        if not v.debuff and v.show and not aura[k] then
+            aura[k] = {
+                duration = random(10, 20),
+                maxstack = random(1, 3),
+            }
+        end
+    end
+
+    --increase
+    local increase = {}
+    for spellId, value in pairs(addon.db.profile.Buffs.Increase) do
+        local k = tonumber(spellId)
+        if k and not aura[k] then
+            aura[k] = {
+                duration = random(10, 20),
+                maxstack = random(1, 3),
+            }
+        end
+    end
+    --user placed
+    for _, auraInfo in pairs(addon.db.profile.Buffs.AuraPosition) do
+        local k = auraInfo.spellId
+        if k and not aura[k] then
+            aura[k] = {
+                duration = random(10, 20),
+                maxstack = random(1, 3),
+            }
+        end
+    end
+    --aura group
+    for _, auraInfo in pairs(addon.db.profile.Buffs.AuraGroup) do
+        for spellId, v in pairs(auraInfo.auraList) do
+            local k = tonumber(spellId)
+            if k and not aura[k] then
+                aura[k] = {
+                    duration = random(10, 20),
+                    maxstack = random(1, 3),
+                }
+            end
+        end
+    end
+
+
+    if testmodeTicker then
+        testmodeTicker:Cancel()
+        testmodeTicker = nil
+        -- 테스트 버프 삭제
+
+        for frame, registry in pairs(frame_registry) do
+            if registry.buffs then
+                for spellId, v in pairs(aura) do
+                    local auraInstanceID = -spellId
+                    if registry.buffs[auraInstanceID] then
+                        registry.buffs[auraInstanceID] = nil
+                    end
+                end
+                onUpdateAuras(frame)
+            end
+        end
+
+        return
+    end
+    local fakeaura = function()
+        local now = GetTime()
+        for frame, registry in pairs(frame_registry) do
+            if registry.buffs then
+                for spellId, v in pairs(aura) do
+                    local auraInstanceID = -spellId
+                    local spellName, _, icon = GetSpellInfo(spellId)
+                    if registry.buffs[auraInstanceID] then
+                        if registry.buffs[auraInstanceID].expirationTime < now then
+                            registry.buffs[auraInstanceID] = nil
+                        end
+                    end
+                    if not registry.buffs[auraInstanceID] then
+                        registry.buffs[auraInstanceID] = {
+                            applications            = random(1, v.maxstack),                      --number	
+                            applicationsp           = nil,                                        --string? force show applications evenif it is 1
+                            auraInstanceID          = auraInstanceID,                             --number	
+                            canApplyAura            = false,                                      -- boolean	Whether or not the player can apply this aura.
+                            charges                 = 1,                                          --number	
+                            dispelName              = false,                                      --string?	
+                            duration                = v.duration,                                 --number	
+                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
+                            icon                    = icon,                                       --number	
+                            isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
+                            isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
+                            isHarmful               = false,                                      --boolean	Whether or not this aura is a debuff.
+                            isHelpful               = true,                                       --boolean	Whether or not this aura is a buff.
+                            isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
+                            isRaid                  = false,                                      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
+                            isStealable             = false,                                      --boolean	
+                            maxCharges              = 1,                                          --number	
+                            name                    = spellName,                                  --string	The name of the aura.
+                            nameplateShowAll        = false,                                      --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
+                            nameplateShowPersonal   = false,                                      --boolean	
+                            points                  = {},                                         --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
+                            sourceUnit              = "player",                                   --string?	Token of the unit that applied the aura.
+                            spellId                 = spellId,                                    --number	The spell ID of the aura.
+                            timeMod                 = 1,                                          --number	
+                        }
+                    end
+                end
+                onUpdateAuras(frame)
+            end
+        end
+    end
+    testmodeTicker = C_Timer.NewTicker(1, fakeaura)
+    fakeaura()
 end

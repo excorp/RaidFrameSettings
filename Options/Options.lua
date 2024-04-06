@@ -1729,6 +1729,23 @@ options = {
                                             get = "GetStatus",
                                             set = "SetStatus",
                                         },
+                                        newline60 = {
+                                            hidden = isClassic,
+                                            order = 60,
+                                            name = "",
+                                            type = "description",
+                                        },
+                                        testmode = {
+                                            hidden = isClassic,
+                                            order = 61,
+                                            name = "Test Mode",
+                                            type = "execute",
+                                            func = function()
+                                                local module = RaidFrameSettings:GetModule("Buffs")
+                                                module:test()
+                                            end,
+                                            width = 0.8,
+                                        },
                                     },
                                 },
                                 DurationDisplay = {
@@ -2387,7 +2404,7 @@ options = {
                                             width = 0.7,
                                         },
                                         inverse = {
-                                            hidden = function() return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baricon or not RaidFrameSettings.db.profile.Buffs.DebuffFramesDisplay.swipe end,
+                                            hidden = function() return RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.baricon or not RaidFrameSettings.db.profile.Debuffs.DebuffFramesDisplay.swipe end,
                                             order = 13,
                                             type = "toggle",
                                             name = L["Inverse"],
@@ -2566,6 +2583,23 @@ options = {
                                             max = 50,
                                             step = 1,
                                             width = 1,
+                                        },
+                                        newline60 = {
+                                            hidden = isClassic,
+                                            order = 60,
+                                            name = "",
+                                            type = "description",
+                                        },
+                                        testmode = {
+                                            hidden = isClassic,
+                                            order = 61,
+                                            name = "Test Mode",
+                                            type = "execute",
+                                            func = function()
+                                                local module = RaidFrameSettings:GetModule("Debuffs")
+                                                module:test()
+                                            end,
+                                            width = 0.8,
                                         },
                                     },
                                 },

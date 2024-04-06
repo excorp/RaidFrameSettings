@@ -12,11 +12,18 @@ local CDT = addonTable.cooldownText
 local fontObj = CreateFont("RaidFrameSettingsFont")
 
 -- mouseover queue
-local TooltipCheckQueueAll = {}
-local TooltipCheckQueueWhere = {}
-local TooltipCheckQueueUnknownPos = {}
-local TooltipCheckQueueUnderFrame = {}
-local TooltipCheckOnUpdateFrame = CreateFrame("Frame")
+local TooltipCheckFrame = CreateFrame("Frame")
+TooltipCheckFrame.QueueAll = {}
+TooltipCheckFrame.QueueWhere = {}
+TooltipCheckFrame.QueueUnknownPos = {}
+TooltipCheckFrame.QueueUnderFrame = {}
+TooltipCheckFrame.elapsed = 0
+TooltipCheckFrame.count = 0
+
+local CooldownUpdateFrame = CreateFrame("Frame")
+CooldownUpdateFrame.queue = {}
+CooldownUpdateFrame.elapsed = 0
+CooldownUpdateFrame.count = 0
 
 Aura.Opt = {
     Buff = {
@@ -50,7 +57,7 @@ local function GetTexCoord(width, height)
 end
 
 function Aura:reset()
-    TooltipCheckQueueWhere = {}
+    TooltipCheckFrame.QueueWhere = {}
 end
 
 function Aura:framesOverlap(frame1, frame2)
@@ -230,20 +237,40 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     local startTime = aura.expirationTime - aura.duration
                     local elasped = GetTime() - startTime
                     if self.swipe or self.edge then
-                        self.elapsed = 0
+                        self.elapsed = -CooldownUpdateFrame.elapsed
                         self:SetMinMaxValues(0, aura.duration)
                         self:SetValue(elasped)
                         self:Show()
 
-                        self:SetScript("OnUpdate", function(self, elapsed)
+                        if not CooldownUpdateFrame.queue[self] then
+                            CooldownUpdateFrame.queue[self] = true
+                            CooldownUpdateFrame.count = CooldownUpdateFrame.count + 1
+                        end
+                        CooldownUpdateFrame:SetScript("OnUpdate", function(self, elapsed)
+                            if next(self.queue) == nil then
+                                self:SetScript("OnUpdate", nil)
+                            end
+
                             self.elapsed = self.elapsed + elapsed
-                            if self.elapsed >= 0.1 then
-                                self:SetValue(self:GetValue() + self.elapsed)
+                            local limit = self.count * 0.01
+                            if limit < 0.1 then limit = 0.1 end
+                            if limit > 1 then limit = 1 end
+                            if self.elapsed > limit then
+                                self.count = 0
+                                for frame in pairs(self.queue) do
+                                    frame.elapsed = frame.elapsed + self.elapsed
+                                    frame:SetValue(frame:GetValue() + frame.elapsed)
+                                    frame.elapsed = 0
+                                    self.count = self.count + 1
+                                end
                                 self.elapsed = 0
                             end
                         end)
                     else
-                        self:SetScript("OnUpdate", nil)
+                        if CooldownUpdateFrame.queue[self] then
+                            CooldownUpdateFrame.queue[self] = nil
+                            CooldownUpdateFrame.count = CooldownUpdateFrame.count - 1
+                        end
                         self:SetMinMaxValues(0, 1)
                         self:SetValue(0)
                         self:Show()
@@ -261,7 +288,10 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     end
                 else
                     self:Hide()
-                    self:SetScript("OnUpdate", nil)
+                    if CooldownUpdateFrame.queue[self] then
+                        CooldownUpdateFrame.queue[self] = nil
+                        CooldownUpdateFrame.count = CooldownUpdateFrame.count - 1
+                    end
                     CDT:StopCooldownText(self)
                 end
             end
@@ -288,8 +318,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             function auraFrame:UnsetAura()
                 self.cooldown:_SetCooldown()
-                self:Hide()
                 auraFrame.aura = nil
+                self:Hide()
             end
 
             function auraFrame:SetBorderColor(r, g, b, a)
@@ -560,21 +590,26 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 end
             end
             local tooltipChecker = function(self, elapsed)
+                if next(self.QueueAll) == nil then
+                    self:SetScript("OnUpdate", nil)
+                    return
+                end
+
                 self.elapsed = self.elapsed + elapsed
                 if self.elapsed > 0.1 then
                     self.elapsed = 0
 
                     -- Ignore the tooltip if it's already showing.
                     local owner = GameTooltip:GetOwner()
-                    if owner and TooltipCheckQueueAll[owner] and owner:IsMouseOver() then
+                    if owner and self.QueueAll[owner] and owner:IsMouseOver() then
                         return
                     end
 
                     local focusFrame = GetMouseFocus()
                     local frameName = focusFrame and focusFrame.GetName and focusFrame:GetName()
                     local finish
-                    if TooltipCheckQueueUnderFrame[frameName] then
-                        for frame in pairs(TooltipCheckQueueUnderFrame[frameName]) do
+                    if self.QueueUnderFrame[frameName] then
+                        for frame in pairs(self.QueueUnderFrame[frameName]) do
                             if frame and frame:IsShown() and frame:IsMouseOver() then
                                 onEnter(frame)
                                 finish = true
@@ -584,15 +619,15 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     end
 
                     if not finish then
-                        for frame in pairs(TooltipCheckQueueUnknownPos) do
+                        for frame in pairs(self.QueueUnknownPos) do
                             if frame and frame:IsShown() and frame:IsMouseOver() then
                                 onEnter(frame)
                                 finish = true
 
-                                TooltipCheckQueueWhere[frame] = frame
-                                TooltipCheckQueueUnknownPos[frame] = nil
-                                TooltipCheckQueueUnderFrame[frameName] = TooltipCheckQueueUnderFrame[frameName] or {}
-                                TooltipCheckQueueUnderFrame[frameName][frame] = true
+                                self.QueueWhere[frame] = frame
+                                self.QueueUnknownPos[frame] = nil
+                                self.QueueUnderFrame[frameName] = self.QueueUnderFrame[frameName] or {}
+                                self.QueueUnderFrame[frameName][frame] = true
                                 break
                             end
                         end
@@ -600,50 +635,48 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
                     if not finish then
                         local owner = GameTooltip:GetOwner()
-                        if owner and TooltipCheckQueueAll[owner] then
+                        if owner and self.QueueAll[owner] then
                             onLeave(owner)
                         end
                     end
                 end
-                if next(TooltipCheckQueueAll) == nil then
-                    TooltipCheckOnUpdateFrame:SetScript("OnUpdate", nil)
-                    return
-                end
             end
             auraFrame:SetScript("OnShow", function(self)
                 if self.overwrapWithParent then
-                    TooltipCheckQueueWhere[self] = fname
+                    TooltipCheckFrame.QueueWhere[self] = fname
                 end
-                if TooltipCheckQueueWhere[self] then
-                    local frameName = TooltipCheckQueueWhere[self]
-                    TooltipCheckQueueUnderFrame[frameName] = TooltipCheckQueueUnderFrame[frameName] or {}
-                    TooltipCheckQueueUnderFrame[frameName][self] = true
+                if TooltipCheckFrame.QueueWhere[self] then
+                    local frameName = TooltipCheckFrame.QueueWhere[self]
+                    TooltipCheckFrame.QueueUnderFrame[frameName] = TooltipCheckFrame.QueueUnderFrame[frameName] or {}
+                    TooltipCheckFrame.QueueUnderFrame[frameName][self] = true
                 else
-                    TooltipCheckQueueUnknownPos[self] = true
+                    TooltipCheckFrame.QueueUnknownPos[self] = true
                 end
 
-                TooltipCheckQueueAll[self] = true
-                TooltipCheckOnUpdateFrame.elapsed = 0
-                TooltipCheckOnUpdateFrame:SetScript("OnUpdate", tooltipChecker)
+                TooltipCheckFrame.QueueAll[self] = true
+                TooltipCheckFrame:SetScript("OnUpdate", tooltipChecker)
             end)
             auraFrame:SetScript("OnHide", function(self, ...)
-                TooltipCheckQueueAll[self] = nil
-                TooltipCheckQueueUnknownPos[self] = nil
+                TooltipCheckFrame.QueueAll[self] = nil
+                TooltipCheckFrame.QueueUnknownPos[self] = nil
 
-                if TooltipCheckQueueWhere[self] then
-                    local frameName = TooltipCheckQueueWhere[self]
-                    if TooltipCheckQueueUnderFrame[frameName] then
-                        TooltipCheckQueueUnderFrame[frameName][self] = nil
+                if TooltipCheckFrame.QueueWhere[self] then
+                    local frameName = TooltipCheckFrame.QueueWhere[self]
+                    if TooltipCheckFrame.QueueUnderFrame[frameName] then
+                        TooltipCheckFrame.QueueUnderFrame[frameName][self] = nil
                     end
                 end
-                if next(TooltipCheckQueueAll) == nil then
-                    TooltipCheckOnUpdateFrame:SetScript("OnUpdate", nil)
-                end
                 onLeave(self)
+
+                self.cooldown:_SetCooldown()
+                auraFrame.aura = nil
             end)
         else
             auraFrame:SetScript("OnShow", nil)
-            auraFrame:SetScript("OnHide", nil)
+            auraFrame:SetScript("OnHide", function()
+                self.cooldown:_SetCooldown()
+                auraFrame.aura = nil
+            end)
         end
     end
 

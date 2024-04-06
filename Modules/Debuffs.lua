@@ -568,14 +568,15 @@ function Debuffs:OnEnable()
 
         for _, v in pairs(frame.debuffFrames) do
             v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
         end
 
         -- frame_registry[frame].displayDebuffs = frame.optionTable.displayDebuffs
         -- frame.optionTable.displayDebuffs = false
         -- Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs)
     end
-
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+
     if frameOpt.petframe then
         self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
     end
@@ -645,6 +646,7 @@ function Debuffs:OnDisable()
             if i > 1 then
                 frame.debuffFrames[i]:SetPoint(debuffPos, frame.debuffFrames[i - 1], debuffRelativePoint, 0, 0)
             end
+            frame.debuffFrames[i].cooldown:SetDrawSwipe(true)
         end
 
         frame.dispelDebuffFrames[1]:ClearAllPoints()

@@ -579,6 +579,7 @@ function Debuffs:OnEnable()
 
         for _, v in pairs(frame.debuffFrames) do
             v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
@@ -630,7 +631,7 @@ function Debuffs:OnDisable()
                 frame.dispelDebuffFrames[i]:ClearAllPoints()
                 frame.dispelDebuffFrames[i]:SetPoint("RIGHT", frame.dispelDebuffFrames[i - 1], "LEFT", 0, 0)
             end
-            frame.dispelDebuffFrames[i]:SetSize(12, 12)
+            frame.debuffFrames[i].cooldown:SetDrawSwipe(true)
         end
 
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then

@@ -34,21 +34,36 @@ end
 local CooldownQueue = {}
 
 local CooldownOnUpdateFrame = CreateFrame("Frame")
+CooldownOnUpdateFrame.elapsed = 0
+CooldownOnUpdateFrame.count = 0
 
-local function updateFontStrings(_, elapsed)
-    for Cooldown in next, CooldownQueue do
-        local fs = Cooldown._rfs_cd_text
-        fs.elapsed = fs.elapsed + elapsed
-        if fs.elapsed > 0.1 then
+local function updateFontStrings(self, elapsed)
+    if next(CooldownQueue) == nil then
+        CooldownOnUpdateFrame:SetScript("OnUpdate", nil)
+        return
+    end
+
+    self.elapsed = self.elapsed + elapsed
+    local limit = self.count * 0.01
+    if limit < 0.1 then limit = 0.1 end
+    if limit > 1 then limit = 1 end
+    if self.elapsed > limit then
+        self.count = 0
+        for Cooldown in next, CooldownQueue do
+            local fs = Cooldown._rfs_cd_text
+            fs.elapsed = fs.elapsed + self.elapsed
             fs.duration = fs.duration - fs.elapsed
             fs.elapsed = 0
             if fs.duration <= 0 then
-                Cooldown._rfs_cd_text:SetText("")
+                fs:SetText("")
                 CooldownQueue[Cooldown] = nil
             end
-            Cooldown._rfs_cd_text:SetText(getTimerText(fs.duration))
+            fs:SetText(getTimerText(fs.duration))
+            self.count = self.count + 1
         end
+        self.elapsed = 0
     end
+
     if next(CooldownQueue) == nil then
         CooldownOnUpdateFrame:SetScript("OnUpdate", nil)
         return
@@ -59,8 +74,14 @@ function CooldownText:StartCooldownText(Cooldown)
     if not Cooldown._rfs_cd_text then
         return false
     end
-    Cooldown._rfs_cd_text:Show()
-    CooldownQueue[Cooldown] = true
+    local fs = Cooldown._rfs_cd_text
+    fs:SetText(getTimerText(fs.duration - fs.elapsed))
+    fs:Show()
+    fs.elapsed = fs.elapsed - CooldownOnUpdateFrame.elapsed
+    if not CooldownQueue[Cooldown] then
+        CooldownQueue[Cooldown] = true
+        CooldownOnUpdateFrame.count = CooldownOnUpdateFrame.count + 1
+    end
     if next(CooldownQueue) ~= nil then
         CooldownOnUpdateFrame:SetScript("OnUpdate", updateFontStrings)
     end
@@ -70,12 +91,13 @@ function CooldownText:StopCooldownText(Cooldown)
     if not Cooldown._rfs_cd_text then
         return false
     end
-    CooldownQueue[Cooldown] = nil
-    Cooldown._rfs_cd_text:SetText("")
-    Cooldown._rfs_cd_text:Hide()
-    if next(CooldownQueue) == nil then
-        CooldownOnUpdateFrame:SetScript("OnUpdate", nil)
+    local fs = Cooldown._rfs_cd_text
+    if CooldownQueue[Cooldown] then
+        CooldownQueue[Cooldown] = nil
+        CooldownOnUpdateFrame.count = CooldownOnUpdateFrame.count - 1
     end
+    fs:SetText("")
+    fs:Hide()
 end
 
 function CooldownText:DisableCooldownText(Cooldown)

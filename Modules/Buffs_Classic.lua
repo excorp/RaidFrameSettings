@@ -515,6 +515,7 @@ function Buffs:OnEnable()
 
         for _, v in pairs(frame.buffFrames) do
             v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
@@ -567,6 +568,7 @@ function Buffs:OnDisable()
             if i > 1 then
                 frame.buffFrames[i]:SetPoint(buffPos, frame.buffFrames[i - 1], buffRelativePoint, 0, 0)
             end
+            frame.buffFrames[i].cooldown:SetDrawSwipe(true)
         end
 
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then

@@ -49,18 +49,12 @@ local onUpdateAuras
 
 if not classMod then
     classMod = {
-        onSetBuff = function(buffFrame, aura, oldAura, opt)
-        end,
-        rosterUpdate = function()
-        end,
-        init = function(frame)
-        end,
-        onEnable = function(opt)
-        end,
-        onDisable = function()
-        end,
-        initMod = function(buffs_mod, buffs_frame_registry, displayAura)
-        end,
+        onSetBuff = function(buffFrame, aura, oldAura, opt) end,
+        rosterUpdate = function() end,
+        init = function(frame) end,
+        onEnable = function(opt) end,
+        onDisable = function() end,
+        initMod = function(buffs_mod, buffs_frame_registry, displayAura) end,
     }
 end
 
@@ -500,14 +494,15 @@ function Buffs:OnEnable()
 
         for _, v in pairs(frame.buffFrames) do
             v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
         end
 
         -- frame_registry[frame].displayBuffs = frame.optionTable.displayBuffs
         -- frame.optionTable.displayBuffs = false
         -- Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
     end
-
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+
     if frameOpt.petframe then
         self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
     end
@@ -580,6 +575,7 @@ function Buffs:OnDisable()
             if i > 1 then
                 frame.buffFrames[i]:SetPoint(buffPos, frame.buffFrames[i - 1], buffRelativePoint, 0, 0)
             end
+            frame.buffFrames[i].cooldown:SetDrawSwipe(true)
         end
 
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then

@@ -809,15 +809,20 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
         end
     end
 
-    if buffsChanged or debuffsChanged then
-        CompactUnitFrame_UpdateAuras(srcframe)
+    if buffsChanged and frame.callback.buffs then
+        frame.callback.buffs(srcframe)
+    end
+    if debuffsChanged and frame.callback.debuffs then
+        frame.callback.debuffs(srcframe)
     end
 end
 
-function Aura:SetAuraVar(srcframe, type, var)
+function Aura:SetAuraVar(srcframe, type, var, callback)
     frame_registry[srcframe] = frame_registry[srcframe] or {}
     local frame = frame_registry[srcframe]
     frame[type] = var
+    frame.callback = frame.callback or {}
+    frame.callback[type] = callback
     if not frame.buffs and not frame.debuffs then
         return
     end

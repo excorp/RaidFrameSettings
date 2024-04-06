@@ -45,8 +45,6 @@ local frame_registry = {}
 local roster_changed = true
 local glowOpt
 
-local onUpdateAuras
-
 if not classMod then
     classMod = {
         onSetBuff = function(buffFrame, aura, oldAura, opt) end,
@@ -214,7 +212,7 @@ function Buffs:OnEnable()
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    onUpdateAuras = function(frame)
+    local onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
@@ -499,7 +497,7 @@ function Buffs:OnEnable()
 
         -- frame_registry[frame].displayBuffs = frame.optionTable.displayBuffs
         -- frame.optionTable.displayBuffs = false
-        -- Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
+        -- Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -529,7 +527,7 @@ function Buffs:OnEnable()
                 CompactUnitFrame_UpdateAuras(frame)
             end
             if frameOpt.petframe and frame.unit:match("pet") then
-                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
+                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
             end
         end
         classMod:init(frame)
@@ -547,7 +545,7 @@ function Buffs:OnEnable()
             if not unit or not unit:match("pet") or not frame_registry[frame] then
                 return
             end
-            Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
+            Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
         end)
     end
 end

@@ -573,7 +573,7 @@ function Debuffs:OnEnable()
 
         -- frame_registry[frame].displayDebuffs = frame.optionTable.displayDebuffs
         -- frame.optionTable.displayDebuffs = false
-        -- Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs)
+        -- Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs, onUpdateAuras)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -606,7 +606,7 @@ function Debuffs:OnEnable()
                 CompactUnitFrame_UpdateAuras(frame)
             end
             if frameOpt.petframe and frame.unit:match("pet") then
-                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs)
+                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
             end
         end
     end
@@ -620,7 +620,7 @@ function Debuffs:OnEnable()
             if not unit or not unit:match("pet") or not frame_registry[frame] then
                 return
             end
-            Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs)
+            Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs, onUpdateAuras)
         end)
     end
 end

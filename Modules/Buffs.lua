@@ -18,19 +18,19 @@ local AuraFilter = addon:GetModule("AuraFilter")
 local UnitIsPlayer = UnitIsPlayer
 local UnitInPartyIsAI = UnitInPartyIsAI
 local GetSpellInfo = GetSpellInfo
-
--- Lua
 local TableUtil = TableUtil
 local AuraUtil = AuraUtil
 local C_Timer = C_Timer
+
+-- Lua
 local CopyTable = CopyTable
+local GetTime = GetTime
 local pairs = pairs
 local tonumber = tonumber
 local tinsert = tinsert
 local math = math
 local table = table
 local random = random
-local GetTime = GetTime
 
 
 local frame_registry = {}
@@ -579,8 +579,30 @@ function Buffs:OnDisable()
     Aura:reset()
 end
 
+local testauras = {}
+
 function Buffs:test()
-    local aura = {
+    if testmodeTicker then
+        testmodeTicker:Cancel()
+        testmodeTicker = nil
+        -- 테스트 버프 삭제
+
+        for frame, registry in pairs(frame_registry) do
+            if registry.buffs then
+                for spellId, v in pairs(testauras) do
+                    local auraInstanceID = -spellId
+                    if registry.buffs[auraInstanceID] then
+                        registry.buffs[auraInstanceID] = nil
+                    end
+                end
+                onUpdateAuras(frame)
+            end
+        end
+
+        return
+    end
+
+    testauras = {
         [774] = {
             duration = 15,
             maxstack = 1,
@@ -600,41 +622,43 @@ function Buffs:test()
     }
 
     for k, v in pairs(addon.filteredAuras) do
-        if not v.debuff and v.show and not aura[k] then
-            aura[k] = {
+        if not v.debuff and v.show and not testauras[k] then
+            testauras[k] = {
                 duration = random(10, 20),
                 maxstack = random(1, 3),
             }
         end
     end
 
+    local conf = addon.db.profile.Buffs
+
     --increase
     local increase = {}
-    for spellId, value in pairs(addon.db.profile.Buffs.Increase) do
+    for spellId, value in pairs(conf.Increase) do
         local k = tonumber(spellId)
-        if k and not aura[k] then
-            aura[k] = {
+        if k and not testauras[k] then
+            testauras[k] = {
                 duration = random(10, 20),
                 maxstack = random(1, 3),
             }
         end
     end
     --user placed
-    for _, auraInfo in pairs(addon.db.profile.Buffs.AuraPosition) do
+    for _, auraInfo in pairs(conf.AuraPosition) do
         local k = auraInfo.spellId
-        if k and not aura[k] then
-            aura[k] = {
+        if k and not testauras[k] then
+            testauras[k] = {
                 duration = random(10, 20),
                 maxstack = random(1, 3),
             }
         end
     end
-    --aura group
-    for _, auraInfo in pairs(addon.db.profile.Buffs.AuraGroup) do
+    --auras group
+    for _, auraInfo in pairs(conf.AuraGroup) do
         for spellId, v in pairs(auraInfo.auraList) do
             local k = tonumber(spellId)
-            if k and not aura[k] then
-                aura[k] = {
+            if k and not testauras[k] then
+                testauras[k] = {
                     duration = random(10, 20),
                     maxstack = random(1, 3),
                 }
@@ -642,31 +666,11 @@ function Buffs:test()
         end
     end
 
-
-    if testmodeTicker then
-        testmodeTicker:Cancel()
-        testmodeTicker = nil
-        -- 테스트 버프 삭제
-
-        for frame, registry in pairs(frame_registry) do
-            if registry.buffs then
-                for spellId, v in pairs(aura) do
-                    local auraInstanceID = -spellId
-                    if registry.buffs[auraInstanceID] then
-                        registry.buffs[auraInstanceID] = nil
-                    end
-                end
-                onUpdateAuras(frame)
-            end
-        end
-
-        return
-    end
     local fakeaura = function()
         local now = GetTime()
         for frame, registry in pairs(frame_registry) do
             if registry.buffs then
-                for spellId, v in pairs(aura) do
+                for spellId, v in pairs(testauras) do
                     local auraInstanceID = -spellId
                     local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.buffs[auraInstanceID] then

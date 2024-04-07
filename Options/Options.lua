@@ -1730,13 +1730,11 @@ options = {
                                             set = "SetStatus",
                                         },
                                         newline60 = {
-                                            hidden = isClassic,
                                             order = 60,
                                             name = "",
                                             type = "description",
                                         },
                                         testmode = {
-                                            hidden = isClassic,
                                             order = 61,
                                             name = "Test Mode",
                                             type = "execute",
@@ -2585,13 +2583,11 @@ options = {
                                             width = 1,
                                         },
                                         newline60 = {
-                                            hidden = isClassic,
                                             order = 60,
                                             name = "",
                                             type = "description",
                                         },
                                         testmode = {
-                                            hidden = isClassic,
                                             order = 61,
                                             name = "Test Mode",
                                             type = "execute",

@@ -18,20 +18,21 @@ local AuraFilter = addon:GetModule("AuraFilter")
 local UnitIsPlayer = UnitIsPlayer
 local UnitInPartyIsAI = UnitInPartyIsAI
 local GetSpellInfo = GetSpellInfo
-
--- Lua
 local CreateFrame = CreateFrame
-local math = math
 local AuraUtil = AuraUtil
 local TableUtil = TableUtil
 local C_Timer = C_Timer
+local GameTooltip = GameTooltip
+
+-- Lua
 local CopyTable = CopyTable
+local GetTime = GetTime
+local math = math
 local pairs = pairs
 local ipairs = ipairs
 local tonumber = tonumber
 local tinsert = tinsert
 local table = table
-local GetTime = GetTime
 local random = random
 
 
@@ -246,6 +247,13 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
+    local function UtilSetDispelDebuff(dispellDebuffFrame, aura)
+        dispellDebuffFrame:Show()
+        dispellDebuffFrame.icon:SetTexture("Interface\\RaidFrame\\Raid-Icon-Debuff" .. aura.dispelName)
+        dispellDebuffFrame.auraInstanceID = aura.auraInstanceID
+        dispellDebuffFrame.opt = frameOpt
+    end
+
     onUpdateAuras = function(frame)
         if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
             return
@@ -265,7 +273,7 @@ function Debuffs:OnEnable()
             debuffs:Iterate(function(auraInstanceID, aura)
                 if frameOpt.showDispel and AuraUtil.DispellableDebuffTypes[aura.dispelName] and not dispelDisplayed[aura.dispelName] and dispelFrameNum <= frame.maxDispelDebuffs then
                     local dispelFrame = frame.dispelDebuffFrames[dispelFrameNum]
-                    CompactUnitFrame_UtilSetDispelDebuff(dispelFrame, aura)
+                    UtilSetDispelDebuff(dispelFrame, aura)
                     dispelDisplayed[aura.dispelName] = true
                     dispelFrameNum = dispelFrameNum + 1
                 end
@@ -561,11 +569,50 @@ function Debuffs:OnEnable()
         frame.dispelDebuffFrames[1]:SetPoint(frameOpt.dispelPoint, frame, frameOpt.dispelPoint, frameOpt.dispelXOffset, frameOpt.dispelYOffset)
         local followPoint, followRelativePoint = addon:GetAuraGrowthOrientationPoints(frameOpt.dispelOrientation)
         for i = 1, #frame.dispelDebuffFrames do
+            local dispelDebuffFrame = frame.dispelDebuffFrames[i]
             if (i > 1) then
-                frame.dispelDebuffFrames[i]:ClearAllPoints()
-                frame.dispelDebuffFrames[i]:SetPoint(followPoint, frame.dispelDebuffFrames[i - 1], followRelativePoint)
+                dispelDebuffFrame:ClearAllPoints()
+                dispelDebuffFrame:SetPoint(followPoint, frame.dispelDebuffFrames[i - 1], followRelativePoint)
             end
-            frame.dispelDebuffFrames[i]:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
+            dispelDebuffFrame:SetSize(frameOpt.dispelWidth, frameOpt.dispelHeight)
+
+            if frameOpt.tooltip then
+                dispelDebuffFrame:SetScript("OnEnter", function(self)
+                    if self.tooltipPosition then
+                        GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
+                    else
+                        GameTooltip:SetOwner(self, "ANCHOR_PRESERVE")
+                    end
+                    self:UpdateTooltip()
+                    local function RunOnUpdate()
+                        if GameTooltip:IsOwned(self) then
+                            self:UpdateTooltip()
+                        end
+                    end
+                    self:SetScript("OnUpdate", RunOnUpdate)
+                end)
+                dispelDebuffFrame:SetScript("OnLeave", function(self)
+                    if GameTooltip:IsOwned(self) then
+                        GameTooltip:Hide()
+                    end
+                    self:SetScript("OnUpdate", nil)
+                end)
+            else
+                dispelDebuffFrame:SetScript("OnUpdate", nil)
+                dispelDebuffFrame:SetScript("OnEnter", nil)
+                dispelDebuffFrame:SetScript("OnLeave", nil)
+            end
+
+            frame.dispelDebuffFrames[i].UpdateTooltip = function(self)
+                if not GameTooltip:IsOwned(self) then
+                    return
+                end
+                if self.auraInstanceID > 0 then
+                    GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, "RAID")
+                else
+                    GameTooltip:SetSpellByID(-1 * self.auraInstanceID)
+                end
+            end
         end
 
         -- frame_registry[frame].displayDebuffs = frame.optionTable.displayDebuffs
@@ -649,11 +696,28 @@ function Debuffs:OnDisable()
         frame.dispelDebuffFrames[1]:ClearAllPoints()
         frame.dispelDebuffFrames[1]:SetPoint("TOPRIGHT", -3, -2)
         for i = 1, #frame.dispelDebuffFrames do
+            local dispelDebuffFrame = frame.dispelDebuffFrames[i]
             if (i > 1) then
-                frame.dispelDebuffFrames[i]:ClearAllPoints()
-                frame.dispelDebuffFrames[i]:SetPoint("RIGHT", frame.dispelDebuffFrames[i - 1], "LEFT", 0, 0)
+                dispelDebuffFrame:ClearAllPoints()
+                dispelDebuffFrame:SetPoint("RIGHT", frame.dispelDebuffFrames[i - 1], "LEFT", 0, 0)
             end
-            frame.dispelDebuffFrames[i]:SetSize(12, 12)
+            dispelDebuffFrame:SetSize(12, 12)
+
+            dispelDebuffFrame:SetScript("OnEnter", function(self)
+                self:UpdateTooltip()
+                local function RunOnUpdate()
+                    if GameTooltip:IsOwned(self) then
+                        self:UpdateTooltip()
+                    end
+                end
+                self:SetScript("OnUpdate", RunOnUpdate)
+            end)
+            dispelDebuffFrame:SetScript("OnLeave", function(self)
+                if GameTooltip:IsOwned(self) then
+                    GameTooltip:Hide()
+                end
+                self:SetScript("OnUpdate", nil)
+            end)
         end
 
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
@@ -668,8 +732,36 @@ function Debuffs:OnDisable()
     Aura:reset()
 end
 
+local testauras = {}
+
 function Debuffs:test()
-    local aura = {
+    if testmodeTicker then
+        testmodeTicker:Cancel()
+        testmodeTicker = nil
+        -- 테스트 버프 삭제
+
+        for frame, registry in pairs(frame_registry) do
+            if registry.debuffs then
+                for spellId, v in pairs(testauras) do
+                    local auraInstanceID = -spellId
+                    if registry.debuffs[auraInstanceID] then
+                        registry.debuffs[auraInstanceID] = nil
+                    end
+                end
+                onUpdateAuras(frame)
+
+                local fname = frame:GetName() .. "PrivateAuraTest"
+                local indicator = _G[fname]
+                if indicator then
+                    indicator:Hide()
+                end
+            end
+        end
+
+        return
+    end
+
+    testauras = {
         [243237] = {
             duration = 10,
             maxstack = 10,
@@ -707,36 +799,62 @@ function Debuffs:test()
         },
     }
 
-    if testmodeTicker then
-        testmodeTicker:Cancel()
-        testmodeTicker = nil
-        -- 테스트 버프 삭제
+    local dispelType = { "Poison", "Disease", "Curse", "Magic", false }
 
-        for frame, registry in pairs(frame_registry) do
-            if registry.debuffs then
-                for spellId, v in pairs(aura) do
-                    local auraInstanceID = -spellId
-                    if registry.debuffs[auraInstanceID] then
-                        registry.debuffs[auraInstanceID] = nil
-                    end
-                end
-                onUpdateAuras(frame)
+    for k, v in pairs(addon.filteredAuras) do
+        if v.debuff and v.show and not testauras[k] then
+            testauras[k] = {
+                duration = random(10, 20),
+                maxstack = random(1, 3),
+                dispelName = dispelType[random(1, 5)],
+            }
+        end
+    end
 
-                local fname = frame:GetName() .. "PrivateAuraTest"
-                local indicator = _G[fname]
-                if indicator then
-                    indicator:Hide()
-                end
+    local conf = addon.db.profile.Debuffs
+
+    --increase
+    local increase = {}
+    for spellId, value in pairs(conf.Increase) do
+        local k = tonumber(spellId)
+        if k and not testauras[k] then
+            testauras[k] = {
+                duration = random(10, 20),
+                maxstack = random(1, 3),
+                dispelName = dispelType[random(1, 5)],
+            }
+        end
+    end
+    --user placed
+    for _, auraInfo in pairs(conf.AuraPosition) do
+        local k = auraInfo.spellId
+        if k and not testauras[k] then
+            testauras[k] = {
+                duration = random(10, 20),
+                maxstack = random(1, 3),
+                dispelName = dispelType[random(1, 5)],
+            }
+        end
+    end
+    --auras group
+    for _, auraInfo in pairs(conf.AuraGroup) do
+        for spellId, v in pairs(auraInfo.auraList) do
+            local k = tonumber(spellId)
+            if k and not testauras[k] then
+                testauras[k] = {
+                    duration = random(10, 20),
+                    maxstack = random(1, 3),
+                    dispelName = dispelType[random(1, 5)],
+                }
             end
         end
-
-        return
     end
+
     local fakeaura = function()
         local now = GetTime()
         for frame, registry in pairs(frame_registry) do
             if registry.debuffs then
-                for spellId, v in pairs(aura) do
+                for spellId, v in pairs(testauras) do
                     local auraInstanceID = -spellId
                     local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.debuffs[auraInstanceID] then
@@ -778,7 +896,7 @@ function Debuffs:test()
                 local fname = frame:GetName() .. "PrivateAuraTest"
                 local indicator = _G[fname]
                 if indicator then
-                    if not indicator:IsShown() then
+                    if frame:IsVisible() and not indicator:IsShown() then
                         indicator:Show()
                     end
                 else
@@ -815,8 +933,10 @@ function Debuffs:test()
                             indicator.cooldown:SetCooldown(GetTime(), 15)
                         end)
                     end)
-                    indicator:HookScript("OnHide", function()
+                    frame:HookScript("OnHide", function()
                         if timer then timer:Cancel() end
+                        indicator.cooldown:Clear()
+                        indicator:Hide()
                     end)
                 end
             end

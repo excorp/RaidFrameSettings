@@ -854,7 +854,7 @@ function Debuffs:test()
         local now = GetTime()
         for frame, registry in pairs(frame_registry) do
             if registry.debuffs then
-                local displayOnlyDispellableDebuffs = false -- CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(frame, frame.optionTable)
+                local displayOnlyDispellableDebuffs = CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(frame, frame.optionTable)
                 local ignoreBuffs = true
                 local displayDebuffs = CompactUnitFrame_GetOptionDisplayDebuffs(frame, frame.optionTable)
                 local ignoreDebuffs = not frame.debuffFrames or not displayDebuffs or registry.maxDebuffs == 0
@@ -884,7 +884,7 @@ function Debuffs:test()
                             isHarmful               = true,                                       --boolean	Whether or not this aura is a debuff.
                             isHelpful               = false,                                      --boolean	Whether or not this aura is a buff.
                             isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
-                            isRaid                  = false,                                      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
+                            isRaid                  = true,                                       --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
                             isStealable             = false,                                      --boolean	
                             maxCharges              = 1,                                          --number	
                             name                    = spellName,                                  --string	The name of the aura.

@@ -4,12 +4,13 @@ addonTable.cooldownText = {}
 local CooldownText = addonTable.cooldownText
 
 --WoW Api
-local SetScript = SetScript
-local SetText = SetText
-local Round = Round
+local CreateFrame = CreateFrame
+
 --Lua
+local Round = Round
 local next = next
-local string_format = string.format
+local string = string
+local pairs = pairs
 
 --Cooldown Formatting
 CooldownText.TimerTextLimit = {
@@ -22,11 +23,11 @@ local function getTimerText(number)
     if number < CooldownText.TimerTextLimit.sec then
         return Round(number)
     elseif number < CooldownText.TimerTextLimit.min then
-        return string_format("%dm", Round(number / 60))
+        return string.format("%dm", Round(number / 60))
     elseif number < CooldownText.TimerTextLimit.hour then
-        return string_format("%dh", Round(number / 3600))
+        return string.format("%dh", Round(number / 3600))
     else
-        return string_format("%dd", Round(number / 86400))
+        return string.format("%dd", Round(number / 86400))
     end
 end
 

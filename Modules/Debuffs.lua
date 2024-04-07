@@ -765,7 +765,7 @@ function Debuffs:test()
         [243237] = {
             duration = 10,
             maxstack = 10,
-            dispelName = false,
+            dispelName = nil,
         },
         [198904] = {
             duration = 12,
@@ -790,16 +790,16 @@ function Debuffs:test()
         [206151] = {
             duration = 0,
             maxstack = 1,
-            dispelName = false,
+            dispelName = nil,
         },
         [57723] = {
             duration = 600,
             maxstack = 1,
-            dispelName = false,
+            dispelName = nil,
         },
     }
 
-    local dispelType = { "Poison", "Disease", "Curse", "Magic", false }
+    local dispelType = { "Poison", "Disease", "Curse", "Magic", nil }
 
     for k, v in pairs(addon.filteredAuras) do
         if v.debuff and v.show and not testauras[k] then
@@ -854,6 +854,12 @@ function Debuffs:test()
         local now = GetTime()
         for frame, registry in pairs(frame_registry) do
             if registry.debuffs then
+                local displayOnlyDispellableDebuffs = false -- CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(frame, frame.optionTable)
+                local ignoreBuffs = true
+                local displayDebuffs = CompactUnitFrame_GetOptionDisplayDebuffs(frame, frame.optionTable)
+                local ignoreDebuffs = not frame.debuffFrames or not displayDebuffs or registry.maxDebuffs == 0
+                local ignoreDispelDebuffs = ignoreDebuffs or not frame.dispelDebuffFrames or not frame.optionTable.displayDispelDebuffs or frame.maxDispelDebuffs == 0
+
                 for spellId, v in pairs(testauras) do
                     local auraInstanceID = -spellId
                     local spellName, _, icon = GetSpellInfo(spellId)
@@ -863,7 +869,7 @@ function Debuffs:test()
                         end
                     end
                     if not registry.debuffs[auraInstanceID] then
-                        registry.debuffs[auraInstanceID] = {
+                        local aura = {
                             applications            = random(1, v.maxstack),                      --number	
                             applicationsp           = nil,                                        --string? force show applications evenif it is 1
                             auraInstanceID          = auraInstanceID,                             --number	
@@ -875,8 +881,8 @@ function Debuffs:test()
                             icon                    = icon,                                       --number	
                             isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
                             isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
-                            isHarmful               = false,                                      --boolean	Whether or not this aura is a debuff.
-                            isHelpful               = true,                                       --boolean	Whether or not this aura is a buff.
+                            isHarmful               = true,                                       --boolean	Whether or not this aura is a debuff.
+                            isHelpful               = false,                                      --boolean	Whether or not this aura is a buff.
                             isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
                             isRaid                  = false,                                      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
                             isStealable             = false,                                      --boolean	
@@ -885,10 +891,14 @@ function Debuffs:test()
                             nameplateShowAll        = false,                                      --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
                             nameplateShowPersonal   = false,                                      --boolean	
                             points                  = {},                                         --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
-                            sourceUnit              = "player",                                   --string?	Token of the unit that applied the aura.
+                            sourceUnit              = nil,                                        --string?	Token of the unit that applied the aura.
                             spellId                 = spellId,                                    --number	The spell ID of the aura.
                             timeMod                 = 1,                                          --number	
                         }
+                        local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                        if type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
+                            registry.debuffs[auraInstanceID] = aura
+                        end
                     end
                 end
                 onUpdateAuras(frame)

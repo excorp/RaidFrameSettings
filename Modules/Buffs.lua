@@ -670,6 +670,11 @@ function Buffs:test()
         local now = GetTime()
         for frame, registry in pairs(frame_registry) do
             if registry.buffs then
+                local displayOnlyDispellableDebuffs = false
+                local ignoreBuffs = not frame.optionTable.displayBuffs or registry.maxBuffs == 0
+                local ignoreDebuffs = true
+                local ignoreDispelDebuffs = true
+
                 for spellId, v in pairs(testauras) do
                     local auraInstanceID = -spellId
                     local spellName, _, icon = GetSpellInfo(spellId)
@@ -679,13 +684,13 @@ function Buffs:test()
                         end
                     end
                     if not registry.buffs[auraInstanceID] then
-                        registry.buffs[auraInstanceID] = {
+                        local aura = {
                             applications            = random(1, v.maxstack),                      --number	
                             applicationsp           = nil,                                        --string? force show applications evenif it is 1
                             auraInstanceID          = auraInstanceID,                             --number	
                             canApplyAura            = false,                                      -- boolean	Whether or not the player can apply this aura.
                             charges                 = 1,                                          --number	
-                            dispelName              = false,                                      --string?	
+                            dispelName              = nil,                                        --string?	
                             duration                = v.duration,                                 --number	
                             expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
                             icon                    = icon,                                       --number	
@@ -705,6 +710,11 @@ function Buffs:test()
                             spellId                 = spellId,                                    --number	The spell ID of the aura.
                             timeMod                 = 1,                                          --number	
                         }
+
+                        local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                        if type == AuraUtil.AuraUpdateChangedType.Buff then
+                            registry.buffs[auraInstanceID] = aura
+                        end
                     end
                 end
                 onUpdateAuras(frame)

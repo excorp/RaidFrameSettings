@@ -749,7 +749,7 @@ function Buffs:test()
                             auraInstanceID          = auraInstanceID,                             --number	
                             canApplyAura            = true,                                       -- boolean	Whether or not the player can apply this aura.
                             charges                 = 1,                                          --number	
-                            dispelName              = false,                                      --string?	
+                            dispelName              = nil,                                        --string?	
                             duration                = v.duration,                                 --number	
                             expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
                             icon                    = icon,                                       --number	

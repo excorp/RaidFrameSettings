@@ -764,7 +764,7 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
     else
         if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                local type = processAura(srcframe, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
                 if type == AuraUtil.AuraUpdateChangedType.Buff then
                     frame.buffs[aura.auraInstanceID] = aura
                     buffsChanged = true

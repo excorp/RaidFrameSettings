@@ -898,8 +898,8 @@ function Debuffs:test()
                             icon                    = icon,                                       --number	
                             isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
                             isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
-                            isHarmful               = false,                                      --boolean	Whether or not this aura is a debuff.
-                            isHelpful               = true,                                       --boolean	Whether or not this aura is a buff.
+                            isHarmful               = true,                                       --boolean	Whether or not this aura is a debuff.
+                            isHelpful               = false,                                      --boolean	Whether or not this aura is a buff.
                             isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
                             isRaid                  = false,                                      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
                             isStealable             = false,                                      --boolean	

@@ -656,7 +656,7 @@ function Debuffs:OnEnable()
 
             if frameOpt.tooltip then
                 dispelDebuffFrame:SetScript("OnEnter", function(self)
-                    if self.tooltipPosition then
+                    if frameOpt.tooltipPosition then
                         GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
                     else
                         GameTooltip:SetOwner(self, "ANCHOR_PRESERVE")

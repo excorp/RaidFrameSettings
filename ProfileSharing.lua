@@ -19,7 +19,7 @@ end
 function addon:ImportProfile(input)
     --validate input
     --empty?
-    if input == "" then
+    if not input or input == "" then
         self:Print("No import string provided. Abort")
         return
     end
@@ -41,6 +41,14 @@ function addon:ImportProfile(input)
     if valid and imported_Profile then
         for i, v in pairs(imported_Profile) do
             self.db.profile[i] = CopyTable(v)
+        end
+        for i, v in pairs(imported_Profile) do
+            if type(v) == "table" then
+                self.db.profile[i] = CopyTable(v)
+            else
+                local new_value = v
+                self.db.profile[i] = new_value
+            end
         end
     else
         self:Print("Invalid profile. Abort")

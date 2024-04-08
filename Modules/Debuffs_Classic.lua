@@ -81,9 +81,10 @@ local function UtilIsBossAura(unit, index, filter, checkAsBuff)
     return isBossAura
 end
 
-local function UtilSetDispelDebuff(dispellDebuffFrame, debuffType, index)
+local function UtilSetDispelDebuff(dispellDebuffFrame, debuffType, index, spellId)
     dispellDebuffFrame:Show()
     dispellDebuffFrame.icon:SetTexture("Interface\\RaidFrame\\Raid-Icon-Debuff" .. debuffType)
+    dispellDebuffFrame.spellId = spellId
     dispellDebuffFrame:SetID(index)
 end
 
@@ -336,7 +337,7 @@ function Debuffs:OnEnable()
 
             if frameOpt.showDispel and debuffType and dispellableDebuffTypes[debuffType] and not dispelDisplayed[debuffType] and dispelFrameNum <= frame.maxDispelDebuffs then
                 local dispelFrame = frame.dispelDebuffFrames[dispelFrameNum]
-                UtilSetDispelDebuff(dispelFrame, debuffType, index)
+                UtilSetDispelDebuff(dispelFrame, debuffType, index, spellId)
                 dispelDisplayed[debuffType] = true
                 dispelFrameNum = dispelFrameNum + 1
             end
@@ -686,9 +687,17 @@ function Debuffs:OnEnable()
                     return
                 end
                 if self.isBossBuff then
-                    GameTooltip:SetUnitBuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
+                    if UnitBuff(self:GetParent().displayedUnit, self:GetID(), self.filter) then
+                        GameTooltip:SetUnitBuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
+                    elseif self.spellId then
+                        GameTooltip:SetSpellByID(self.spellId)
+                    end
                 else
-                    GameTooltip:SetUnitDebuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
+                    if UnitDebuff(self:GetParent().displayedUnit, self:GetID(), self.filter) then
+                        GameTooltip:SetUnitDebuff(self:GetParent().displayedUnit, self:GetID(), self.filter)
+                    elseif self.spellId then
+                        GameTooltip:SetSpellByID(self.spellId)
+                    end
                 end
             end
         end

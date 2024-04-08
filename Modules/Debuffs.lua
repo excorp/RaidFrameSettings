@@ -608,7 +608,7 @@ function Debuffs:OnEnable()
                     return
                 end
                 if self.auraInstanceID > 0 then
-                    GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, "RAID")
+                    GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID)
                 else
                     GameTooltip:SetSpellByID(-1 * self.auraInstanceID)
                 end
@@ -903,51 +903,53 @@ function Debuffs:test()
                 end
                 onUpdateAuras(frame)
 
-                local fname = frame:GetName() .. "PrivateAuraTest"
-                local indicator = _G[fname]
-                if indicator then
-                    if frame:IsVisible() and not indicator:IsShown() then
-                        indicator:Show()
-                    end
-                else
-                    indicator = CreateFrame("Frame", fname)
-                    indicator:SetAllPoints(frame.PrivateAuraAnchor1)
+                if frame:IsVisible() then
+                    local fname = frame:GetName() .. "PrivateAuraTest"
+                    local indicator = _G[fname]
+                    if indicator then
+                        if not indicator:IsShown() then
+                            indicator:Show()
+                        end
+                    else
+                        indicator = CreateFrame("Frame", fname)
+                        indicator:SetAllPoints(frame.PrivateAuraAnchor1)
 
-                    indicator.mask = indicator:CreateMaskTexture()
-                    indicator.mask:SetTexture("interface/framegeneral/uiframeiconmask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-                    indicator.mask:SetAllPoints(indicator)
+                        indicator.mask = indicator:CreateMaskTexture()
+                        indicator.mask:SetTexture("interface/framegeneral/uiframeiconmask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                        indicator.mask:SetAllPoints(indicator)
 
-                    indicator.icon = indicator:CreateTexture(nil, "ARTWORK")
-                    indicator.icon:SetAllPoints(indicator)
-                    indicator.icon:SetTexture(237555)
-                    indicator.icon:AddMaskTexture(indicator.mask)
+                        indicator.icon = indicator:CreateTexture(nil, "ARTWORK")
+                        indicator.icon:SetAllPoints(indicator)
+                        indicator.icon:SetTexture(237555)
+                        indicator.icon:AddMaskTexture(indicator.mask)
 
-                    indicator.border = indicator:CreateTexture(nil, "BORDER")
-                    indicator.border:SetPoint("TOPLEFT", indicator.icon, -1, 0)
-                    indicator.border:SetPoint("BOTTOMRIGHT", indicator.icon, 1, 0)
-                    indicator.border:SetTexture([[Interface\Buttons\UI-Debuff-Overlays]])
-                    indicator.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
-                    indicator.border:SetVertexColor(0.8, 0, 0)
+                        indicator.border = indicator:CreateTexture(nil, "BORDER")
+                        indicator.border:SetPoint("TOPLEFT", indicator.icon, -1, 0)
+                        indicator.border:SetPoint("BOTTOMRIGHT", indicator.icon, 1, 0)
+                        indicator.border:SetTexture([[Interface\Buttons\UI-Debuff-Overlays]])
+                        indicator.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+                        indicator.border:SetVertexColor(0.8, 0, 0)
 
-                    indicator.cooldown = CreateFrame("Cooldown", nil, indicator, "CooldownFrameTemplate")
-                    indicator.cooldown:SetAllPoints(indicator)
-                    indicator.cooldown:SetReverse(true)
-                    indicator.cooldown:SetDrawEdge(false)
-                    indicator.cooldown:SetDrawBling(false)
+                        indicator.cooldown = CreateFrame("Cooldown", nil, indicator, "CooldownFrameTemplate")
+                        indicator.cooldown:SetAllPoints(indicator)
+                        indicator.cooldown:SetReverse(true)
+                        indicator.cooldown:SetDrawEdge(false)
+                        indicator.cooldown:SetDrawBling(false)
 
-                    local timer
-                    indicator:HookScript("OnShow", function()
-                        if timer then timer:Cancel() end
-                        indicator.cooldown:SetCooldown(GetTime(), 15)
-                        timer = C_Timer.NewTicker(15, function()
+                        local timer
+                        indicator:HookScript("OnShow", function()
+                            if timer then timer:Cancel() end
                             indicator.cooldown:SetCooldown(GetTime(), 15)
+                            timer = C_Timer.NewTicker(15, function()
+                                indicator.cooldown:SetCooldown(GetTime(), 15)
+                            end)
                         end)
-                    end)
-                    frame:HookScript("OnHide", function()
-                        if timer then timer:Cancel() end
-                        indicator.cooldown:Clear()
-                        indicator:Hide()
-                    end)
+                        frame:HookScript("OnHide", function()
+                            if timer then timer:Cancel() end
+                            indicator.cooldown:Clear()
+                            indicator:Hide()
+                        end)
+                    end
                 end
             end
         end

@@ -764,24 +764,21 @@ function Debuffs:OnDisable()
                 dispelDebuffFrame:SetPoint("RIGHT", frame.dispelDebuffFrames[i - 1], "LEFT", 0, 0)
             end
 
-            -- todo: 시대는 툴팁 표시를 기본적으로 안하지 않나? 확인이 필요하다.
-            if not addonTable.isVanilla then
-                dispelDebuffFrame:SetScript("OnEnter", function(self)
-                    self:UpdateTooltip()
-                    local function RunOnUpdate()
-                        if GameTooltip:IsOwned(self) then
-                            self:UpdateTooltip()
-                        end
-                    end
-                    self:SetScript("OnUpdate", RunOnUpdate)
-                end)
-                dispelDebuffFrame:SetScript("OnLeave", function(self)
+            dispelDebuffFrame:SetScript("OnEnter", function(self)
+                self:UpdateTooltip()
+                local function RunOnUpdate()
                     if GameTooltip:IsOwned(self) then
-                        GameTooltip:Hide()
+                        self:UpdateTooltip()
                     end
-                    self:SetScript("OnUpdate", nil)
-                end)
-            end
+                end
+                self:SetScript("OnUpdate", RunOnUpdate)
+            end)
+            dispelDebuffFrame:SetScript("OnLeave", function(self)
+                if GameTooltip:IsOwned(self) then
+                    GameTooltip:Hide()
+                end
+                self:SetScript("OnUpdate", nil)
+            end)
         end
 
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then

@@ -678,7 +678,7 @@ function Buffs:test()
                     local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.buffs[auraInstanceID] then
                         if registry.buffs[auraInstanceID].expirationTime < now then
-                            -- registry.buffs[auraInstanceID] = nil
+                            registry.buffs[auraInstanceID] = nil
                         end
                     end
                     if not registry.buffs[auraInstanceID] then
@@ -690,7 +690,7 @@ function Buffs:test()
                             charges                 = 1,                                          --number	
                             dispelName              = nil,                                        --string?	
                             duration                = v.duration,                                 --number	
-                            expirationTime          = 1, --number	
+                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
                             icon                    = icon,                                       --number	
                             isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
                             isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.

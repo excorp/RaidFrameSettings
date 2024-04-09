@@ -58,8 +58,9 @@ local function updateFontStrings(self, elapsed)
             if fs.duration <= 0 then
                 fs:SetText("")
                 CooldownQueue[Cooldown] = nil
+            else
+                fs:SetText(getTimerText(fs.duration))
             end
-            fs:SetText(getTimerText(fs.duration))
             self.count = self.count + 1
         end
         self.elapsed = 0
@@ -76,7 +77,11 @@ function CooldownText:StartCooldownText(Cooldown)
         return false
     end
     local fs = Cooldown._rfs_cd_text
-    fs:SetText(getTimerText(fs.duration - fs.elapsed))
+    local duration = fs.duration - fs.elapsed
+    if duration < 0 then
+        return false
+    end
+    fs:SetText(getTimerText(duration))
     fs:Show()
     fs.elapsed = fs.elapsed - CooldownOnUpdateFrame.elapsed
     if not CooldownQueue[Cooldown] then

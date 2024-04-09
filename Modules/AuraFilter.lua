@@ -35,7 +35,7 @@ SpellGetVisibilityInfo = function(spellId, visType)
 end
 
 local function setFilter(spellId)
-    if not filteredAuras[spellId] or filteredAuras[spellId].show == false then
+    if not filteredAuras[spellId] then
         filteredAuras[spellId] = {
             spellId = spellId,
             show = true,

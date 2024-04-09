@@ -6,7 +6,6 @@ local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
-local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local classMod = addonTable.classMod
@@ -63,7 +62,7 @@ end
 function Buffs:OnEnable()
     AuraFilter:reloadConf()
 
-    CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
+    Aura:setTimerLimit(addon.db.profile.MinorModules.TimerTextLimit)
 
     glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
@@ -575,7 +574,6 @@ function Buffs:OnDisable()
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)
     end
-    CDT:DisableCooldownText()
     Aura:reset()
 end
 
@@ -680,7 +678,7 @@ function Buffs:test()
                     local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.buffs[auraInstanceID] then
                         if registry.buffs[auraInstanceID].expirationTime < now then
-                            registry.buffs[auraInstanceID] = nil
+                            -- registry.buffs[auraInstanceID] = nil
                         end
                     end
                     if not registry.buffs[auraInstanceID] then
@@ -692,7 +690,7 @@ function Buffs:test()
                             charges                 = 1,                                          --number	
                             dispelName              = nil,                                        --string?	
                             duration                = v.duration,                                 --number	
-                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
+                            expirationTime          = 1, --number	
                             icon                    = icon,                                       --number	
                             isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
                             isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.

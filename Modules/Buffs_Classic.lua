@@ -6,7 +6,6 @@ local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
-local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
@@ -115,7 +114,7 @@ end
 function Buffs:OnEnable()
     AuraFilter:reloadConf()
 
-    CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
+    Aura:setTimerLimit(addon.db.profile.MinorModules.TimerTextLimit)
 
     glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)

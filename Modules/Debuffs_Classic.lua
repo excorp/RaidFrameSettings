@@ -7,7 +7,6 @@ local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable
 local addon = addonTable.RaidFrameSettings
 local Debuffs = addon:NewModule("Debuffs")
 Mixin(Debuffs, addonTable.hooks)
-local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
@@ -127,7 +126,7 @@ function Debuffs:OnEnable()
     debuffColors.Poison = dbObj.Poison
     debuffColors.Bleed = dbObj.Bleed
 
-    CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
+    Aura:setTimerLimit(addon.db.profile.MinorModules.TimerTextLimit)
 
     glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
@@ -284,7 +283,7 @@ function Debuffs:OnEnable()
         if not durationOpt.durationByDebuffColor then
             color = durationOpt.fontColor
         end
-        local cooldownText = CDT:CreateOrGetCooldownFontString(debuffFrame.cooldown)
+        local cooldownText = debuffFrame.cooldown._rfs_cd_text
         cooldownText:SetVertexColor(color.r, color.g, color.b, color.a)
 
         local auraGroupNo = auraGroupList[spellId]

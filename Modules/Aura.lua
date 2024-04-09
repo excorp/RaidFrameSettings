@@ -7,8 +7,6 @@ addonTable.Aura = {}
 local Aura = addonTable.Aura
 Mixin(Aura, addonTable.hooks)
 
-local CDT = addonTable.cooldownText
-
 local fontObj = CreateFont("RaidFrameSettingsFont")
 
 -- mouseover queue
@@ -21,9 +19,6 @@ TooltipCheckFrame.elapsed = 0
 TooltipCheckFrame.count = 0
 
 local CooldownUpdateFrame = CreateFrame("Frame")
-CooldownUpdateFrame.queue = {}
-CooldownUpdateFrame.elapsed = 0
-CooldownUpdateFrame.count = 0
 
 Aura.Opt = {
     Buff = {
@@ -40,6 +35,146 @@ Aura.Opt = {
 
 local iconCrop = 0
 
+
+local queue = {}
+queue.queue = {}
+queue.pending = {}
+
+--Cooldown Formatting
+queue.TimerTextLimit = {
+    sec = 60,
+    min = 3600,
+    hour = 86400,
+}
+
+queue.getTimerText = function(number)
+    if number < queue.TimerTextLimit.sec then
+        return Round(number)
+    elseif number < queue.TimerTextLimit.min then
+        return string.format("%dm", Round(number / 60))
+    elseif number < queue.TimerTextLimit.hour then
+        return string.format("%dh", Round(number / 3600))
+    else
+        return string.format("%dd", Round(number / 86400))
+    end
+end
+
+queue.co = coroutine.create(function()
+    while true do
+        local now = GetTime()
+        local count = 0
+        for cooldown in next, queue.queue do
+            local elapsed = now - cooldown.time
+            if elapsed > 0 then
+                cooldown.elapsed = cooldown.elapsed + elapsed
+                cooldown.time = now
+                if cooldown.elapsed > cooldown.duration then
+                    cooldown.elapsed = cooldown.duration
+                end
+                queue.setText(cooldown)
+
+                if cooldown.type == "baricon" then
+                    cooldown:SetValue(cooldown.elapsed)
+                    if cooldown.edge and cooldown.elapsed > cooldown.sparkTurnPoint then
+                        cooldown.sparkTurnPoint = cooldown.duration
+                        local auraFrame = cooldown:GetParent()
+                        local spark = auraFrame.spark
+                        spark:ClearAllPoints()
+                        if cooldown.orientation == 1 then -- left
+                            spark:SetPoint("TOPLEFT", auraFrame, "TOPLEFT")
+                            spark:SetPoint("BOTTOMLEFT", auraFrame, "BOTTOMLEFT")
+                        elseif cooldown.orientation == 2 then -- right
+                            spark:SetPoint("TOPRIGHT", auraFrame, "TOPRIGHT")
+                            spark:SetPoint("BOTTOMRIGHT", auraFrame, "BOTTOMRIGHT")
+                        elseif cooldown.orientation == 3 then -- up
+                            spark:SetPoint("TOPLEFT", auraFrame, "TOPLEFT")
+                            spark:SetPoint("TOPRIGHT", auraFrame, "TOPRIGHT")
+                        elseif cooldown.orientation == 4 then -- down
+                            spark:SetPoint("BOTTOMLEFT", auraFrame, "BOTTOMLEFT")
+                            spark:SetPoint("BOTTOMRIGHT", auraFrame, "BOTTOMRIGHT")
+                        end
+                    end
+                end
+
+                if cooldown.elapsed >= cooldown.duration then
+                    queue.queue[cooldown] = nil
+                end
+            end
+            count = count + 1
+            coroutine.yield(false, count)
+        end
+        coroutine.yield(true, count)
+    end
+end)
+
+queue.add = function(cooldown)
+    queue.pending[cooldown] = true
+end
+
+queue.setText = function(cooldown)
+    local time = cooldown.duration - cooldown.elapsed
+    local fs = cooldown._rfs_cd_text
+    if not fs then
+        return
+    end
+    if time > 0 then
+        fs:SetText(queue.getTimerText(time))
+        fs:Show()
+    else
+        fs:SetText("")
+        fs:Hide()
+    end
+end
+
+queue.run = function()
+    if queue.ticker and not queue.ticker:IsCancelled() then
+        return
+    end
+    for k, v in pairs(queue.pending) do
+        queue.queue[k] = v
+        queue.pending[k] = nil
+    end
+    local function run()
+        -- Start timing
+        local start = debugprofilestop()
+        -- Resume as often as possible (Limit to 1ms per frame)
+        while (debugprofilestop() - start < 1) do
+            -- Resume or remove
+            if coroutine.status(queue.co) ~= "dead" then
+                local ok, done, count = coroutine.resume(queue.co)
+                if not ok then
+                    geterrorhandler()(debugstack(queue.co))
+                    queue.ticker:Cancel()
+                end
+                if done == true then
+                    for k, v in pairs(queue.pending) do
+                        queue.queue[k] = v
+                        queue.pending[k] = nil
+                        count = count + 1
+                    end
+                    if next(queue.queue) == nil then
+                        queue.ticker:Cancel()
+                        break
+                    end
+                    queue.ticker:Cancel()
+                    local nexttime = count * 0.01
+                    if nexttime < 0.2 then
+                        nexttime = 0.2
+                    elseif nexttime > 1 then
+                        nexttime = 1
+                    end
+                    queue.ticker = C_Timer.NewTicker(nexttime, run)
+                    break
+                end
+            else
+                queue.ticker:Cancel()
+                break
+            end
+        end
+    end
+    queue.ticker = C_Timer.NewTicker(0, run)
+end
+
 local function GetTexCoord(width, height)
     -- ULx,ULy, LLx,LLy, URx,URy, LRx,LRy
     local texCoord = { iconCrop, iconCrop, iconCrop, 1 - iconCrop, 1 - iconCrop, iconCrop, 1 - iconCrop, 1 - iconCrop }
@@ -54,6 +189,10 @@ local function GetTexCoord(width, height)
     end
 
     return texCoord
+end
+
+function Aura:setTimerLimit(conf)
+    queue.TimerTextLimit = conf
 end
 
 function Aura:reset()
@@ -103,6 +242,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             auraFrame:SetParent(frame)
             auraFrame:Hide()
             auraFrame.cooldown:SetHideCountdownNumbers(true)
+            auraFrame.cooldown.type = type
 
             local textFrame = CreateFrame("Frame", nil, auraFrame)
             auraFrame.textFrame = textFrame
@@ -126,10 +266,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     local startTime = aura.expirationTime - aura.duration
                     CooldownFrame_Set(self, startTime, aura.duration, true)
                     if self.timerText then
-                        local ps = self._rfs_cd_text
-                        ps.elapsed = GetTime() - startTime
-                        ps.duration = aura.duration
-                        CDT:StartCooldownText(self)
+                        self.time = GetTime()
+                        self.elapsed = self.time - startTime
+                        self.duration = aura.duration
+                        queue.setText(self)
+                        queue.add(self)
+                        queue.run()
                     end
                     self:SetDrawSwipe(self.swipe)
                     self:SetDrawEdge(self.edge)
@@ -139,7 +281,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     end
                 else
                     CooldownFrame_Clear(self)
-                    CDT:StopCooldownText(self)
+                    self.elapsed = 0
+                    self.duration = 0
+                    queue.setText(self)
                 end
             end
 
@@ -189,6 +333,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             local cooldown = CreateFrame("StatusBar", name .. "CooldownBar", auraFrame)
             auraFrame.cooldown = cooldown
+            cooldown.type = type
             cooldown.swipe = frameOpt.swipe
             cooldown.edge = frameOpt.edge
             cooldown:SetPoint("TOPLEFT", auraFrame.icon)
@@ -236,52 +381,59 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             function auraFrame.cooldown:_SetCooldown(aura)
                 local enabled = aura and aura.expirationTime and aura.expirationTime ~= 0
                 if enabled then
+                    local now = GetTime()
                     local startTime = aura.expirationTime - aura.duration
-                    local elasped = GetTime() - startTime
-                    if self.swipe or self.edge then
-                        self.elapsed = -CooldownUpdateFrame.elapsed
-                        self:SetMinMaxValues(0, aura.duration)
-                        self:SetValue(elasped)
-                        self:Show()
+                    local elasped = now - startTime
 
-                        if not CooldownUpdateFrame.queue[self] then
-                            CooldownUpdateFrame.queue[self] = true
-                            CooldownUpdateFrame.count = CooldownUpdateFrame.count + 1
+                    self.time = now
+                    self.elapsed = elasped
+                    self.duration = aura.duration
+
+                    if aura.expirationTime > now then
+                        if self.timerText then
+                            queue.setText(self)
                         end
-                        CooldownUpdateFrame:SetScript("OnUpdate", function(self, elapsed)
-                            if next(self.queue) == nil then
-                                self:SetScript("OnUpdate", nil)
-                            end
 
-                            self.elapsed = self.elapsed + elapsed
-                            local limit = self.count * 0.01
-                            if limit < 0.1 then limit = 0.1 end
-                            if limit > 1 then limit = 1 end
-                            if self.elapsed > limit then
-                                self.count = 0
-                                for frame in pairs(self.queue) do
-                                    frame.elapsed = frame.elapsed + self.elapsed
-                                    frame:SetValue(frame:GetValue() + frame.elapsed)
-                                    frame.elapsed = 0
-                                    self.count = self.count + 1
+                        if self.swipe or self.edge then
+                            self.orientation = frameOpt.cdOrientation
+                            self:SetMinMaxValues(0, aura.duration)
+                            self:SetValue(elasped)
+                            self:Show()
+
+                            local frameSize = 0
+                            if self.edge then
+                                local spark = self:GetParent().spark
+                                spark:ClearAllPoints()
+                                if frameOpt.cdOrientation == 1 then -- left
+                                    spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "TOPLEFT")
+                                    spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
+                                    frameSize = auraFrame:GetWidth()
+                                elseif frameOpt.cdOrientation == 2 then -- right
+                                    spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
+                                    spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
+                                    frameSize = auraFrame:GetWidth()
+                                elseif frameOpt.cdOrientation == 3 then -- up
+                                    spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "TOPLEFT")
+                                    spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
+                                    frameSize = auraFrame:GetHeight()
+                                elseif frameOpt.cdOrientation == 4 then -- down
+                                    spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
+                                    spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
+                                    frameSize = auraFrame:GetHeight()
                                 end
-                                self.elapsed = 0
+                                spark:Show()
+                                self.sparkTurnPoint = (frameSize - border_size) / (frameSize / aura.duration)
                             end
-                        end)
-                    else
-                        if CooldownUpdateFrame.queue[self] then
-                            CooldownUpdateFrame.queue[self] = nil
-                            CooldownUpdateFrame.count = CooldownUpdateFrame.count - 1
                         end
+
+                        queue.add(self)
+                        queue.run()
+                    else
                         self:SetMinMaxValues(0, 1)
-                        self:SetValue(0)
+                        self:SetValue(1)
                         self:Show()
-                    end
-                    if self.timerText then
-                        local fs = self._rfs_cd_text
-                        fs.elapsed = elasped
-                        fs.duration = aura.duration
-                        CDT:StartCooldownText(self)
+                        -- self:Hide()
+                        self:GetParent().spark:Hide()
                     end
 
                     if aura.refresh then
@@ -290,11 +442,10 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     end
                 else
                     self:Hide()
-                    if CooldownUpdateFrame.queue[self] then
-                        CooldownUpdateFrame.queue[self] = nil
-                        CooldownUpdateFrame.count = CooldownUpdateFrame.count - 1
-                    end
-                    CDT:StopCooldownText(self)
+                    self:GetParent().spark:Hide()
+                    self.elapsed = 0
+                    self.duration = 0
+                    queue.setText(self)
                 end
             end
 
@@ -440,7 +591,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     cooldown.timerText = frameOpt.timerText
     cooldown.edge = frameOpt.edge
     if frameOpt.timerText then
-        local cooldownText = CDT:CreateOrGetCooldownFontString(cooldown)
+        local cooldownText = cooldown._rfs_cd_text or cooldown:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+        cooldown._rfs_cd_text = cooldownText
+        cooldownText:Show()
         cooldownText:ClearAllPoints()
         cooldownText:SetPoint(durationOpt.point, auraFrame, durationOpt.relativePoint, durationOpt.xOffsetFont, durationOpt.yOffsetFont)
         local res = cooldownText:SetFont(durationOpt.font, durationOpt.fontSize, durationOpt.outlinemode)
@@ -488,52 +641,36 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         if frameOpt.cdOrientation == 1 then -- left
             cooldown:SetOrientation("HORIZONTAL")
             cooldown:SetReverseFill(true)
-
-            spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "TOPLEFT")
-            spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
             spark:SetWidth(border_size)
-            cooldown:SetPoint("TOPLEFT", auraFrame.icon, "TOPLEFT", cooldown.edge and border_size or 0, 0)
+            cooldown:SetPoint("TOPLEFT", auraFrame.icon, "TOPLEFT")
             cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon)
-
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture())
             mask:SetPoint("BOTTOMRIGHT")
         elseif frameOpt.cdOrientation == 2 then -- right
             cooldown:SetOrientation("HORIZONTAL")
             cooldown:SetReverseFill(false)
-
-            spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
-            spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
             spark:SetWidth(border_size)
             cooldown:SetPoint("TOPLEFT", auraFrame.icon)
-            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon, "BOTTOMRIGHT", cooldown.edge and -border_size or 0, 0)
-
+            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon, "BOTTOMRIGHT")
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT")
             mask:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture())
         elseif frameOpt.cdOrientation == 3 then -- up
             cooldown:SetOrientation("VERTICAL")
             cooldown:SetReverseFill(false)
-
-            spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "TOPLEFT")
-            spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
             spark:SetHeight(border_size)
-            cooldown:SetPoint("TOPLEFT", auraFrame.icon, "TOPLEFT", 0, cooldown.edge and -border_size or 0)
+            cooldown:SetPoint("TOPLEFT", auraFrame.icon, "TOPLEFT")
             cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon)
-
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture())
             mask:SetPoint("BOTTOMRIGHT")
         elseif frameOpt.cdOrientation == 4 then -- down
             cooldown:SetOrientation("VERTICAL")
             cooldown:SetReverseFill(true)
-
-            spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
-            spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
             spark:SetHeight(border_size)
             cooldown:SetPoint("TOPLEFT", auraFrame.icon)
-            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon, "BOTTOMRIGHT", 0, cooldown.edge and border_size or 0)
-
+            cooldown:SetPoint("BOTTOMRIGHT", auraFrame.icon, "BOTTOMRIGHT")
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT")
             mask:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture())

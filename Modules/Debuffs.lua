@@ -6,7 +6,6 @@ local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 local Debuffs = addon:NewModule("Debuffs")
 Mixin(Debuffs, addonTable.hooks)
-local CDT = addonTable.cooldownText
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local Media = LibStub("LibSharedMedia-3.0")
@@ -62,7 +61,7 @@ function Debuffs:OnEnable()
     }
     local Bleeds = addonTable.Bleeds
 
-    CDT.TimerTextLimit = addon.db.profile.MinorModules.TimerTextLimit
+    Aura:setTimerLimit(addon.db.profile.MinorModules.TimerTextLimit)
 
     glowOpt = CopyTable(addon.db.profile.MinorModules.Glow)
     glowOpt.type = addon:ConvertDbNumberToGlowType(glowOpt.type)
@@ -200,7 +199,7 @@ function Debuffs:OnEnable()
         if not durationOpt.durationByDebuffColor then
             color = durationOpt.fontColor
         end
-        local cooldownText = CDT:CreateOrGetCooldownFontString(debuffFrame.cooldown)
+        local cooldownText = debuffFrame.cooldown._rfs_cd_text
         cooldownText:SetVertexColor(color.r, color.g, color.b, color.a)
 
         if aura then
@@ -728,7 +727,6 @@ function Debuffs:OnDisable()
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)
     end
-    CDT:DisableCooldownText()
     Aura:reset()
 end
 
@@ -865,35 +863,35 @@ function Debuffs:test()
                     local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.debuffs[auraInstanceID] then
                         if registry.debuffs[auraInstanceID].expirationTime < now then
-                            registry.debuffs[auraInstanceID] = nil
+                            -- registry.debuffs[auraInstanceID] = nil
                         end
                     end
                     if not registry.debuffs[auraInstanceID] then
                         local aura = {
-                            applications            = random(1, v.maxstack),                      --number	
-                            applicationsp           = nil,                                        --string? force show applications evenif it is 1
-                            auraInstanceID          = auraInstanceID,                             --number	
-                            canApplyAura            = false,                                      -- boolean	Whether or not the player can apply this aura.
-                            charges                 = 1,                                          --number	
-                            dispelName              = v.dispelName,                               --string?	
-                            duration                = v.duration,                                 --number	
-                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
-                            icon                    = icon,                                       --number	
-                            isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
-                            isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
-                            isHarmful               = true,                                       --boolean	Whether or not this aura is a debuff.
-                            isHelpful               = false,                                      --boolean	Whether or not this aura is a buff.
-                            isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
-                            isRaid                  = true,                                       --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
-                            isStealable             = false,                                      --boolean	
-                            maxCharges              = 1,                                          --number	
-                            name                    = spellName,                                  --string	The name of the aura.
-                            nameplateShowAll        = false,                                      --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
-                            nameplateShowPersonal   = false,                                      --boolean	
-                            points                  = {},                                         --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
-                            sourceUnit              = nil,                                        --string?	Token of the unit that applied the aura.
-                            spellId                 = spellId,                                    --number	The spell ID of the aura.
-                            timeMod                 = 1,                                          --number	
+                            applications            = random(1, v.maxstack), --number	
+                            applicationsp           = nil,                   --string? force show applications evenif it is 1
+                            auraInstanceID          = auraInstanceID,        --number	
+                            canApplyAura            = false,                 -- boolean	Whether or not the player can apply this aura.
+                            charges                 = 1,                     --number	
+                            dispelName              = v.dispelName,          --string?	
+                            duration                = v.duration,            --number	
+                            expirationTime          = 1,                     --number	
+                            icon                    = icon,                  --number	
+                            isBossAura              = false,                 --boolean	Whether or not this aura was applied by a boss.
+                            isFromPlayerOrPlayerPet = true,                  --boolean	Whether or not this aura was applied by a player or their pet.
+                            isHarmful               = true,                  --boolean	Whether or not this aura is a debuff.
+                            isHelpful               = false,                 --boolean	Whether or not this aura is a buff.
+                            isNameplateOnly         = false,                 --boolean	Whether or not this aura should appear on nameplates.
+                            isRaid                  = true,                  --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
+                            isStealable             = false,                 --boolean	
+                            maxCharges              = 1,                     --number	
+                            name                    = spellName,             --string	The name of the aura.
+                            nameplateShowAll        = false,                 --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
+                            nameplateShowPersonal   = false,                 --boolean	
+                            points                  = {},                    --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
+                            sourceUnit              = nil,                   --string?	Token of the unit that applied the aura.
+                            spellId                 = spellId,               --number	The spell ID of the aura.
+                            timeMod                 = 1,                     --number	
                         }
                         local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
                         if type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then

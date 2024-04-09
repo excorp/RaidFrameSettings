@@ -160,8 +160,8 @@ queue.run = function()
                     local nexttime = count * 0.01
                     if nexttime < 0.2 then
                         nexttime = 0.2
-                    elseif nexttime > 1 then
-                        nexttime = 1
+                    elseif nexttime > 0.5 then
+                        nexttime = 0.5
                     end
                     queue.ticker = C_Timer.NewTicker(nexttime, run)
                     break

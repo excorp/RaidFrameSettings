@@ -256,11 +256,13 @@ function DebuffHighlight:OnEnable()
                     if ticker and not ticker:IsCancelled() then
                         ticker:Cancel()
                     end
-                    local leasttime = math.min(unpack(leftime))
-                    ticker = C_Timer.NewTimer(leasttime, function()
-                        onUpdateHighlihgt(frame)
-                        ticker = nil
-                    end)
+                    if #leftime > 0 then
+                        local leasttime = math.min(unpack(leftime))
+                        ticker = C_Timer.NewTimer(leasttime, function()
+                            onUpdateHighlihgt(frame)
+                            ticker = nil
+                        end)
+                    end
                 end
             end
         end

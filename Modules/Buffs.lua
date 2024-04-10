@@ -206,6 +206,9 @@ function Buffs:OnEnable()
         conf.class = addon:ConvertDbNumberToClass(v.class)
         missingAuraOpt[tonumber(spellId)] = conf
     end
+    if next(missingAuraOpt) ~= nil then
+        frameOpt.missingAura = false
+    end
 
 
     --Buff size
@@ -572,8 +575,10 @@ function Buffs:OnEnable()
             end
         end
 
-        if frameOpt.missingAura and next(missingAuraOpt) ~= nil then
-            Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras)
+        if frameOpt.missingAura then
+            if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras)
+            end
         end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
@@ -594,6 +599,11 @@ function Buffs:OnEnable()
                     end
                 end
             end)
+            if frameOpt.missingAura then
+                addon:IterateRoster(function(frame)
+                    onUpdateMissingAuras(frame)
+                end)
+            end
             classMod:rosterUpdate()
         end)
     end)
@@ -619,7 +629,7 @@ function Buffs:OnEnable()
         onFrameSetup(frame)
         if frame.unit then
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                if frameOpt.missingAura and next(missingAuraOpt) ~= nil then
+                if frameOpt.missingAura then
                     if not onUpdateMissingAuras(frame) then
                         onUpdateAuras(frame)
                     end

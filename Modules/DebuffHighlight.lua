@@ -253,7 +253,7 @@ function DebuffHighlight:OnEnable()
                     end
                     glow[dispelName] = true
                 else
-                    if ticker and not ticker:IsCanceled() then
+                    if ticker and not ticker:IsCancelled() then
                         ticker:Cancel()
                     end
                     local leasttime = math.min(unpack(leftime))

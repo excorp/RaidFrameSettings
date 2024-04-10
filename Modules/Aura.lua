@@ -881,13 +881,13 @@ local function parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ign
     local batchCount = nil
     local usePackedAura = true
     local function HandleAura(aura)
-        if frame.buffsAll or frame.debuffsAll then
-            local all
-            if aura.isHelpful then
-                all = frame.buffsAll
-            else
-                all = frame.debuffsAll
-            end
+        local all
+        if aura.isHelpful and frame.buffsAll then
+            all = frame.buffsAll
+        elseif aura.isHarmful and frame.debuffsAll then
+            all = frame.debuffsAll
+        end
+        if all then
             all.aura[aura.auraInstanceID] = aura
             all.all[aura.spellId] = all.all[aura.spellId] or {}
             all.all[aura.spellId][aura.auraInstanceID] = aura
@@ -1075,8 +1075,9 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
     end
 
     if buffsAllChanged and frame.callback.buffsAll then
-        frame.callback.buffsAll(srcframe)
-        buffsChanged = false
+        if frame.callback.buffsAll(srcframe) then
+            buffsChanged = false
+        end
     end
 
     if debuffsAllChanged and frame.callback.debuffsAll then

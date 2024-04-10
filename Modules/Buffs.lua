@@ -305,6 +305,7 @@ function Buffs:OnEnable()
         if changed then
             onUpdateAuras(frame)
         end
+        return changed
     end
 
     onUpdateAuras = function(frame)
@@ -618,7 +619,13 @@ function Buffs:OnEnable()
         onFrameSetup(frame)
         if frame.unit then
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                onUpdateAuras(frame)
+                if frameOpt.missingAura and next(missingAuraOpt) ~= nil then
+                    if not onUpdateMissingAuras(frame) then
+                        onUpdateAuras(frame)
+                    end
+                else
+                    onUpdateAuras(frame)
+                end
             end
             if frameOpt.petframe and frame.unit:match("pet") then
                 Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)

@@ -56,7 +56,7 @@ local function makeAura(spellId, opt)
         applications            = 0,         --number	
         applicationsp           = nil,       --string? force show applications evenif it is 1
         auraInstanceID          = -spellId,  --number	
-        canApplyAura            = false,     -- boolean	Whether or not the player can apply this aura.
+        canApplyAura            = true,      -- boolean	Whether or not the player can apply this aura.
         charges                 = 1,         --number	
         dispelName              = nil,       --string?	
         duration                = 0,         --number	
@@ -581,41 +581,6 @@ function Buffs:OnEnable()
         self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
     end
 
-    if roster_changed then
-        roster_changed = false
-        addon:IterateRoster(function(frame)
-            if not frameOpt.petframe then
-                local fname = frame:GetName()
-                if not fname or fname:match("Pet") then
-                    return
-                end
-            end
-            if not frame_registry[frame] then
-                initRegistry(frame)
-            end
-        end)
-    end
-    for frame, v in pairs(frame_registry) do
-        v.dirty = true
-        onFrameSetup(frame)
-        if frame.unit then
-            if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                onUpdateAuras(frame)
-            end
-            if frameOpt.petframe and frame.unit:match("pet") then
-                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
-            end
-            groupClass = {}
-            addon:IterateRoster(function(frame)
-                if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                    local class = select(2, UnitClass(frame.unit))
-                    groupClass[class] = true
-                end
-            end)
-        end
-        classMod:init(frame)
-    end
-
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
         C_Timer.After(0, function()
@@ -631,6 +596,40 @@ function Buffs:OnEnable()
             classMod:rosterUpdate()
         end)
     end)
+
+    if roster_changed then
+        roster_changed = false
+        addon:IterateRoster(function(frame)
+            if not frameOpt.petframe then
+                local fname = frame:GetName()
+                if not fname or fname:match("Pet") then
+                    return
+                end
+            end
+            if not frame_registry[frame] then
+                initRegistry(frame)
+            end
+        end)
+    end
+
+    groupClass = {}
+    for frame, v in pairs(frame_registry) do
+        v.dirty = true
+        onFrameSetup(frame)
+        if frame.unit then
+            if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
+                onUpdateAuras(frame)
+            end
+            if frameOpt.petframe and frame.unit:match("pet") then
+                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+            end
+            if UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
+                local class = select(2, UnitClass(frame.unit))
+                groupClass[class] = true
+            end
+        end
+        classMod:init(frame)
+    end
 
     if frameOpt.petframe then
         self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)

@@ -930,6 +930,13 @@ local function parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ign
     end
 end
 
+local function GetOptionDisplayOnlyDispellableDebuffs(frame, optionTable)
+    if isClassic then
+        return frame.optionTable.displayOnlyDispellableDebuffs
+    end
+    return CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(frame, frame.optionTable)
+end
+
 local function updateAuras(srcframe, unitAuraUpdateInfo)
     local frame = frame_registry[srcframe]
 
@@ -942,7 +949,7 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
     local buffsAllChanged = false
     local debuffsAllChanged = false
 
-    local displayOnlyDispellableDebuffs = CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(srcframe, srcframe.optionTable)
+    local displayOnlyDispellableDebuffs = GetOptionDisplayOnlyDispellableDebuffs(srcframe, srcframe.optionTable)
     local ignoreBuffs = not frame.buffs
     local ignoreDebuffs = not frame.debuffs
     local ignoreDispelDebuffs = true

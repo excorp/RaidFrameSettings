@@ -41,6 +41,55 @@ local glowOpt
 local testmodeTicker
 local onUpdateAuras
 
+local function makeAura(spellId, opt)
+    local spellName, _, icon = GetSpellInfo(spellId)
+    local aura = {
+        applications            = 0,         --number	
+        applicationsp           = nil,       --string? force show applications evenif it is 1
+        auraInstanceID          = -spellId,  --number	
+        canApplyAura            = false,     -- boolean	Whether or not the player can apply this aura.
+        charges                 = 1,         --number	
+        dispelName              = nil,       --string?	
+        duration                = 0,         --number	
+        expirationTime          = 0,         --number	
+        icon                    = icon,      --number	
+        isBossAura              = false,     --boolean	Whether or not this aura was applied by a boss.
+        isFromPlayerOrPlayerPet = true,      --boolean	Whether or not this aura was applied by a player or their pet.
+        isHarmful               = true,      --boolean	Whether or not this aura is a debuff.
+        isHelpful               = false,     --boolean	Whether or not this aura is a buff.
+        isNameplateOnly         = false,     --boolean	Whether or not this aura should appear on nameplates.
+        isRaid                  = true,      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
+        isStealable             = false,     --boolean	
+        maxCharges              = 1,         --number	
+        name                    = spellName, --string	The name of the aura.
+        nameplateShowAll        = false,     --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
+        nameplateShowPersonal   = false,     --boolean	
+        points                  = {},        --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
+        sourceUnit              = nil,       --string?	Token of the unit that applied the aura.
+        spellId                 = spellId,   --number	The spell ID of the aura.
+        timeMod                 = 1,         --number	
+    }
+    if opt and type(opt) == "table" then
+        MergeTable(aura, opt)
+    end
+    return aura
+end
+
+local function initRegistry(frame)
+    frame_registry[frame] = {
+        maxDebuffs        = 0,
+        placedAuraStart   = 0,
+        auraGroupStart    = {},
+        auraGroupEnd      = {},
+        extraDebuffFrames = {},
+        reanchor          = {},
+        debuffs           = TableUtil.CreatePriorityTable(AuraUtil.UnitFrameDebuffComparator, TableUtil.Constants.AssociativePriorityTable),
+        aura              = {},
+        userPlacedShown   = {},
+        dirty             = true,
+    }
+end
+
 function Debuffs:Glow(frame, onoff)
     if onoff then
         Glow:Start(glowOpt, frame)
@@ -220,6 +269,7 @@ function Debuffs:OnEnable()
         self:Glow(debuffFrame, opt.glow)
         debuffFrame:SetAlpha(opt.alpha or 1)
     end
+
 
     local function onUpdatePrivateAuras(frame)
         if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
@@ -407,22 +457,6 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
-    local function initRegistry(frame)
-        frame_registry[frame] = {
-            maxDebuffs        = frameOpt.maxdebuffs,
-            placedAuraStart   = 0,
-            auraGroupStart    = {},
-            auraGroupEnd      = {},
-            extraDebuffFrames = {},
-            reanchor          = {},
-            debuffs           = TableUtil.CreatePriorityTable(AuraUtil.UnitFrameDebuffComparator, TableUtil.Constants.AssociativePriorityTable),
-            dispels           = {},
-            aura              = {},
-            userPlacedShown   = {},
-            dirty             = true,
-        }
-    end
-
     local function onFrameSetup(frame)
         if frame.unit and not (frame.unit:match("pet") and frameOpt.petframe) and not UnitIsPlayer(frame.unit) and not UnitInPartyIsAI(frame.unit) then
             return
@@ -430,9 +464,6 @@ function Debuffs:OnEnable()
 
         if not frame_registry[frame] then
             initRegistry(frame)
-            for type, _ in pairs(AuraUtil.DispellableDebuffTypes) do
-                frame_registry[frame].dispels[type] = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable)
-            end
         end
 
         if frame_registry[frame].dirty then
@@ -613,10 +644,6 @@ function Debuffs:OnEnable()
                 end
             end
         end
-
-        -- frame_registry[frame].displayDebuffs = frame.optionTable.displayDebuffs
-        -- frame.optionTable.displayDebuffs = false
-        -- Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs, onUpdateAuras)
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -635,9 +662,6 @@ function Debuffs:OnEnable()
             end
             if not frame_registry[frame] then
                 initRegistry(frame)
-                for type, _ in pairs(AuraUtil.DispellableDebuffTypes) do
-                    frame_registry[frame].dispels[type] = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable)
-                end
             end
         end)
     end
@@ -649,7 +673,7 @@ function Debuffs:OnEnable()
                 onUpdateAuras(frame)
             end
             if frameOpt.petframe and frame.unit:match("pet") then
-                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+                Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].buffs, onUpdateAuras)
             end
         end
     end
@@ -722,7 +746,7 @@ function Debuffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-        frame_registry[frame] = nil
+        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)
@@ -860,39 +884,19 @@ function Debuffs:test()
 
                 for spellId, v in pairs(testauras) do
                     local auraInstanceID = -spellId
-                    local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.debuffs[auraInstanceID] then
                         if registry.debuffs[auraInstanceID].expirationTime < now then
                             registry.debuffs[auraInstanceID] = nil
                         end
                     end
                     if not registry.debuffs[auraInstanceID] then
-                        local aura = {
-                            applications            = random(1, v.maxstack),                      --number	
-                            applicationsp           = nil,                                        --string? force show applications evenif it is 1
-                            auraInstanceID          = auraInstanceID,                             --number	
-                            canApplyAura            = false,                                      -- boolean	Whether or not the player can apply this aura.
-                            charges                 = 1,                                          --number	
-                            dispelName              = v.dispelName,                               --string?	
-                            duration                = v.duration,                                 --number	
-                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
-                            icon                    = icon,                                       --number	
-                            isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
-                            isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
-                            isHarmful               = true,                                       --boolean	Whether or not this aura is a debuff.
-                            isHelpful               = false,                                      --boolean	Whether or not this aura is a buff.
-                            isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
-                            isRaid                  = true,                                       --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
-                            isStealable             = false,                                      --boolean	
-                            maxCharges              = 1,                                          --number	
-                            name                    = spellName,                                  --string	The name of the aura.
-                            nameplateShowAll        = false,                                      --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
-                            nameplateShowPersonal   = false,                                      --boolean	
-                            points                  = {},                                         --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
-                            sourceUnit              = nil,                                        --string?	Token of the unit that applied the aura.
-                            spellId                 = spellId,                                    --number	The spell ID of the aura.
-                            timeMod                 = 1,                                          --number	
-                        }
+                        local aura = makeAura(spellId, {
+                            applications   = random(1, v.maxstack),                      --number	
+                            auraInstanceID = auraInstanceID,                             --number	
+                            dispelName     = v.dispelName,                               --string?	
+                            duration       = v.duration,                                 --number	
+                            expirationTime = v.duration > 0 and (now + v.duration) or 0, --number	
+                        })
                         local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
                         if type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
                             registry.debuffs[auraInstanceID] = aura

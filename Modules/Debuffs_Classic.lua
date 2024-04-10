@@ -98,6 +98,37 @@ local function UtilShouldDisplayDebuff(unit, index, filter)
     end
 end
 
+local function initRegistry(frame)
+    frame_registry[frame] = {
+        maxDebuffs        = 0,
+        placedAuraStart   = 0,
+        auraGroupStart    = {},
+        auraGroupEnd      = {},
+        extraDebuffFrames = {},
+        reanchor          = {},
+        aura              = {},
+        userPlacedShown   = {},
+        debuffs           = TableUtil.CreatePriorityTable(function(a, b)
+            if a.debuffType ~= b.debuffType then
+                return a.debuffType < b.debuffType;
+            end
+
+            local aFromPlayer = (a.sourceUnit ~= nil) and UnitIsUnit("player", a.sourceUnit) or false
+            local bFromPlayer = (b.sourceUnit ~= nil) and UnitIsUnit("player", b.sourceUnit) or false
+            if aFromPlayer ~= bFromPlayer then
+                return aFromPlayer
+            end
+
+            if a.canApplyAura ~= b.canApplyAura then
+                return a.canApplyAura
+            end
+
+            return a.auraInstanceID < b.auraInstanceID
+        end
+        , TableUtil.Constants.AssociativePriorityTable),
+        dirty             = true,
+    }
+end
 
 function Debuffs:Glow(frame, onoff)
     if onoff then
@@ -476,38 +507,6 @@ function Debuffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
-    local function initRegistry(frame)
-        frame_registry[frame] = {
-            maxDebuffs        = frameOpt.maxdebuffs,
-            placedAuraStart   = 0,
-            auraGroupStart    = {},
-            auraGroupEnd      = {},
-            extraDebuffFrames = {},
-            reanchor          = {},
-            aura              = {},
-            userPlacedShown   = {},
-            debuffs           = TableUtil.CreatePriorityTable(function(a, b)
-                if a.debuffType ~= b.debuffType then
-                    return a.debuffType < b.debuffType;
-                end
-
-                local aFromPlayer = (a.sourceUnit ~= nil) and UnitIsUnit("player", a.sourceUnit) or false
-                local bFromPlayer = (b.sourceUnit ~= nil) and UnitIsUnit("player", b.sourceUnit) or false
-                if aFromPlayer ~= bFromPlayer then
-                    return aFromPlayer
-                end
-
-                if a.canApplyAura ~= b.canApplyAura then
-                    return a.canApplyAura
-                end
-
-                return a.auraInstanceID < b.auraInstanceID
-            end
-            , TableUtil.Constants.AssociativePriorityTable),
-            dirty             = true,
-        }
-    end
-
     local function onFrameSetup(frame)
         if not frameOpt.petframe then
             local fname = frame:GetName()
@@ -784,7 +783,7 @@ function Debuffs:OnDisable()
             CompactUnitFrame_UpdateAuras(frame)
         end
 
-        frame_registry[frame] = nil
+        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)

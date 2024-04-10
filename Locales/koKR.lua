@@ -3,7 +3,7 @@ if not L then return end
 
 L["RaidFrameSettings"]                    = "RaidFrameSettings"
 L["RaidFrameSettings_Excorp_Fork"]        = "RaidFrameSettings 변하지롱 수정판"
-L["Options will show after combat ends."] = "옵션창은 전투 종료후 표시 됩니다."
+L["Options will open after combat ends."] = "옵션창은 전투 종료후 표시 됩니다."
 
 
 L["Raid Frame Settings"] = "레이드 프레임 셋팅"
@@ -22,7 +22,7 @@ L["Auras:"]              = "오라:"
 L["Buffs"]               = "버프"
 L["Debuffs"]             = "디버프"
 L["Overabsorb"]          = "초과흡수"
-L["Aura Highlight"]      = "오라 하이라이트"
+L["Debuff Highlight"]    = "디버프 하이라이트"
 L["Custom Scale"]        = "커스텀 스케일"
 L["Solo"]                = "솔로"
 L["Profiles"]            = "프로필"
@@ -41,7 +41,6 @@ L["Sets the visibility, hiding, and priority of the aura.\n|cffF4A460CPU Impact:
 L["Adjust the position, orientation and size of buffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"] = "버프의 위치, 방향, 크기를 조정합니다.\n|cffF4A460CPU 영향: |r|cff00ff00낮음|r ~ |r|cffFFFF00중간|r"
 L["Adjust the position, orientation and size of debuffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"] = "디버프의 위치, 방향, 크기를 조정합니다.\n|cffF4A460CPU 영향: |r|cff00ff00낮음|r ~ |r|cffFFFF00중간|r"
 L["Show absorbs above the units max hp.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"] = "보호막이 최대 체력 이상일때의 표시기를 설정합니다.\n|cffF4A460CPU 영향: |r|cff00ff00낮음|r"
-L["Recolor unit health bars based on debuff type.\n|cffF4A460CPU Impact: |r|cffFFFF00MEDIUM|r to |r|cffFF474DHIGH|r"] = "디버프 유형에 따라 유닛 체력바의 색상을 변경합니다.\n|cffF4A460CPU 영향: |r|cffFFFF00중간|r ~ |r|cffFF474D높음|r"
 L["Set a scaling factor for raid and party frames.\n|cffF4A460CPU Impact: |r|cff90EE90NEGLIGIBLE|r"] = "레이드 및 파티 프레임의 스케일링 계수를 설정합니다.\n|cffF4A460CPU 영향: |r|cff90EE90없음|r"
 L["Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r"] = "파티중이 아닐때에도 레이드 프레임을 표시 합니다.\n|cffF4A460CPU 영향: |r|cff90EE90매우 낮음|r"
 
@@ -395,3 +394,11 @@ L["Defensive Spells"] = "생존기"
 L["Tank Spells"] = "탱커 뎀감기"
 
 L["Show Dispel Type"] = "디버프 해제종류 표시"
+
+L["Missing Aura"] = "없는 오라"
+L["Raid Buffs"] = "레이드 버프"
+L["Missing:"] = "없음:"
+L["Always"] = "항상"
+L["Has Dispel"] = "해제 스킬 있음"
+L["Can Dispel"] = "해제 가능"
+L["Use"] = "사용"

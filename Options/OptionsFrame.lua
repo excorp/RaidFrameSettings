@@ -90,7 +90,7 @@ frame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_REGEN_DISABLED" then
         frame:Hide()
         frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-        RaidFrameSettings:Print("Options will open after combat ends.")
+        RaidFrameSettings:Print(L["Options will open after combat ends."])
     elseif event == "PLAYER_REGEN_ENABLED" then
         frame:Show()
         frame:UnregisterEvent("PLAYER_REGEN_ENABLED")

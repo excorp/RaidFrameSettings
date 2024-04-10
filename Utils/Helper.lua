@@ -62,6 +62,27 @@ function addon:ConvertDbNumberToBaseline(number)
     return position or ""
 end
 
+function addon:ConvertDbNumberToClass(number)
+    local classes = {
+        [1] = nil,
+        [2] = "WARRIOR",
+        [3] = "PALADIN",
+        [4] = "HUNTER",
+        [5] = "ROGUE",
+        [6] = "PRIEST",
+        [7] = "DEATHKNIGHT",
+        [8] = "SHAMAN",
+        [9] = "MAGE",
+        [10] = "WARLOCK",
+        [11] = "MONK",
+        [12] = "DRUID",
+        [13] = "DEMONHUNTER",
+        [14] = "EVOKER",
+    }
+    local class = classes[number]
+    return class or ""
+end
+
 --[[
 
 ]]
@@ -422,6 +443,32 @@ function addon:GetHealerSpellPreset(type)
         tinsert(spells, tostring(spellId))
     end
     return spells
+end
+
+function addon:GetRaidBuffs()
+    local buffs = {
+        ["1126"] = {
+            other = true,
+            class = 12,
+        },
+        ["1459"] = {
+            other = true,
+            class = 9,
+        },
+        ["21562"] = {
+            other = true,
+            class = 6,
+        },
+        ["381746"] = {
+            other = true,
+            class = 14,
+        },
+        ["6673"] = {
+            other = true,
+            class = 2,
+        },
+    }
+    return buffs
 end
 
 function addon:GetSpellIdsByName(name)

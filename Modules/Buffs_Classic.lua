@@ -103,6 +103,33 @@ local function UpdateCooldownFrame(frame, expirationTime, duration)
     end
 end
 
+local function initRegistry(frame)
+    frame_registry[frame] = {
+        maxBuffs        = 0,
+        placedAuraStart = 0,
+        auraGroupStart  = {},
+        auraGroupEnd    = {},
+        extraBuffFrames = {},
+        reanchor        = {},
+        aura            = {},
+        userPlacedShown = {},
+        buffs           = TableUtil.CreatePriorityTable(function(a, b)
+            local aFromPlayer = (a.sourceUnit ~= nil) and UnitIsUnit("player", a.sourceUnit) or false
+            local bFromPlayer = (b.sourceUnit ~= nil) and UnitIsUnit("player", b.sourceUnit) or false
+            if aFromPlayer ~= bFromPlayer then
+                return aFromPlayer
+            end
+
+            if a.canApplyAura ~= b.canApplyAura then
+                return a.canApplyAura
+            end
+
+            return a.auraInstanceID < b.auraInstanceID
+        end, TableUtil.Constants.AssociativePriorityTable),
+        dirty           = true,
+    }
+end
+
 function Buffs:Glow(frame, onoff)
     if onoff then
         Glow:Start(glowOpt, frame)
@@ -424,33 +451,6 @@ function Buffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
-    local function initRegistry(frame)
-        frame_registry[frame] = {
-            maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
-            placedAuraStart = 0,
-            auraGroupStart  = {},
-            auraGroupEnd    = {},
-            extraBuffFrames = {},
-            reanchor        = {},
-            aura            = {},
-            userPlacedShown = {},
-            buffs           = TableUtil.CreatePriorityTable(function(a, b)
-                local aFromPlayer = (a.sourceUnit ~= nil) and UnitIsUnit("player", a.sourceUnit) or false
-                local bFromPlayer = (b.sourceUnit ~= nil) and UnitIsUnit("player", b.sourceUnit) or false
-                if aFromPlayer ~= bFromPlayer then
-                    return aFromPlayer
-                end
-
-                if a.canApplyAura ~= b.canApplyAura then
-                    return a.canApplyAura
-                end
-
-                return a.auraInstanceID < b.auraInstanceID
-            end, TableUtil.Constants.AssociativePriorityTable),
-            dirty           = true,
-        }
-    end
-
     local function onFrameSetup(frame)
         if not frameOpt.petframe then
             local fname = frame:GetName()
@@ -644,7 +644,7 @@ function Buffs:OnDisable()
             CompactUnitFrame_UpdateAuras(frame)
         end
 
-        frame_registry[frame] = nil
+        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)

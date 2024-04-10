@@ -3,7 +3,7 @@ if not L then return end
 
 L["RaidFrameSettings"]                    = "RaidFrameSettings"
 L["RaidFrameSettings_Excorp_Fork"]        = "RaidFrameSettings Excorp Fork"
-L["Options will show after combat ends."] = "Options will show after combat ends."
+L["Options will open after combat ends."] = "Options will open after combat ends."
 
 
 L["Raid Frame Settings"] = "Raid Frame Settings"
@@ -21,7 +21,7 @@ L["Auras:"]              = "Auras:"
 L["Buffs"]               = "Buffs"
 L["Debuffs"]             = "Debuffs"
 L["Overabsorb"]          = "Overabsorb"
-L["Aura Highlight"]      = "Aura Highlight"
+L["Debuff Highlight"]    = "Debuff Highlight"
 L["Custom Scale"]        = "Custom Scale"
 L["Solo"]                = "Solo"
 L["Profiles"]            = "Profiles"
@@ -40,7 +40,6 @@ L["Sets the visibility, hiding, and priority of the aura.\n|cffF4A460CPU Impact:
 L["Adjust the position, orientation and size of buffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"] = "Adjust the position, orientation and size of buffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"
 L["Adjust the position, orientation and size of debuffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"] = "Adjust the position, orientation and size of debuffs.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |r|cffFFFF00MEDIUM|r"
 L["Show absorbs above the units max hp.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"] = "Show absorbs above the units max hp.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r"
-L["Recolor unit health bars based on debuff type.\n|cffF4A460CPU Impact: |r|cffFFFF00MEDIUM|r to |r|cffFF474DHIGH|r"] = "Recolor unit health bars based on debuff type.\n|cffF4A460CPU Impact: |r|cffFFFF00MEDIUM|r to |r|cffFF474DHIGH|r"
 L["Set a scaling factor for raid and party frames.\n|cffF4A460CPU Impact: |r|cff90EE90NEGLIGIBLE|r"] = "Set a scaling factor for raid and party frames.\n|cffF4A460CPU Impact: |r|cff90EE90NEGLIGIBLE|r"
 L["Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r"] = "Use CompactParty when Solo.\n|cffF4A460CPU Impact: |r|cff90EE90VERY LOW|r"
 
@@ -396,3 +395,11 @@ L["Defensive Spells"] = "Defensive Spells"
 L["Tank Spells"] = "Tank Spells"
 
 L["Show Dispel Type"] = "Show Dispel Type"
+
+L["Missing Aura"] = "Missing Aura"
+L["Raid Buffs"] = "Raid Buffs"
+L["Missing:"] = "Missing:"
+L["Always"] = "Always"
+L["Has Dispel"] = "Has Dispel"
+L["Can Dispel"] = "Can Dispel"
+L["Use"] = "Use"

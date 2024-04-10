@@ -23,10 +23,10 @@ end
 local defaults = {
     profile = {
         Module = {
-            ["*"]         = true,
-            CustomScale   = false,
-            AuraHighlight = false,
-            Sort          = false,
+            ["*"]           = true,
+            CustomScale     = false,
+            DebuffHighlight = false,
+            Sort            = false,
         },
         HealthBars = {
             Textures = {
@@ -135,6 +135,7 @@ local defaults = {
                 dispelYOffset = -2,
                 dispelWidth = 12,
                 dispelHeight = 12,
+                hightlight = true,
             },
             DurationDisplay = {
                 font = "Friz Quadrata TT",
@@ -177,6 +178,7 @@ local defaults = {
             petframe = false,
             sotf = true,
             mastery = true,
+            useMissingAura = true,
             BuffFramesDisplay = {
                 width = 14,
                 height = 14,
@@ -239,25 +241,17 @@ local defaults = {
             Increase = {
                 --[[spellID = name                ]] --
             },
-        },
-        AuraHighlight = {
-            Config = {
-                operation_mode = 1,
-                useHealthBarColor = true,
-                useHealthBarGlow = false,
-                Curse = false,
-                Disease = false,
-                Magic = false,
-                Poison = false,
-                Bleed = false,
-            },
             MissingAura = {
-                classSelection = 1,
-                missingAuraColor = { r = 0.8156863451004028, g = 0.5803921818733215, b = 0.658823549747467, a = 1 },
-                ["*"] = {
-                    input_field = "",
-                    spellIDs = {},
-                },
+
+            }
+        },
+        DebuffHighlight = {
+            Config = {
+                Curse   = 3,
+                Disease = 3,
+                Magic   = 3,
+                Poison  = 3,
+                Bleed   = 1,
             },
         },
         Sort = {
@@ -319,16 +313,7 @@ local defaults = {
                 EVOKER      = 1,
             },
             user = {
-                --[[
-                    ["변하지롱"] = {
-                        priority = 123,
-                        fullname = true,
-                        spec     = true,
-                        rolepos  = true,
-                        class    = true,
-                        name     = true,
-                    }
-                    ]]
+
             },
         },
         MinorModules = {
@@ -469,9 +454,6 @@ function RaidFrameSettings:SetStatus(info, value)
     if module_name == "DebuffColors" then
         if self:IsModuleEnabled("Debuffs") then
             self:UpdateModule("Debuffs")
-        end
-        if self:IsModuleEnabled("AuraHighlight") then
-            self:UpdateModule("AuraHighlight")
         end
     elseif module_name == "Glow" then
         if self:IsModuleEnabled("Buffs") then

@@ -34,6 +34,7 @@ local random = random
 
 local frame_registry = {}
 local roster_changed = true
+local groupClass = {}
 local glowOpt
 local testmodeTicker
 local onUpdateAuras
@@ -46,6 +47,62 @@ if not classMod then
         onEnable = function(opt) end,
         onDisable = function() end,
         initMod = function(buffs_mod, buffs_frame_registry, displayAura) end,
+    }
+end
+
+local function makeAura(spellId, opt)
+    local spellName, _, icon = GetSpellInfo(spellId)
+    local aura = {
+        applications            = 0,         --number	
+        applicationsp           = nil,       --string? force show applications evenif it is 1
+        auraInstanceID          = -spellId,  --number	
+        canApplyAura            = false,     -- boolean	Whether or not the player can apply this aura.
+        charges                 = 1,         --number	
+        dispelName              = nil,       --string?	
+        duration                = 0,         --number	
+        expirationTime          = 1,         --number	
+        icon                    = icon,      --number	
+        isBossAura              = false,     --boolean	Whether or not this aura was applied by a boss.
+        isFromPlayerOrPlayerPet = true,      --boolean	Whether or not this aura was applied by a player or their pet.
+        isHarmful               = false,     --boolean	Whether or not this aura is a debuff.
+        isHelpful               = true,      --boolean	Whether or not this aura is a buff.
+        isNameplateOnly         = false,     --boolean	Whether or not this aura should appear on nameplates.
+        isRaid                  = false,     --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
+        isStealable             = false,     --boolean	
+        maxCharges              = 1,         --number	
+        name                    = spellName, --string	The name of the aura.
+        nameplateShowAll        = false,     --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
+        nameplateShowPersonal   = false,     --boolean	
+        points                  = {},        --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
+        sourceUnit              = "player",  --string?	Token of the unit that applied the aura.
+        spellId                 = spellId,   --number	The spell ID of the aura.
+        timeMod                 = 1,         --number	
+    }
+    if opt and type(opt) == "table" then
+        MergeTable(aura, opt)
+    end
+    return aura
+end
+
+local function initRegistry(frame)
+    frame_registry[frame] = {
+        maxBuffs        = 0,
+        placedAuraStart = 0,
+        auraGroupStart  = {},
+        auraGroupEnd    = {},
+        extraBuffFrames = {},
+        reanchor        = {},
+        buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
+        aura            = {},
+        allaura         = {
+            aura  = {},
+            all   = {},
+            own   = {},
+            other = {},
+        },
+        empowered       = {},
+        userPlacedShown = {},
+        dirty           = true,
     }
 end
 
@@ -74,6 +131,7 @@ function Buffs:OnEnable()
     frameOpt.framestrata = addon:ConvertDbNumberToFrameStrata(frameOpt.framestrata)
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
+    frameOpt.missingAura = addon.db.profile.Buffs.useMissingAura
 
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Buffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
@@ -141,6 +199,15 @@ function Buffs:OnEnable()
             end
         end
     end
+    --missing aura
+    local missingAuraOpt = {}
+    for spellId, v in pairs(addon.db.profile.Buffs.MissingAura) do
+        local conf = CopyTable(v)
+        conf.class = addon:ConvertDbNumberToClass(v.class)
+        missingAuraOpt[tonumber(spellId)] = conf
+    end
+
+
     --Buff size
     local width      = frameOpt.width
     local height     = frameOpt.height
@@ -203,6 +270,41 @@ function Buffs:OnEnable()
 
         self:Glow(buffFrame, aura.empowered or opt.glow)
         buffFrame:SetAlpha(opt.alpha or 1)
+    end
+
+    local function onUpdateMissingAuras(frame)
+        local changed
+        if not frame_registry[frame] then
+            return
+        end
+
+        for spellId, v in pairs(missingAuraOpt) do
+            local check
+            if v.other then
+                if groupClass[v.class] then
+                    check = frame_registry[frame].allaura.all
+                end
+            else
+                check = frame_registry[frame].allaura.own
+            end
+            if check then
+                if check[spellId] then
+                    if frame_registry[frame].buffs[-spellId] then
+                        frame_registry[frame].buffs[-spellId] = nil
+                        changed = true
+                    end
+                else
+                    if not frame_registry[frame].buffs[-spellId] then
+                        frame_registry[frame].buffs[-spellId] = makeAura(spellId)
+                        changed = true
+                    end
+                end
+            end
+        end
+
+        if changed then
+            onUpdateAuras(frame)
+        end
     end
 
     onUpdateAuras = function(frame)
@@ -337,22 +439,6 @@ function Buffs:OnEnable()
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
-    local function initRegistry(frame)
-        frame_registry[frame] = {
-            maxBuffs        = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs,
-            placedAuraStart = 0,
-            auraGroupStart  = {},
-            auraGroupEnd    = {},
-            extraBuffFrames = {},
-            reanchor        = {},
-            buffs           = TableUtil.CreatePriorityTable(AuraUtil.DefaultAuraCompare, TableUtil.Constants.AssociativePriorityTable),
-            aura            = {},
-            empowered       = {},
-            userPlacedShown = {},
-            dirty           = true,
-        }
-    end
-
     local function onFrameSetup(frame)
         if frame.unit and not (frame.unit:match("pet") and frameOpt.petframe) and not UnitIsPlayer(frame.unit) and not UnitInPartyIsAI(frame.unit) then
             return
@@ -485,9 +571,9 @@ function Buffs:OnEnable()
             end
         end
 
-        -- frame_registry[frame].displayBuffs = frame.optionTable.displayBuffs
-        -- frame.optionTable.displayBuffs = false
-        -- Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+        if frameOpt.missingAura and next(missingAuraOpt) ~= nil then
+            Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras)
+        end
     end
     self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
 
@@ -519,6 +605,13 @@ function Buffs:OnEnable()
             if frameOpt.petframe and frame.unit:match("pet") then
                 Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
             end
+            groupClass = {}
+            addon:IterateRoster(function(frame)
+                if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                    local class = select(2, UnitClass(frame.unit))
+                    groupClass[class] = true
+                end
+            end)
         end
         classMod:init(frame)
     end
@@ -526,6 +619,15 @@ function Buffs:OnEnable()
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
         C_Timer.After(0, function()
+            groupClass = {}
+            addon:IterateRoster(function(frame)
+                if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                    local class = select(2, UnitClass(frame.unit))
+                    if class then
+                        groupClass[class] = true
+                    end
+                end
+            end)
             classMod:rosterUpdate()
         end)
     end)
@@ -550,6 +652,7 @@ function Buffs:OnDisable()
     local restoreBuffFrames = function(frame)
         -- frame.optionTable.displayDebuffs = frame_registry[frame].displayBuffs
         Aura:SetAuraVar(frame, "buffs")
+        Aura:SetAuraVar(frame, "buffsAll")
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)
@@ -569,7 +672,7 @@ function Buffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-        frame_registry[frame] = nil
+        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)
@@ -675,40 +778,17 @@ function Buffs:test()
 
                 for spellId, v in pairs(testauras) do
                     local auraInstanceID = -spellId
-                    local spellName, _, icon = GetSpellInfo(spellId)
                     if registry.buffs[auraInstanceID] then
                         if registry.buffs[auraInstanceID].expirationTime < now then
                             registry.buffs[auraInstanceID] = nil
                         end
                     end
                     if not registry.buffs[auraInstanceID] then
-                        local aura = {
-                            applications            = random(1, v.maxstack),                      --number	
-                            applicationsp           = nil,                                        --string? force show applications evenif it is 1
-                            auraInstanceID          = auraInstanceID,                             --number	
-                            canApplyAura            = false,                                      -- boolean	Whether or not the player can apply this aura.
-                            charges                 = 1,                                          --number	
-                            dispelName              = nil,                                        --string?	
-                            duration                = v.duration,                                 --number	
-                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
-                            icon                    = icon,                                       --number	
-                            isBossAura              = false,                                      --boolean	Whether or not this aura was applied by a boss.
-                            isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
-                            isHarmful               = false,                                      --boolean	Whether or not this aura is a debuff.
-                            isHelpful               = true,                                       --boolean	Whether or not this aura is a buff.
-                            isNameplateOnly         = false,                                      --boolean	Whether or not this aura should appear on nameplates.
-                            isRaid                  = false,                                      --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
-                            isStealable             = false,                                      --boolean	
-                            maxCharges              = 1,                                          --number	
-                            name                    = spellName,                                  --string	The name of the aura.
-                            nameplateShowAll        = false,                                      --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
-                            nameplateShowPersonal   = false,                                      --boolean	
-                            points                  = {},                                         --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
-                            sourceUnit              = "player",                                   --string?	Token of the unit that applied the aura.
-                            spellId                 = spellId,                                    --number	The spell ID of the aura.
-                            timeMod                 = 1,                                          --number	
-                        }
-
+                        local aura = makeAura(spellId, {
+                            applications   = random(1, v.maxstack),                      --number	
+                            duration       = v.duration,                                 --number	
+                            expirationTime = v.duration > 0 and (now + v.duration) or 0, --number	
+                        })
                         local type = CompactUnitFrame_ProcessAura(frame, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
                         if type == AuraUtil.AuraUpdateChangedType.Buff then
                             registry.buffs[auraInstanceID] = aura

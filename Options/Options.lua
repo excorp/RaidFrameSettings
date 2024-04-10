@@ -19,7 +19,7 @@ local Range_disabled                          = function() return not RaidFrameS
 local AuraFilter_disabled                     = function() return not RaidFrameSettings.db.profile.Module.AuraFilter end
 local Buffs_disabled                          = function() return not RaidFrameSettings.db.profile.Module.Buffs end
 local Debuffs_disabled                        = function() return not RaidFrameSettings.db.profile.Module.Debuffs end
-local AuraHighlight_disabled                  = function() return not RaidFrameSettings.db.profile.Module.AuraHighlight end
+local DebuffHighlight_disabled                = function() return not RaidFrameSettings.db.profile.Module.DebuffHighlight end
 local CustomScale_disabled                    = function() return not RaidFrameSettings.db.profile.Module.CustomScale end
 local Overabsorb_disabled                     = function() return not RaidFrameSettings.db.profile.Module.Overabsorb end
 local Sort_disabled                           = function() return not RaidFrameSettings.db.profile.Module.Sort end
@@ -431,11 +431,12 @@ options = {
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
-                        AuraHighlight = {
+                        DebuffHighlight = {
+                            hidden = isClassic,
                             order = 8,
                             type = "toggle",
-                            name = L["Aura Highlight"],
-                            desc = L["Recolor unit health bars based on debuff type.\n|cffF4A460CPU Impact: |r|cffFFFF00MEDIUM|r to |r|cffFF474DHIGH|r"],
+                            name = L["Debuff Highlight"],
+                            desc = "",
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -2164,6 +2165,90 @@ options = {
                                 },
                             },
                         },
+                        MissingAura = {
+                            hidden = not isRetail,
+                            order = 4,
+                            name = L["Missing Aura"],
+                            desc = "",
+                            type = "group",
+                            args = {
+                                use = {
+                                    order = 1,
+                                    name = L["Use"],
+                                    desc = "",
+                                    type = "toggle",
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Buffs.useMissingAura
+                                    end,
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Buffs.useMissingAura = value
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                    width = "full",
+                                },
+                                addAura = {
+                                    order = 2,
+                                    name = L["Enter spellId:"],
+                                    desc = "",
+                                    type = "input",
+                                    width = 1.5,
+                                    -- pattern = "^%d+$",
+                                    -- usage = L["please enter a number"],
+                                    set = function(_, value)
+                                        local spellId = RaidFrameSettings:SafeToNumber(value)
+                                        local spellIds = { spellId }
+                                        if not spellId then
+                                            spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+                                        end
+                                        for _, spellId in pairs(spellIds) do
+                                            value = tostring(spellId)
+                                            local opt = {
+                                                other = false,
+                                                class = nil,
+                                            }
+                                            RaidFrameSettings.db.profile.Buffs.MissingAura[value] = opt
+                                            RaidFrameSettings:CreateMissingAuraEntry(value)
+                                        end
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                },
+                                importOptions = {
+                                    hidden = not isRetail,
+                                    order = 3,
+                                    name = L["Import presets:"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+                                        retailDefensiveCooldowns = {
+                                            order = 1,
+                                            hidden = not isRetail,
+                                            name = L["Raid Buffs"],
+                                            desc = "",
+                                            type = "execute",
+                                            func = function()
+                                                local buffs = RaidFrameSettings:GetRaidBuffs()
+                                                for value, opt in pairs(buffs) do
+                                                    RaidFrameSettings.db.profile.Buffs.MissingAura[value] = opt
+                                                    RaidFrameSettings:CreateMissingAuraEntry(value)
+                                                end
+                                                RaidFrameSettings:LoadUserInputEntrys()
+                                                RaidFrameSettings:UpdateModule("Buffs")
+                                            end,
+                                            width = 0.8,
+                                        },
+                                    },
+                                },
+                                MissedAuras = {
+                                    order = 4,
+                                    name = L["Missing:"],
+                                    type = "group",
+                                    inline = true,
+                                    args = {
+
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
                 Debuffs = {
@@ -2756,11 +2841,11 @@ options = {
                 },
             },
         },
-        AuraHighlight = {
+        DebuffHighlight = {
             order = 6,
-            name = L["Aura Highlight"],
+            name = L["Debuff Highlight"],
             type = "group",
-            hidden = AuraHighlight_disabled,
+            hidden = DebuffHighlight_disabled,
             args = {
                 Config = {
                     order = 1,
@@ -2768,135 +2853,50 @@ options = {
                     type = "group",
                     inline = true,
                     args = {
-                        operation_mode = {
-                            order = 1,
-                            name = L["Operation mode"],
-                            desc = L["Smart - The add-on will determine which debuffs you can dispel based on your talents and class, and will only highlight those debuffs. \nManual - You choose which debuff types you want to see."],
-                            type = "select",
-                            values = { L["Smart"], L["Manual"] },
-                            sorting = { 1, 2 },
-                            get = "GetStatus",
-                            set = "SetStatus",
-                        },
-                        useHealthBarColor = {
-                            order = 1.1,
-                            name = L["Color HealthBar"],
-                            desc = "",
-                            type = "toggle",
-                            get = "GetStatus",
-                            set = "SetStatus",
-                            width = 1,
-                        },
-                        useHealthBarGlow = {
-                            order = 1.2,
-                            name = L["Glow HealthBar"],
-                            desc = "",
-                            type = "toggle",
-                            get = "GetStatus",
-                            set = "SetStatus",
-                            width = 1,
-                        },
-                        newline = {
-                            order = 1.3,
-                            type = "description",
-                            name = "",
-                        },
                         Curse = {
-                            hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 2,
                             name = L["Curse"],
-                            type = "toggle",
+                            type = "select",
+                            values = { L["Always"], L["Has Dispel"], L["Can Dispel"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.5,
                         },
                         Disease = {
-                            hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 3,
                             name = L["Disease"],
-                            type = "toggle",
+                            type = "select",
+                            values = { L["Always"], L["Has Dispel"], L["Can Dispel"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.5,
                         },
                         Magic = {
-                            hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 4,
                             name = L["Magic"],
-                            type = "toggle",
+                            type = "select",
+                            values = { L["Always"], L["Has Dispel"], L["Can Dispel"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.5,
                         },
                         Poison = {
-                            hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 5,
                             name = L["Poison"],
-                            type = "toggle",
+                            type = "select",
+                            values = { L["Always"], L["Has Dispel"], L["Can Dispel"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.5,
                         },
                         Bleed = {
-                            hidden = function() return RaidFrameSettings.db.profile.AuraHighlight.Config.operation_mode == 1 and true or false end,
                             order = 6,
                             name = L["Bleed"],
-                            type = "toggle",
-                            get = "GetStatus",
-                            set = "SetStatus",
-                            width = 0.5,
-                        },
-                    },
-                },
-                MissingAura = {
-                    order = 3,
-                    name = L["Missing Aura"],
-                    type = "group",
-                    inline = true,
-                    args = {
-                        classSelection = {
-                            order = 1,
-                            name = L["Class:"],
                             type = "select",
-                            values = addonTable.playableHealerClasses,
+                            values = { L["Always"], L["Has Dispel"], L["Can Dispel"] },
+                            sorting = { 1, 2, 3 },
                             get = "GetStatus",
                             set = "SetStatus",
-                        },
-                        missingAuraColor = {
-                            order = 2,
-                            name = L["Missing Aura Color"],
-                            type = "color",
-                            hasAlpha = true,
-                            get = "GetColor",
-                            set = "SetColor",
-                        },
-                        input_field = {
-                            order = 3,
-                            name = L["Enter spellIDs"],
-                            desc = L["enter spellIDs seperated by a semicolon or comma\nExample: 12345; 123; 456;"],
-                            type = "input",
-                            width = "full",
-                            multiline = 5,
-                            set = function(self, input)
-                                local dbObj = RaidFrameSettings.db.profile.AuraHighlight.MissingAura
-                                local class = addonTable.playableHealerClasses[dbObj.classSelection]
-                                dbObj[class].input_field = input
-                                --transform string to a list of spellIDs:
-                                local tbl = {}
-                                for word in string.gmatch(input, "([^;,%s]+)") do
-                                    local name = GetSpellInfo(word)
-                                    if name then
-                                        tbl[tonumber(word)] = name
-                                    end
-                                end
-                                dbObj[class].spellIDs = tbl
-                                RaidFrameSettings:UpdateModule("AuraHighlight")
-                            end,
-                            get = function()
-                                local dbObj = RaidFrameSettings.db.profile.AuraHighlight.MissingAura
-                                local class = addonTable.playableHealerClasses[dbObj.classSelection]
-                                return dbObj[class].input_field
-                            end,
                         },
                     },
                 },
@@ -3584,7 +3584,7 @@ options = {
                     },
                 },
                 DebuffColors = {
-                    hidden = function() return not RaidFrameSettings.db.profile.Module.Debuffs and not RaidFrameSettings.db.profile.Module.AuraHighlight end,
+                    hidden = function() return not RaidFrameSettings.db.profile.Module.Debuffs and not RaidFrameSettings.db.profile.Module.DebuffHighlight end,
                     order = 4,
                     name = L["Debuff colors"],
                     type = "group",
@@ -4450,6 +4450,67 @@ function RaidFrameSettings:CreateIncreaseEntry(spellId, category)
         },
     }
     increaseOptions[spellId] = increase_entry
+end
+
+function RaidFrameSettings:CreateMissingAuraEntry(spellId)
+    local dbObj = self.db.profile.Buffs.MissingAura[spellId]
+    local missingOptions = options.args.Auras.args.Buffs.args.MissingAura.args.MissedAuras.args
+    local spellName, _, icon
+    if #spellId <= 10 then --spellId's longer than 10 intergers cause an overflow error
+        spellName, _, icon = GetSpellInfo(spellId)
+    end
+    local maxEntry = self:count(missingOptions)
+    local missingOptions_entry = {
+        order = maxEntry + 1,
+        name = "",
+        type = "group",
+        inline = true,
+        args = {
+            auraInfo = {
+                order = 1,
+                image = icon,
+                imageCoords = { 0.1, 0.9, 0.1, 0.9 },
+                name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
+                type = "description",
+                width = 1.5,
+            },
+            others = {
+                order = 2,
+                name = L["Other's buff"],
+                type = "toggle",
+                get = function() return dbObj.other end,
+                set = function(_, value)
+                    dbObj.other = value
+                    RaidFrameSettings:UpdateModule("Buffs")
+                end,
+            },
+            class = {
+                hidden = function() return not dbObj.other end,
+                order = 3,
+                name = L["Class"],
+                type = "select",
+                values = { "Any", L["WARRIOR"], L["PALADIN"], L["HUNTER"], L["ROGUE"], L["PRIEST"], L["DEATHKNIGHT"], L["SHAMAN"], L["MAGE"], L["WARLOCK"], L["MONK"], L["DRUID"], L["DEMONHUNTER"], L["EVOKER"], },
+                sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 },
+                get = function() return dbObj.class end,
+                set = function(_, value)
+                    dbObj.class = value
+                    RaidFrameSettings:UpdateModule("Buffs")
+                end,
+            },
+            remove = {
+                order = 4,
+                name = L["remove"],
+                type = "execute",
+                func = function()
+                    self.db.profile.Buffs.MissingAura[spellId] = nil
+                    missingOptions[spellId] = nil
+                    RaidFrameSettings:UpdateModule("Buffs")
+                end,
+                width = 0.5,
+            },
+        },
+    }
+    missingOptions[spellId] = missingOptions_entry
 end
 
 function RaidFrameSettings:CreateSortUserEntry(keyword)
@@ -5599,6 +5660,12 @@ function RaidFrameSettings:LoadUserInputEntrys()
                 self:CreateAuraGroupEntry(tostring(v.spellId), groupNo, category)
             end
         end
+    end
+
+    --aura increase
+    options.args.Auras.args.Buffs.args.MissingAura.args.MissedAuras.args = {}
+    for spellId in pairs(self.db.profile.Buffs.MissingAura) do
+        self:CreateMissingAuraEntry(spellId)
     end
 
     --sort

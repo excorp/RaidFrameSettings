@@ -68,9 +68,6 @@ queue.co = coroutine.create(function()
             if elapsed > 0 then
                 cooldown.elapsed = cooldown.elapsed + elapsed
                 cooldown.time = now
-                if cooldown.elapsed > cooldown.duration then
-                    cooldown.elapsed = cooldown.duration
-                end
                 queue.setText(cooldown)
 
                 if cooldown.type == "baricon" then
@@ -241,8 +238,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             auraFrame = CreateFrame("Button", name, addonTable.isClassic and UIParent or nil, "Compact" .. category .. "Template") -- Specifying a "frame" as parent will automatically add it to frame.buffFrames, so set it to nil and set the parent later.
             auraFrame:SetParent(frame)
             auraFrame:Hide()
-            auraFrame.cooldown:SetHideCountdownNumbers(true)
-            auraFrame.cooldown.type = type
+            local cooldown = auraFrame.cooldown
+            cooldown:SetHideCountdownNumbers(true)
+            cooldown.type = type
 
             local textFrame = CreateFrame("Frame", nil, auraFrame)
             auraFrame.textFrame = textFrame
@@ -264,20 +262,26 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 local enabled = aura and aura.expirationTime and aura.expirationTime ~= 0
                 if enabled then
                     local startTime = aura.expirationTime - aura.duration
+                    local now = GetTime()
                     CooldownFrame_Set(self, startTime, aura.duration, true)
-                    if self.timerText then
-                        self.time = GetTime()
-                        self.elapsed = self.time - startTime
-                        self.duration = aura.duration
-                        queue.setText(self)
-                        queue.add(self)
-                        queue.run()
-                    end
-                    self:SetDrawSwipe(self.swipe)
-                    self:SetDrawEdge(self.edge)
-                    if aura.refresh then
-                        auraFrame.ag:Play()
-                        aura.refresh = nil
+                    if aura.expirationTime > now then
+                        if self.timerText then
+                            self.time = now
+                            self.elapsed = self.time - startTime
+                            self.duration = aura.duration
+                            queue.setText(self)
+                            queue.add(self)
+                            queue.run()
+                        end
+                        self:SetDrawSwipe(self.swipe)
+                        self:SetDrawEdge(self.edge)
+                        if aura.refresh then
+                            auraFrame.ag:Play()
+                            aura.refresh = nil
+                        end
+                    else
+                        auraFrame.icon:SetDesaturated(true)
+                        auraFrame.icon:SetVertexColor(0.5, 0.5, 0.5, 1)
                     end
                 else
                     CooldownFrame_Clear(self)
@@ -289,6 +293,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
             function auraFrame:SetAura(aura)
                 self.icon:SetTexture(aura.icon)
+                self.icon:SetDesaturated(false)
+                self.icon:SetVertexColor(1, 1, 1, 1)
                 if (aura.applications > 1 or (aura.applications >= 1 and aura.applicationsp)) then
                     local countText = aura.applications .. (aura.applicationsp or "")
                     if (aura.applications >= 100) then
@@ -395,7 +401,6 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         end
 
                         if self.swipe or self.edge then
-                            self.orientation = frameOpt.cdOrientation
                             self:SetMinMaxValues(0, aura.duration)
                             self:SetValue(elasped)
                             self:Show()
@@ -404,19 +409,19 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                             if self.edge then
                                 local spark = self:GetParent().spark
                                 spark:ClearAllPoints()
-                                if frameOpt.cdOrientation == 1 then -- left
+                                if self.orientation == 1 then -- left
                                     spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "TOPLEFT")
                                     spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
                                     frameSize = auraFrame:GetWidth()
-                                elseif frameOpt.cdOrientation == 2 then -- right
+                                elseif self.orientation == 2 then -- right
                                     spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
                                     spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
                                     frameSize = auraFrame:GetWidth()
-                                elseif frameOpt.cdOrientation == 3 then -- up
+                                elseif self.orientation == 3 then -- up
                                     spark:SetPoint("BOTTOMLEFT", cooldown:GetStatusBarTexture(), "TOPLEFT")
                                     spark:SetPoint("BOTTOMRIGHT", cooldown:GetStatusBarTexture(), "TOPRIGHT")
                                     frameSize = auraFrame:GetHeight()
-                                elseif frameOpt.cdOrientation == 4 then -- down
+                                elseif self.orientation == 4 then -- down
                                     spark:SetPoint("TOPLEFT", cooldown:GetStatusBarTexture(), "BOTTOMLEFT")
                                     spark:SetPoint("TOPRIGHT", cooldown:GetStatusBarTexture(), "BOTTOMRIGHT")
                                     frameSize = auraFrame:GetHeight()
@@ -638,6 +643,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
         end
 
         spark:ClearAllPoints()
+        cooldown.orientation = frameOpt.cdOrientation
         if frameOpt.cdOrientation == 1 then -- left
             cooldown:SetOrientation("HORIZONTAL")
             cooldown:SetReverseFill(true)
@@ -875,19 +881,50 @@ local function parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ign
     local batchCount = nil
     local usePackedAura = true
     local function HandleAura(aura)
+        if frame.buffsAll or frame.debuffsAll then
+            local all
+            if aura.isHelpful then
+                all = frame.buffsAll
+            else
+                all = frame.debuffsAll
+            end
+            all.aura[aura.auraInstanceID] = aura
+            all.all[aura.spellId] = all.all[aura.spellId] or {}
+            all.all[aura.spellId][aura.auraInstanceID] = aura
+            if aura.isFromPlayerOrPlayerPet then
+                all.own[aura.spellId] = aura
+            else
+                -- all.other[aura.spellId] = all.other[aura.spellId] or {}
+                -- all.other[aura.spellId][aura.auraInstanceID] = aura
+            end
+        end
         local type = processAura(srcframe, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-        if type == AuraUtil.AuraUpdateChangedType.Buff then
+        if frame.buffs and type == AuraUtil.AuraUpdateChangedType.Buff then
             frame.buffs[aura.auraInstanceID] = aura
-        elseif type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
+        elseif frame.debuffs and (type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel) then
             frame.debuffs[aura.auraInstanceID] = aura
         end
     end
-    if frame.buffs then
-        frame.buffs:Clear()
+    if frame.buffs or frame.buffsAll then
+        if frame.buffs then
+            frame.buffs:Clear()
+        elseif frame.buffsAll then
+            frame.buffsAll.aura = {}
+            frame.buffsAll.all = {}
+            frame.buffsAll.own = {}
+            frame.buffsAll.other = {}
+        end
         AuraUtil.ForEachAura(srcframe.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Helpful), batchCount, HandleAura, usePackedAura)
     end
-    if frame.debuffs then
-        frame.debuffs:Clear()
+    if frame.debuffs or frame.debuffsAll then
+        if frame.debuffs then
+            frame.debuffs:Clear()
+        elseif frame.debuffsAll then
+            frame.debuffsAll.aura = {}
+            frame.debuffsAll.all = {}
+            frame.debuffsAll.own = {}
+            frame.debuffsAll.other = {}
+        end
         AuraUtil.ForEachAura(srcframe.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful), batchCount, HandleAura, usePackedAura)
         AuraUtil.ForEachAura(srcframe.displayedUnit, AuraUtil.CreateFilterString(AuraUtil.AuraFilters.Harmful, AuraUtil.AuraFilters.Raid), batchCount, HandleAura, usePackedAura)
     end
@@ -896,12 +933,14 @@ end
 local function updateAuras(srcframe, unitAuraUpdateInfo)
     local frame = frame_registry[srcframe]
 
-    if not srcframe.displayedUnit or not frame.buffs and not frame.debuffs then
+    if not srcframe.displayedUnit or not frame.buffs and not frame.debuffs and not frame.buffsAll and not frame.debuffsAll then
         return
     end
 
     local buffsChanged = false
     local debuffsChanged = false
+    local buffsAllChanged = false
+    local debuffsAllChanged = false
 
     local displayOnlyDispellableDebuffs = CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(srcframe, srcframe.optionTable)
     local ignoreBuffs = not frame.buffs
@@ -912,9 +951,30 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
         parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
         buffsChanged = true
         debuffsChanged = true
+        buffsAllChanged = true
+        debuffsAllChanged = true
     else
         if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
+                local all
+                if aura.isHelpful and frame.buffsAll then
+                    all = frame.buffsAll
+                    buffsAllChanged = true
+                elseif aura.isHarmful and frame.debuffsAll then
+                    all = frame.debuffsAll
+                    debuffsAllChanged = true
+                end
+                if all then
+                    all.aura[aura.auraInstanceID] = aura
+                    all.all[aura.spellId] = all.all[aura.spellId] or {}
+                    all.all[aura.spellId][aura.auraInstanceID] = aura
+                    if aura.isFromPlayerOrPlayerPet then
+                        all.own[aura.spellId] = aura
+                    else
+                        -- all.other[aura.spellId] = all.other[aura.spellId] or {}
+                        -- all.other[aura.spellId][aura.auraInstanceID] = aura
+                    end
+                end
                 local type = processAura(srcframe, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
                 if type == AuraUtil.AuraUpdateChangedType.Buff then
                     frame.buffs[aura.auraInstanceID] = aura
@@ -928,27 +988,73 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
 
         if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
-                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
-                    if newAura ~= nil then
-                        newAura.isBuff = true
+                local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
+                if newAura then
+                    local all
+                    if newAura.isHelpful and frame.buffsAll then
+                        all = frame.buffsAll
+                        buffsAllChanged = true
+                    elseif newAura.isHarmful and frame.debuffsAll then
+                        all = frame.debuffsAll
+                        debuffsAllChanged = true
                     end
-                    frame.buffs[auraInstanceID] = newAura
-                    buffsChanged = true
-                elseif frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
-                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
-                    local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
-                    if newAura ~= nil then
-                        newAura.debuffType = oldDebuffType
+                    if all then
+                        all.aura[newAura.auraInstanceID] = newAura
+                        all.all[newAura.spellId] = all.all[newAura.spellId] or {}
+                        all.all[newAura.spellId][newAura.auraInstanceID] = newAura
+                        if newAura.isFromPlayerOrPlayerPet then
+                            all.own[newAura.spellId] = newAura
+                        else
+                            -- all.other[newAura.spellId] = all.other[newAura.spellId] or {}
+                            -- all.other[newAura.spellId][newAura.auraInstanceID] = newAura
+                        end
                     end
-                    frame.debuffs[auraInstanceID] = newAura
-                    debuffsChanged = true
+                    if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
+                        if newAura ~= nil then
+                            newAura.isBuff = true
+                        end
+                        frame.buffs[auraInstanceID] = newAura
+                        buffsChanged = true
+                    elseif frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
+                        local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
+                        if newAura ~= nil then
+                            newAura.debuffType = oldDebuffType
+                        end
+                        frame.debuffs[auraInstanceID] = newAura
+                        debuffsChanged = true
+                    end
                 end
             end
         end
 
         if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                if frame.buffsAll or frame.debuffsAll then
+                    local all = frame.buffsAll and frame.buffsAll.aura[auraInstanceID] and frame.buffsAll or frame.debuffsAll and frame.debuffsAll.aura[auraInstanceID] and frame.debuffsAll
+                    if all then
+                        if all == frame.buffsAll then
+                            buffsAllChanged = true
+                        else
+                            debuffsAllChanged = true
+                        end
+                        local aura = all.aura[auraInstanceID]
+                        all.aura[auraInstanceID] = nil
+                        all.all[aura.spellId] = all.all[aura.spellId] or {}
+                        all.all[aura.spellId][aura.auraInstanceID] = nil
+                        if next(all.all[aura.spellId]) == nil then
+                            all.all[aura.spellId] = nil
+                        end
+                        if aura.isFromPlayerOrPlayerPet then
+                            all.own[aura.spellId] = nil
+                        else
+                            -- all.other[aura.spellId] = all.other[aura.spellId] or {}
+                            -- all.other[aura.spellId][aura.auraInstanceID] = nil
+                            -- if next(all.other[aura.spellId]) == nil then
+                            --     all.other[aura.spellId] = nil
+                            -- end
+                        end
+                    end
+                end
                 if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
                     frame.buffs[auraInstanceID] = nil
                     buffsChanged = true
@@ -959,6 +1065,15 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
                 end
             end
         end
+    end
+
+    if buffsAllChanged and frame.callback.buffsAll then
+        frame.callback.buffsAll(srcframe)
+        buffsChanged = false
+    end
+
+    if debuffsAllChanged and frame.callback.debuffsAll then
+        frame.callback.debuffsAll(srcframe)
     end
 
     if buffsChanged and frame.callback.buffs then
@@ -975,7 +1090,7 @@ function Aura:SetAuraVar(srcframe, type, var, callback)
     frame[type] = var
     frame.callback = frame.callback or {}
     frame.callback[type] = callback
-    if not frame.buffs and not frame.debuffs then
+    if not frame.buffs and not frame.debuffs and not frame.buffsAll and not frame.debuffsAll then
         return
     end
     self:HookScript(srcframe, "OnEvent", function(srcframe, event, unit, unitAuraUpdateInfo)

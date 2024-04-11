@@ -142,6 +142,7 @@ queue.run = function()
                 if not ok then
                     geterrorhandler()(debugstack(queue.co))
                     queue.ticker:Cancel()
+                    break
                 end
                 if done == true then
                     for k, v in pairs(queue.pending) do

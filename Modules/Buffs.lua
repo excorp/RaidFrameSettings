@@ -679,7 +679,7 @@ function Buffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     roster_changed = true
-
+    Queue:flush()
     local restoreBuffFrames = function(frame)
         -- frame.optionTable.displayDebuffs = frame_registry[frame].displayBuffs
         Aura:SetAuraVar(frame, "buffs")

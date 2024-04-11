@@ -751,6 +751,7 @@ function Debuffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     roster_changed = true
+    Queue:flush()
     local restoreDebuffFrames = function(frame)
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
             -- onUnsetDebuff(extraDebuffFrame)

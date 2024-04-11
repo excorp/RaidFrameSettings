@@ -309,6 +309,13 @@ function Buffs:OnEnable()
                 check = frame_registry[frame].allaura.own
             end
             if check then
+                if not check[spellId] then
+                    for _, alterId in pairs(v.alter) do
+                        if check[alterId] then
+                            spellId = alterId
+                        end
+                    end
+                end
                 if check[spellId] then
                     if frame_registry[frame].buffs[-spellId] then
                         frame_registry[frame].buffs[-spellId] = nil
@@ -616,7 +623,9 @@ function Buffs:OnEnable()
             end)
             if frameOpt.missingAura then
                 addon:IterateRoster(function(frame)
-                    onUpdateMissingAuras(frame)
+                    if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                        onUpdateMissingAuras(frame)
+                    end
                 end)
             end
             classMod:rosterUpdate()
@@ -644,7 +653,7 @@ function Buffs:OnEnable()
         onFrameSetup(frame)
         if frame.unit then
             if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                if frameOpt.missingAura then
+                if frameOpt.missingAura and frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
                     if not onUpdateMissingAuras(frame) then
                         onUpdateAuras(frame)
                     end

@@ -450,22 +450,49 @@ function addon:GetRaidBuffs()
         ["1126"] = {
             other = true,
             class = 12,
+            alter = {
+                432661,
+            },
         },
         ["1459"] = {
             other = true,
             class = 9,
+            alter = {
+                432778,
+            },
         },
         ["21562"] = {
             other = true,
             class = 6,
-        },
-        ["381746"] = {
-            other = true,
-            class = 14,
+            alter = {
+
+            },
         },
         ["6673"] = {
             other = true,
             class = 2,
+            alter = {
+
+            },
+        },
+        ["364342"] = {
+            other = true,
+            class = 14,
+            alter = {
+                381732,
+                381741,
+                381746,
+                381748,
+                381749,
+                381750,
+                381751,
+                381752,
+                381753,
+                381754,
+                381756,
+                381757,
+                381758,
+            },
         },
     }
     return buffs

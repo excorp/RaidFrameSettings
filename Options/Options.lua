@@ -2205,6 +2205,7 @@ options = {
                                             local opt = {
                                                 other = false,
                                                 class = nil,
+                                                alter = {},
                                             }
                                             RaidFrameSettings.db.profile.Buffs.MissingAura[value] = opt
                                             RaidFrameSettings:CreateMissingAuraEntry(value)
@@ -4462,54 +4463,118 @@ function RaidFrameSettings:CreateMissingAuraEntry(spellId)
     local maxEntry = self:count(missingOptions)
     local missingOptions_entry = {
         order = maxEntry + 1,
-        name = "",
+        name = spellName,
         type = "group",
-        inline = true,
         args = {
-            auraInfo = {
+            list = {
                 order = 1,
-                image = icon,
-                imageCoords = { 0.1, 0.9, 0.1, 0.9 },
-                name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
-                type = "description",
-                width = 1.5,
-            },
-            others = {
-                order = 2,
-                name = L["Other's buff"],
-                type = "toggle",
-                get = function() return dbObj.other end,
-                set = function(_, value)
-                    dbObj.other = value
-                    RaidFrameSettings:UpdateModule("Buffs")
-                end,
-            },
-            class = {
-                hidden = function() return not dbObj.other end,
-                order = 3,
-                name = L["Class"],
-                type = "select",
-                values = { "Any", L["WARRIOR"], L["PALADIN"], L["HUNTER"], L["ROGUE"], L["PRIEST"], L["DEATHKNIGHT"], L["SHAMAN"], L["MAGE"], L["WARLOCK"], L["MONK"], L["DRUID"], L["DEMONHUNTER"], L["EVOKER"], },
-                sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 },
-                get = function() return dbObj.class end,
-                set = function(_, value)
-                    dbObj.class = value
-                    RaidFrameSettings:UpdateModule("Buffs")
-                end,
-            },
-            remove = {
-                order = 4,
-                name = L["remove"],
-                type = "execute",
-                func = function()
-                    self.db.profile.Buffs.MissingAura[spellId] = nil
-                    missingOptions[spellId] = nil
-                    RaidFrameSettings:UpdateModule("Buffs")
-                end,
-                width = 0.5,
+                name = "",
+                type = "group",
+                inline = true,
+                args = {
+                    auraInfo = {
+                        order = 1,
+                        image = icon,
+                        imageCoords = { 0.1, 0.9, 0.1, 0.9 },
+                        name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
+                        type = "description",
+                        width = 1.5,
+                    },
+                    others = {
+                        order = 2,
+                        name = L["Other's buff"],
+                        type = "toggle",
+                        get = function() return dbObj.other end,
+                        set = function(_, value)
+                            dbObj.other = value
+                            RaidFrameSettings:UpdateModule("Buffs")
+                        end,
+                    },
+                    class = {
+                        hidden = function() return not dbObj.other end,
+                        order = 3,
+                        name = L["Class"],
+                        type = "select",
+                        values = { "Any", L["WARRIOR"], L["PALADIN"], L["HUNTER"], L["ROGUE"], L["PRIEST"], L["DEATHKNIGHT"], L["SHAMAN"], L["MAGE"], L["WARLOCK"], L["MONK"], L["DRUID"], L["DEMONHUNTER"], L["EVOKER"], },
+                        sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 },
+                        get = function() return dbObj.class end,
+                        set = function(_, value)
+                            dbObj.class = value
+                            RaidFrameSettings:UpdateModule("Buffs")
+                        end,
+                    },
+                    remove = {
+                        order = 4,
+                        name = L["remove"],
+                        type = "execute",
+                        func = function()
+                            self.db.profile.Buffs.MissingAura[spellId] = nil
+                            missingOptions[spellId] = nil
+                            RaidFrameSettings:UpdateModule("Buffs")
+                        end,
+                        width = 0.5,
+                    },
+                },
             },
         },
+
     }
+    for k, alterSpellId in pairs(dbObj.alter) do
+        local idx = 10 + k * 3
+        missingOptions_entry.args.list.args["newline" .. idx] = {
+            order = idx,
+            type = "description",
+            name = "",
+        }
+        local alterName, _, alterIcon = GetSpellInfo(alterSpellId)
+        missingOptions_entry.args.list.args["auraInfo" .. idx] = {
+            order = idx + 1,
+            image = alterIcon,
+            imageCoords = { 0.1, 0.9, 0.1, 0.9 },
+            name = (alterName or L["|cffff0000aura not found|r"]) .. " (" .. alterSpellId .. ")",
+            type = "description",
+            width = 1.5,
+        }
+        missingOptions_entry.args.list.args["remove" .. idx] = {
+            order = idx + 2,
+            name = L["remove"],
+            type = "execute",
+            func = function()
+                self.db.profile.Buffs.MissingAura[spellId].alter[k] = nil
+                RaidFrameSettings:LoadUserInputEntrys()
+                RaidFrameSettings:UpdateModule("Buffs")
+            end,
+            width = 0.5,
+        }
+    end
+
+    missingOptions_entry.args.list.args.newline = {
+        order = 20 + #dbObj.alter * 3,
+        type = "description",
+        name = "",
+    }
+    missingOptions_entry.args.list.args.addAura = {
+        order = 21 + #dbObj.alter * 3,
+        name = L["Enter spellId:"],
+        desc = "",
+        type = "input",
+        width = 1,
+        -- pattern = "^%d+$",
+        -- usage = L["please enter a number"],
+        set = function(_, value)
+            local spellId = RaidFrameSettings:SafeToNumber(value)
+            local spellIds = { spellId }
+            if not spellId then
+                spellIds = RaidFrameSettings:GetSpellIdsByName(value)
+            end
+            for _, spellId in pairs(spellIds) do
+                tinsert(dbObj.alter, spellId)
+            end
+            RaidFrameSettings:LoadUserInputEntrys()
+            RaidFrameSettings:UpdateModule("Buffs")
+        end,
+    }
+
     missingOptions[spellId] = missingOptions_entry
 end
 

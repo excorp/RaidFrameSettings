@@ -397,7 +397,7 @@ L["Show Dispel Type"] = "디버프 해제종류 표시"
 
 L["Missing Aura"] = "없는 오라"
 L["Raid Buffs"] = "레이드 버프"
-L["Missing:"] = "없음:"
+L["Missing:"] = "없는 오라 추적 리스트:"
 L["Always"] = "항상"
 L["Has Dispel"] = "해제 스킬 있음"
 L["Can Dispel"] = "해제 가능"

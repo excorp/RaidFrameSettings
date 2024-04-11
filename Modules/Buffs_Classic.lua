@@ -8,6 +8,7 @@ local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
+local Queue = addonTable.Queue
 local Media = LibStub("LibSharedMedia-3.0")
 
 local AuraFilter = addon:GetModule("AuraFilter")
@@ -284,7 +285,7 @@ function Buffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetBuff = function(buffFrame, unit, index, filter, opt)
+    local onSetBuffReal = function(buffFrame, unit, index, filter, opt)
         if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -347,6 +348,23 @@ function Buffs:OnEnable()
 
         self:Glow(buffFrame, opt.glow)
         buffFrame:SetAlpha(opt.alpha or 1)
+    end
+
+    local onSetBuff = function(buffFrame, unit, index, filter, opt)
+        -- onSetBuffReal(buffFrame, unit, index, filter, opt)
+        Queue:add(onSetBuffReal, buffFrame, unit, index, filter, opt)
+        Queue:run()
+    end
+
+    local onUnsetBuffReal = function(buffFrame)
+        self:Glow(buffFrame, false)
+        buffFrame:UnsetAura()
+    end
+
+    local onUnsetBuff = function(buffFrame)
+        -- onUnsetBuffReal(buffFrame)
+        Queue:add(onUnsetBuffReal, buffFrame)
+        Queue:run()
     end
 
     local function onUpdateMissingAuras(frame)
@@ -477,8 +495,7 @@ function Buffs:OnEnable()
         for buffFrame in pairs(frame_registry[frame].userPlacedShown) do
             if not userPlacedShown[buffFrame] then
                 if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
-                    self:Glow(buffFrame, false)
-                    buffFrame:UnsetAura()
+                    onUnsetBuff(buffFrame)
                     frame_registry[frame].aura[buffFrame.auraInstanceID] = nil
                 else
                     userPlacedShown[buffFrame] = true
@@ -491,8 +508,7 @@ function Buffs:OnEnable()
             if not buffFrame:IsShown() then
                 break
             end
-            self:Glow(buffFrame, false)
-            buffFrame:UnsetAura()
+            onUnsetBuff(buffFrame)
             if buffFrame.auraInstanceID and frame_registry[frame].aura[buffFrame.auraInstanceID] then
                 frame_registry[frame].aura[buffFrame.auraInstanceID] = nil
             end
@@ -525,8 +541,7 @@ function Buffs:OnEnable()
                 if not buffFrame:IsShown() then
                     break
                 end
-                self:Glow(buffFrame, false)
-                buffFrame:UnsetAura()
+                onUnsetBuff(buffFrame)
                 if buffFrame.auraInstanceID and frame_registry[frame].aura[buffFrame.auraInstanceID] then
                     frame_registry[frame].aura[buffFrame.auraInstanceID] = nil
                 end
@@ -731,6 +746,7 @@ function Buffs:OnDisable()
     local restoreBuffFrames = function(frame)
         Aura:SetAuraVar(frame, "buffsAll")
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
+            -- onUnsetBuff(extraBuffFrame)
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)
         end

@@ -9,6 +9,7 @@ local Debuffs = addon:NewModule("Debuffs")
 Mixin(Debuffs, addonTable.hooks)
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
+local Queue = addonTable.Queue
 local Media = LibStub("LibSharedMedia-3.0")
 
 local AuraFilter = addon:GetModule("AuraFilter")
@@ -251,7 +252,7 @@ function Debuffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
+    local onSetDebuffReal = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
         if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -331,6 +332,23 @@ function Debuffs:OnEnable()
 
         self:Glow(debuffFrame, opt.glow)
         debuffFrame:SetAlpha(opt.alpha or 1)
+    end
+
+    local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
+        -- onSetDebuffReal(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
+        Queue:add(onSetDebuffReal, debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
+        Queue:run()
+    end
+
+    local onUnsetDebuffReal = function(debuffFrame)
+        self:Glow(debuffFrame, false)
+        debuffFrame:UnsetAura()
+    end
+
+    local onUnsetDebuff = function(debuffFrame)
+        -- onUnsetDebuffReal(debuffFrame)
+        Queue:add(onUnsetDebuffReal, debuffFrame)
+        Queue:run()
     end
 
     local dispellableDebuffTypes = { Magic = true, Curse = true, Disease = true, Poison = true }
@@ -439,8 +457,7 @@ function Debuffs:OnEnable()
         for debuffFrame in pairs(frame_registry[frame].userPlacedShown) do
             if not userPlacedShown[debuffFrame] then
                 if not debuffFrame.auraInstanceID or not (frame.buffs[debuffFrame.auraInstanceID] or frame_registry[frame].buffs[debuffFrame.auraInstanceID]) then
-                    self:Glow(debuffFrame, false)
-                    debuffFrame:UnsetAura()
+                    onUnsetDebuff(debuffFrame)
                     frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
                 else
                     userPlacedShown[debuffFrame] = true
@@ -450,11 +467,10 @@ function Debuffs:OnEnable()
         frame_registry[frame].userPlacedShown = userPlacedShown
         for i = frameNum, frame_registry[frame].maxDebuffs do
             local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-            self:Glow(debuffFrame, false)
             if not debuffFrame:IsShown() then
                 break
             end
-            debuffFrame:UnsetAura()
+            onUnsetDebuff(debuffFrame)
             if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
                 frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
             end
@@ -487,8 +503,7 @@ function Debuffs:OnEnable()
                 if not debuffFrame:IsShown() then
                     break
                 end
-                self:Glow(debuffFrame, false)
-                debuffFrame:UnsetAura()
+                onUnsetDebuff(debuffFrame)
                 if debuffFrame.auraInstanceID and frame_registry[frame].aura[debuffFrame.auraInstanceID] then
                     frame_registry[frame].aura[debuffFrame.auraInstanceID] = nil
                 end
@@ -738,7 +753,8 @@ function Debuffs:OnDisable()
     roster_changed = true
     local restoreDebuffFrames = function(frame)
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
-            extraDebuffFrame:Hide()
+            -- onUnsetDebuff(extraDebuffFrame)
+            extraDebuffFrame:UnsetAura()
             self:Glow(extraDebuffFrame, false)
         end
 

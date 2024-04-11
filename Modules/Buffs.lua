@@ -8,6 +8,7 @@ local Buffs = addon:NewModule("Buffs")
 Mixin(Buffs, addonTable.hooks)
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
+local Queue = addonTable.Queue
 local classMod = addonTable.classMod
 local Media = LibStub("LibSharedMedia-3.0")
 
@@ -229,7 +230,7 @@ function Buffs:OnEnable()
 
     classMod:onEnable(frameOpt)
 
-    local onSetBuff = function(buffFrame, aura, opt)
+    local onSetBuffReal = function(buffFrame, aura, opt)
         if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -273,6 +274,23 @@ function Buffs:OnEnable()
 
         self:Glow(buffFrame, aura.empowered or opt.glow)
         buffFrame:SetAlpha(opt.alpha or 1)
+    end
+
+    local onSetBuff = function(buffFrame, aura, opt)
+        -- onSetBuffReal(buffFrame, aura, opt)
+        Queue:add(onSetBuffReal, buffFrame, aura, opt)
+        Queue:run()
+    end
+
+    local onUnsetBuffReal = function(buffFrame)
+        self:Glow(buffFrame, false)
+        buffFrame:UnsetAura()
+    end
+
+    local onUnsetBuff = function(buffFrame)
+        -- onUnsetBuffReal(buffFrame)
+        Queue:add(onUnsetBuffReal, buffFrame)
+        Queue:run()
     end
 
     local function onUpdateMissingAuras(frame)
@@ -392,8 +410,7 @@ function Buffs:OnEnable()
         for buffFrame in pairs(frame_registry[frame].userPlacedShown) do
             if not userPlacedShown[buffFrame] then
                 if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
-                    self:Glow(buffFrame, false)
-                    buffFrame:UnsetAura()
+                    onUnsetBuff(buffFrame)
                 else
                     userPlacedShown[buffFrame] = true
                 end
@@ -405,8 +422,7 @@ function Buffs:OnEnable()
             if not buffFrame:IsShown() then
                 break
             end
-            self:Glow(buffFrame, false)
-            buffFrame:UnsetAura()
+            onUnsetBuff(buffFrame)
         end
         -- Modify the anchor of an auraGroup and hide left aura group
         for groupNo, v in pairs(auraGroup) do
@@ -436,8 +452,7 @@ function Buffs:OnEnable()
                 if not buffFrame:IsShown() then
                     break
                 end
-                self:Glow(buffFrame, false)
-                buffFrame:UnsetAura()
+                onUnsetBuff(buffFrame)
             end
         end
     end
@@ -670,6 +685,7 @@ function Buffs:OnDisable()
         Aura:SetAuraVar(frame, "buffs")
         Aura:SetAuraVar(frame, "buffsAll")
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
+            -- onUnsetBuff(extraBuffFrame)
             extraBuffFrame:UnsetAura()
             self:Glow(extraBuffFrame, false)
         end

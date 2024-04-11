@@ -30,6 +30,7 @@ Utils\Helper.lua
 Utils\HookRegistry.lua
 Utils\Scheduler.lua
 Utils\SpellCache.lua
+Utils\Queue.lua
 
 #Modules
 modules_cata.xml

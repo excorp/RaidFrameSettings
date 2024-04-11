@@ -206,7 +206,7 @@ function Buffs:OnEnable()
         conf.class = addon:ConvertDbNumberToClass(v.class)
         missingAuraOpt[tonumber(spellId)] = conf
     end
-    if next(missingAuraOpt) ~= nil then
+    if next(missingAuraOpt) == nil then
         frameOpt.missingAura = false
     end
 

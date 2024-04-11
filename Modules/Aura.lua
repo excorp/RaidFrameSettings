@@ -768,6 +768,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
 
                     local focusFrame = GetMouseFocus()
                     local frameName = focusFrame and focusFrame.GetName and focusFrame:GetName()
+                    if not frameName then
+                        return
+                    end
                     local finish
                     if self.QueueUnderFrame[frameName] then
                         for frame in pairs(self.QueueUnderFrame[frameName]) do

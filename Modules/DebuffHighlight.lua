@@ -238,10 +238,11 @@ function DebuffHighlight:OnEnable()
                     if canDispel[dispelName] then
                         for _, spellId in pairs(canDispel[dispelName]) do
                             local start, duration, enabled = GetSpellCooldown(spellId)
-                            if enabled and start == 0 then
+                            local left = start + duration - GetTime()
+                            if enabled and left <= 0 then
                                 show = true
                             else
-                                tinsert(leftime, start + duration - GetTime())
+                                tinsert(leftime, left)
                             end
                         end
                     end

@@ -22,6 +22,9 @@ local ticker
 
 local co = coroutine.create(function()
     while true do
+        if #queue == 0 then
+            coroutine.yield(0, queue)
+        end
         for k, v in pairs(queue) do
             v.func(SafeUnpack(v.args))
             queue[k] = nil

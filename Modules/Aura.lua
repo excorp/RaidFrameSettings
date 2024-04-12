@@ -127,6 +127,10 @@ queue.run = function()
     if queue.ticker and not queue.ticker:IsCancelled() then
         return
     end
+    if queue.ticker2 then
+        queue.ticker2:Cancel()
+        queue.ticker2 = nil
+    end
     for k, v in pairs(queue.pending) do
         queue.queue[k] = v
         queue.pending[k] = nil
@@ -145,6 +149,13 @@ queue.run = function()
                     break
                 end
                 if done == true then
+                    if next(queue.pending) == nil then
+                        queue.ticker:Cancel()
+                        if not queue.ticker2 or queue.ticker2:IsCancelled() then
+                            queue.ticker2 = C_Timer.NewTimer(0.2, queue.run)
+                        end
+                        break
+                    end
                     for k, v in pairs(queue.pending) do
                         queue.queue[k] = v
                         queue.pending[k] = nil
@@ -161,7 +172,7 @@ queue.run = function()
             end
         end
     end
-    queue.ticker = C_Timer.NewTicker(0.1, run)
+    queue.ticker = C_Timer.NewTicker(0, run)
 end
 
 local function GetTexCoord(width, height)

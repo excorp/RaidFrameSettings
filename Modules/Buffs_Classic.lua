@@ -105,40 +105,6 @@ local function UpdateCooldownFrame(frame, expirationTime, duration)
     end
 end
 
-local function makeAura(spellId, opt)
-    local spellName, _, icon = GetSpellInfo(spellId)
-    local aura = {
-        applications            = 0,         --number	
-        applicationsp           = nil,       --string? force show applications evenif it is 1
-        auraInstanceID          = -spellId,  --number	
-        canApplyAura            = true,      -- boolean	Whether or not the player can apply this aura.
-        charges                 = 1,         --number	
-        dispelName              = nil,       --string?	
-        duration                = 0,         --number	
-        expirationTime          = 1,         --number	
-        icon                    = icon,      --number	
-        isBossAura              = false,     --boolean	Whether or not this aura was applied by a boss.
-        isFromPlayerOrPlayerPet = true,      --boolean	Whether or not this aura was applied by a player or their pet.
-        isHarmful               = false,     --boolean	Whether or not this aura is a debuff.
-        isHelpful               = true,      --boolean	Whether or not this aura is a buff.
-        isNameplateOnly         = false,     --boolean	Whether or not this aura should appear on nameplates.
-        isRaid                  = false,     --boolean	Whether or not this aura meets the conditions of the RAID aura filter.
-        isStealable             = false,     --boolean	
-        maxCharges              = 1,         --number	
-        name                    = spellName, --string	The name of the aura.
-        nameplateShowAll        = false,     --boolean	Whether or not this aura should always be shown irrespective of any usual filtering logic.
-        nameplateShowPersonal   = false,     --boolean	
-        points                  = {},        --array	Variable returns - Some auras return additional values that typically correspond to something shown in the tooltip, such as the remaining strength of an absorption effect.	
-        sourceUnit              = "player",  --string?	Token of the unit that applied the aura.
-        spellId                 = spellId,   --number	The spell ID of the aura.
-        timeMod                 = 1,         --number	
-    }
-    if opt and type(opt) == "table" then
-        MergeTable(aura, opt)
-    end
-    return aura
-end
-
 local function initRegistry(frame)
     frame_registry[frame] = {
         maxBuffs        = 0,
@@ -390,7 +356,9 @@ function Buffs:OnEnable()
                     end
                 else
                     if not frame_registry[frame].buffs[-spellId] then
-                        frame_registry[frame].buffs[-spellId] = makeAura(spellId)
+                        frame_registry[frame].buffs[-spellId] = addon:makeFakeAura(spellId, {
+                            expirationTime = 1,
+                        })
                         changed = true
                     end
                 end
@@ -864,10 +832,14 @@ function Buffs:test()
                         end
                     end
                     if not registry.buffs[auraInstanceID] then
-                        local aura = makeAura(spellId, {
-                            applications   = random(1, v.maxstack),                      --number	
-                            duration       = v.duration,                                 --number	
-                            expirationTime = v.duration > 0 and (now + v.duration) or 0, --number	
+                        local aura = addon:makeFakeAura(spellId, {
+                            isHelpful               = true,                                       --boolean	Whether or not this aura is a buff.
+                            canApplyAura            = true,                                       --boolean	Whether or not the player can apply this aura.
+                            isFromPlayerOrPlayerPet = true,                                       --boolean	Whether or not this aura was applied by a player or their pet.
+                            sourceUnit              = "player",                                   --string?	Token of the unit that applied the aura.
+                            applications            = random(1, v.maxstack),                      --number	
+                            duration                = v.duration,                                 --number	
+                            expirationTime          = v.duration > 0 and (now + v.duration) or 0, --number	
                         })
                         registry.buffs[auraInstanceID] = aura
                     end

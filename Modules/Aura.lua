@@ -134,8 +134,8 @@ queue.run = function()
     local function run()
         -- Start timing
         local start = debugprofilestop()
-        -- Resume as often as possible (Limit to 1ms per frame)
-        while (debugprofilestop() - start < 1) do
+        -- Resume as often as possible (Limit to 5ms per frame)
+        while (debugprofilestop() - start < 2) do
             -- Resume or remove
             if coroutine.status(queue.co) ~= "dead" then
                 local ok, done, count = coroutine.resume(queue.co)
@@ -154,15 +154,6 @@ queue.run = function()
                         queue.ticker:Cancel()
                         break
                     end
-                    queue.ticker:Cancel()
-                    local nexttime = count * 0.01
-                    if nexttime < 0.2 then
-                        nexttime = 0.2
-                    elseif nexttime > 0.5 then
-                        nexttime = 0.5
-                    end
-                    queue.ticker = C_Timer.NewTicker(nexttime, run)
-                    break
                 end
             else
                 queue.ticker:Cancel()
@@ -170,7 +161,7 @@ queue.run = function()
             end
         end
     end
-    queue.ticker = C_Timer.NewTicker(0, run)
+    queue.ticker = C_Timer.NewTicker(0.1, run)
 end
 
 local function GetTexCoord(width, height)

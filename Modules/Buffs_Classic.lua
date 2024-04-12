@@ -349,7 +349,15 @@ function Buffs:OnEnable()
                 check = frame_registry[frame].allaura.own
             end
             if check then
-                if check[spellId] then
+                local checkId = spellId
+                if not check[checkId] then
+                    for _, alterId in pairs(v.alter) do
+                        if check[alterId] then
+                            checkId = alterId
+                        end
+                    end
+                end
+                if check[checkId] then
                     if frame_registry[frame].buffs[-spellId] then
                         frame_registry[frame].buffs[-spellId] = nil
                         changed = true

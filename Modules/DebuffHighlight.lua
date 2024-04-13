@@ -207,6 +207,14 @@ local function getTalent()
     end
 end
 
+local onUpdateHighlihgt
+
+local trackSpellFrame = {}
+local function trackCooldown(spellId, frame)
+    trackSpellFrame[spellId] = trackSpellFrame[spellId] or {}
+    trackSpellFrame[spellId][frame] = true
+end
+
 local ticker
 function DebuffHighlight:OnEnable()
     local Bleeds = addonTable.Bleeds
@@ -220,7 +228,7 @@ function DebuffHighlight:OnEnable()
     debuffHighlightConf.Poison.color = dbObj.Poison
     debuffHighlightConf.Bleed.color = dbObj.Bleed
 
-    local function onUpdateHighlihgt(frame)
+    onUpdateHighlihgt = function(frame)
         local glow = {}
         for auraInstanceID, aura in pairs(frame_registry[frame].allaura.aura) do
             local dispelName = Bleeds[aura.spellId] or aura.dispelName
@@ -241,6 +249,7 @@ function DebuffHighlight:OnEnable()
                             local left = start + duration - GetTime()
                             if enabled and left <= 0 then
                                 show = true
+                                trackCooldown(spellId, frame)
                             else
                                 tinsert(leftime, left)
                             end
@@ -293,6 +302,19 @@ function DebuffHighlight:OnEnable()
         getTalent()
     end)
 
+    self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(event, unitTarget, castGUID, spellID)
+        if not UnitIsUnit(unitTarget, "player") then
+            return
+        end
+        if trackSpellFrame[spellID] then
+            local frames = CopyTable(trackSpellFrame[spellID])
+            trackSpellFrame[spellID] = nil
+            for frame in next, frames do
+                onUpdateHighlihgt(frame)
+            end
+        end
+    end)
+
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
     end)
@@ -315,6 +337,7 @@ function DebuffHighlight:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("TRAIT_CONFIG_UPDATED")
+    self:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     roster_changed = true
     local restoreFrames = function(frame)
         Aura:SetAuraVar(frame, "debuffsAll")

@@ -319,7 +319,6 @@ function Buffs:OnEnable()
     local onSetBuff = function(buffFrame, unit, index, filter, opt)
         -- onSetBuffReal(buffFrame, unit, index, filter, opt)
         Queue:add(onSetBuffReal, buffFrame, unit, index, filter, opt)
-        Queue:run()
     end
 
     local onUnsetBuffReal = function(buffFrame)
@@ -330,7 +329,6 @@ function Buffs:OnEnable()
     local onUnsetBuff = function(buffFrame)
         -- onUnsetBuffReal(buffFrame)
         Queue:add(onUnsetBuffReal, buffFrame)
-        Queue:run()
     end
 
     local function onUpdateMissingAuras(frame)

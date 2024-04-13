@@ -461,7 +461,7 @@ end
 
 function mod:onSetBuff(buffFrame, aura, oldAura, opt)
     local parent = buffFrame:GetParent()
-    if frameOpt.sotf and player.spec == 105 then
+    if frameOpt.sotf and player.spec == 105 and parent.unit then
         local GUID = UnitGUID(parent.unit)
         if GUID then
             if not player.GUIDS[GUID] then

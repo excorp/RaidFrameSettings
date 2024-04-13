@@ -19,14 +19,21 @@ local ticker
 
 local co = coroutine.create(function()
     while true do
-        for k = 1, #queue do
-            local v = queue[k]
-            v.func(SafeUnpack(v.args))
-            coroutine.yield(#queue)
+        local run = 0
+        local count = 0
+        for k, v in next, queue do
+            if v then
+                v.func(SafeUnpack(v.args))
+                coroutine.yield(#queue)
+            end
+            run = k
+            count = count + 1
         end
-        local count = #queue
-        for i = 0, count do queue[i] = nil end
-        coroutine.yield(0)
+        for i = 1, run do
+            queue[i] = nil
+        end
+        -- print("queue:", count, run, #queue)
+        coroutine.yield(#queue)
     end
 end)
 
@@ -35,6 +42,7 @@ function Queue:add(func, ...)
         func = func,
         args = SafePack(...),
     }
+    Queue:run()
 end
 
 function Queue:run()
@@ -43,15 +51,15 @@ function Queue:run()
     end
     local function run()
         local start = debugprofilestop()
-        while debugprofilestop() - start < 2 do
+        while debugprofilestop() - start < 4 do
             if coroutine.status(co) ~= "dead" then
-                local ok, queueLeft = coroutine.resume(co)
+                local ok, queueSize = coroutine.resume(co)
                 if not ok then
                     geterrorhandler()(debugstack(co))
                     ticker:Cancel()
                     break
                 end
-                if queueLeft == 0 then
+                if queueSize == 0 then
                     ticker:Cancel()
                     break
                 end
@@ -70,12 +78,12 @@ function Queue:flush()
     end
     while true do
         if coroutine.status(co) ~= "dead" then
-            local ok, queueLeft = coroutine.resume(co)
+            local ok, queueSize = coroutine.resume(co)
             if not ok then
                 geterrorhandler()(debugstack(co))
                 break
             end
-            if queueLeft == 0 then
+            if queueSize == 0 then
                 break
             end
         else

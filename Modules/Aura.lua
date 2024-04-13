@@ -18,8 +18,6 @@ TooltipCheckFrame.QueueUnderFrame = {}
 TooltipCheckFrame.elapsed = 0
 TooltipCheckFrame.count = 0
 
-local CooldownUpdateFrame = CreateFrame("Frame")
-
 Aura.Opt = {
     Buff = {
         frameOpt = {},
@@ -39,6 +37,7 @@ local iconCrop = 0
 local queue = {}
 queue.queue = {}
 queue.pending = {}
+queue.sleep = 0
 
 --Cooldown Formatting
 queue.TimerTextLimit = {
@@ -123,56 +122,59 @@ queue.setText = function(cooldown)
     end
 end
 
+queue._run = function()
+    -- Start timing
+    local start = debugprofilestop()
+    if queue.sleep > start then
+        return
+    end
+    -- Resume as often as possible (Limit to 5ms per frame)
+    while (debugprofilestop() - start < 4) do
+        -- Resume or remove
+        if coroutine.status(queue.co) ~= "dead" then
+            local ok, done, count = coroutine.resume(queue.co)
+            if not ok then
+                geterrorhandler()(debugstack(queue.co))
+                queue.ticker:Cancel()
+                break
+            end
+            if done == true then
+                for k, v in pairs(queue.pending) do
+                    queue.queue[k] = v
+                    queue.pending[k] = nil
+                    count = count + 1
+                end
+                local interval = count * 0.005
+                if interval < 0.2 then
+                    interval = 0.2
+                elseif interval > 1 then
+                    interval = 1
+                end
+                -- local elapsed = debugprofilestop() - queue.sleep
+                -- print("status:", elapsed, count, interval)
+                queue.sleep = queue.sleep + interval * 1000
+                if next(queue.queue) == nil then
+                    queue.ticker:Cancel()
+                end
+                break
+            end
+        else
+            queue.ticker:Cancel()
+            break
+        end
+    end
+end
+
 queue.run = function()
     if queue.ticker and not queue.ticker:IsCancelled() then
         return
-    end
-    if queue.ticker2 then
-        queue.ticker2:Cancel()
-        queue.ticker2 = nil
     end
     for k, v in pairs(queue.pending) do
         queue.queue[k] = v
         queue.pending[k] = nil
     end
-    local function run()
-        -- Start timing
-        local start = debugprofilestop()
-        -- Resume as often as possible (Limit to 5ms per frame)
-        while (debugprofilestop() - start < 2) do
-            -- Resume or remove
-            if coroutine.status(queue.co) ~= "dead" then
-                local ok, done, count = coroutine.resume(queue.co)
-                if not ok then
-                    geterrorhandler()(debugstack(queue.co))
-                    queue.ticker:Cancel()
-                    break
-                end
-                if done == true then
-                    if next(queue.pending) == nil then
-                        queue.ticker:Cancel()
-                        if not queue.ticker2 or queue.ticker2:IsCancelled() then
-                            queue.ticker2 = C_Timer.NewTimer(0.2, queue.run)
-                        end
-                        break
-                    end
-                    for k, v in pairs(queue.pending) do
-                        queue.queue[k] = v
-                        queue.pending[k] = nil
-                        count = count + 1
-                    end
-                    if next(queue.queue) == nil then
-                        queue.ticker:Cancel()
-                        break
-                    end
-                end
-            else
-                queue.ticker:Cancel()
-                break
-            end
-        end
-    end
-    queue.ticker = C_Timer.NewTicker(0, run)
+    queue.sleep = debugprofilestop()
+    queue.ticker = C_Timer.NewTicker(0, queue._run)
 end
 
 local function GetTexCoord(width, height)
@@ -192,7 +194,12 @@ local function GetTexCoord(width, height)
 end
 
 function Aura:setTimerLimit(conf)
-    queue.TimerTextLimit = conf
+    if not conf then
+        return
+    end
+    queue.TimerTextLimit.sec = conf.sec or queue.TimerTextLimit.sec
+    queue.TimerTextLimit.min = conf.min or queue.TimerTextLimit.min
+    queue.TimerTextLimit.hour = conf.hour or queue.TimerTextLimit.hour
 end
 
 function Aura:reset()
@@ -295,6 +302,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
 
             function auraFrame:SetAura(aura)
+                if not aura then
+                    return
+                end
                 self.icon:SetTexture(aura.icon)
                 self.icon:SetDesaturated(false)
                 self.icon:SetVertexColor(1, 1, 1, 1)
@@ -458,6 +468,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
 
             function auraFrame:SetAura(aura)
+                if not aura then
+                    return
+                end
                 auraFrame.icon:SetTexture(aura.icon)
                 auraFrame.maskIcon:SetTexture(aura.icon)
 
@@ -479,8 +492,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             end
 
             function auraFrame:UnsetAura()
-                -- self.cooldown:_SetCooldown()
-                -- auraFrame.aura = nil
+                self.cooldown:_SetCooldown()
+                auraFrame.aura = nil
                 self:Hide()
             end
 

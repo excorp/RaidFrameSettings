@@ -337,7 +337,6 @@ function Debuffs:OnEnable()
     local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
         -- onSetDebuffReal(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
         Queue:add(onSetDebuffReal, debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
-        Queue:run()
     end
 
     local onUnsetDebuffReal = function(debuffFrame)
@@ -348,7 +347,6 @@ function Debuffs:OnEnable()
     local onUnsetDebuff = function(debuffFrame)
         -- onUnsetDebuffReal(debuffFrame)
         Queue:add(onUnsetDebuffReal, debuffFrame)
-        Queue:run()
     end
 
     local dispellableDebuffTypes = { Magic = true, Curse = true, Disease = true, Poison = true }

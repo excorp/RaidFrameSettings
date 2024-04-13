@@ -178,104 +178,98 @@ function Debuffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetDebuffReal = function(debuffFrame, aura, opt)
-        if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
-            return
-        end
-        local parent = debuffFrame:GetParent()
-        if not parent or not frame_registry[parent] then
-            return
-        end
-
-        if debuffFrame.aura == aura and debuffFrame:IsShown() then
-            return
-        end
-
-        local aurastored = frame_registry[parent].aura
-        if frameOpt.refreshAni and aurastored[aura.auraInstanceID] then
-            if math.abs(aura.expirationTime - aurastored[aura.auraInstanceID].expirationTime) > 1 or aurastored[aura.auraInstanceID].applications ~= aura.applications then
-                aura.refresh = true
-            end
-        end
-        aurastored[aura.auraInstanceID] = aura
-
-        -- icon, stack, cooldown(duration) start
-        debuffFrame.filter = aura.isRaid and AuraUtil.AuraFilters.Raid or nil
-        debuffFrame:SetAura(aura)
-
-        local color = durationOpt.fontColor
-        if aura.dispelName then
-            color = debuffColors[aura.dispelName]
-        end
-        if Bleeds[aura.spellId] then
-            color = debuffColors.Bleed
-        end
-        debuffFrame:SetBorderColor(color.r, color.g, color.b, color.a)
-
-        if not durationOpt.durationByDebuffColor then
-            color = durationOpt.fontColor
-        end
-        local cooldownText = debuffFrame.cooldown._rfs_cd_text
-        cooldownText:SetVertexColor(color.r, color.g, color.b, color.a)
-
-        if aura then
-            local auraGroupNo = auraGroupList[aura.spellId]
-            if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
-                local placed = userPlaced[aura.spellId]
-                debuffFrame:SetSize(placed.width, placed.height)
-            elseif auraGroupNo and auraGroup[auraGroupNo].setSize then
-                local group = auraGroup[auraGroupNo]
-                debuffFrame:SetSize(group.width, group.height)
-            elseif aura.isBossAura or increase[aura.spellId] then
-                debuffFrame:SetSize(boss_width, boss_height)
-            else
-                debuffFrame:SetSize(width, height)
-            end
-        end
-
-        self:Glow(debuffFrame, opt.glow)
-        debuffFrame:SetAlpha(opt.alpha or 1)
-    end
-
     local onSetDebuff = function(debuffFrame, aura, opt)
-        -- onSetDebuffReal(debuffFrame, aura, opt)
-        Queue:add(onSetDebuffReal, debuffFrame, aura, opt)
-        Queue:run()
-    end
+        Queue:add(function(debuffFrame, aura, opt)
+            if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+                return
+            end
+            local parent = debuffFrame:GetParent()
+            if not parent or not frame_registry[parent] then
+                return
+            end
 
-    local onUnsetDebuffReal = function(debuffFrame)
-        self:Glow(debuffFrame, false)
-        debuffFrame:UnsetAura()
+            if debuffFrame.aura == aura and debuffFrame:IsShown() then
+                return
+            end
+
+            local aurastored = frame_registry[parent].aura
+            if frameOpt.refreshAni and aurastored[aura.auraInstanceID] then
+                if math.abs(aura.expirationTime - aurastored[aura.auraInstanceID].expirationTime) > 1 or aurastored[aura.auraInstanceID].applications ~= aura.applications then
+                    aura.refresh = true
+                end
+            end
+            aurastored[aura.auraInstanceID] = aura
+
+            -- icon, stack, cooldown(duration) start
+            debuffFrame.filter = aura.isRaid and AuraUtil.AuraFilters.Raid or nil
+            debuffFrame:SetAura(aura)
+
+            local color = durationOpt.fontColor
+            if aura.dispelName then
+                color = debuffColors[aura.dispelName]
+            end
+            if Bleeds[aura.spellId] then
+                color = debuffColors.Bleed
+            end
+            debuffFrame:SetBorderColor(color.r, color.g, color.b, color.a)
+
+            if not durationOpt.durationByDebuffColor then
+                color = durationOpt.fontColor
+            end
+            local cooldownText = debuffFrame.cooldown._rfs_cd_text
+            cooldownText:SetVertexColor(color.r, color.g, color.b, color.a)
+
+            if aura then
+                local auraGroupNo = auraGroupList[aura.spellId]
+                if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
+                    local placed = userPlaced[aura.spellId]
+                    debuffFrame:SetSize(placed.width, placed.height)
+                elseif auraGroupNo and auraGroup[auraGroupNo].setSize then
+                    local group = auraGroup[auraGroupNo]
+                    debuffFrame:SetSize(group.width, group.height)
+                elseif aura.isBossAura or increase[aura.spellId] then
+                    debuffFrame:SetSize(boss_width, boss_height)
+                else
+                    debuffFrame:SetSize(width, height)
+                end
+            end
+
+            self:Glow(debuffFrame, opt.glow)
+            debuffFrame:SetAlpha(opt.alpha or 1)
+        end, debuffFrame, aura, opt)
     end
 
     local onUnsetDebuff = function(debuffFrame)
-        -- onUnsetDebuffReal(debuffFrame)
-        Queue:add(onUnsetDebuffReal, debuffFrame)
-        Queue:run()
+        Queue:add(function(debuffFrame)
+            self:Glow(debuffFrame, false)
+            debuffFrame:UnsetAura()
+        end, debuffFrame)
     end
 
     local function onUpdatePrivateAuras(frame)
-        if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
-            return
-        end
-
-        local lastShownDebuff
-        for i = frame_registry[frame].maxDebuffs, 1, -1 do
-            local debuff = frame_registry[frame].extraDebuffFrames[i]
-            if debuff and debuff:IsShown() then
-                lastShownDebuff = debuff
-                break
+        Queue:add(function(frame)
+            if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+                return
             end
-        end
-        frame.PrivateAuraAnchor1:ClearAllPoints()
-        if lastShownDebuff then
-            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap + 3, frameOpt.baseline)
-            frame.PrivateAuraAnchor1:SetPoint(followPoint, lastShownDebuff, followRelativePoint, followOffsetX, followOffsetY)
-        else
-            frame.PrivateAuraAnchor1:SetPoint(point, frame, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
-        end
-        frame.PrivateAuraAnchor2:ClearAllPoints()
-        frame.PrivateAuraAnchor2:SetPoint(followPoint, frame.PrivateAuraAnchor1, followRelativePoint, followOffsetX, followOffsetY)
+
+            local lastShownDebuff
+            for i = frame_registry[frame].maxDebuffs, 1, -1 do
+                local debuff = frame_registry[frame].extraDebuffFrames[i]
+                if debuff and debuff:IsShown() then
+                    lastShownDebuff = debuff
+                    break
+                end
+            end
+            frame.PrivateAuraAnchor1:ClearAllPoints()
+            if lastShownDebuff then
+                local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap + 3, frameOpt.baseline)
+                frame.PrivateAuraAnchor1:SetPoint(followPoint, lastShownDebuff, followRelativePoint, followOffsetX, followOffsetY)
+            else
+                frame.PrivateAuraAnchor1:SetPoint(point, frame, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
+            end
+            frame.PrivateAuraAnchor2:ClearAllPoints()
+            frame.PrivateAuraAnchor2:SetPoint(followPoint, frame.PrivateAuraAnchor1, followRelativePoint, followOffsetX, followOffsetY)
+        end, frame)
     end
     self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
@@ -287,153 +281,155 @@ function Debuffs:OnEnable()
     end
 
     onUpdateAuras = function(frame)
-        if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
-            return
-        end
+        Queue:add(function(frame)
+            if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+                return
+            end
 
-        -- set placed aura / other aura
-        local frameNum = 1
-        local groupFrameNum = {}
-        local sorted = {
-            [0] = {},
-        }
-        local userPlacedShown = {}
-        local dispelFrameNum = 1
-        local dispelDisplayed = {}
+            -- set placed aura / other aura
+            local frameNum = 1
+            local groupFrameNum = {}
+            local sorted = {
+                [0] = {},
+            }
+            local userPlacedShown = {}
+            local dispelFrameNum = 1
+            local dispelDisplayed = {}
 
-        for _, debuffs in pairs({ frame.debuffs, frame_registry[frame].debuffs }) do
-            debuffs:Iterate(function(auraInstanceID, aura)
-                if frameOpt.showDispel and AuraUtil.DispellableDebuffTypes[aura.dispelName] and not dispelDisplayed[aura.dispelName] and dispelFrameNum <= frame.maxDispelDebuffs then
-                    local dispelFrame = frame.dispelDebuffFrames[dispelFrameNum]
-                    UtilSetDispelDebuff(dispelFrame, aura)
-                    dispelDisplayed[aura.dispelName] = true
-                    dispelFrameNum = dispelFrameNum + 1
-                end
-
-                if userPlaced[aura.spellId] then
-                    local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
-                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                    local placed = userPlaced[aura.spellId]
-                    onSetDebuff(debuffFrame, aura, placed)
-                    userPlacedShown[debuffFrame] = true
-                    return false
-                end
-                if auraGroupList[aura.spellId] then
-                    local groupNo = auraGroupList[aura.spellId]
-                    local auraList = auraGroup[groupNo].auraList
-                    local auraOpt = auraList[aura.spellId]
-                    local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
-                    if not sorted[groupNo] then sorted[groupNo] = {} end
-                    tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
-                    groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
-                    return false
-                end
-                local filtered = filteredAuras[aura.spellId]
-                local priority = filtered and filtered.priority or 0
-                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
-            end)
-        end
-        -- set debuffs after sorting to priority.
-        for _, v in pairs(sorted) do
-            table.sort(v, comparePriority)
-        end
-        for groupNo, auralist in pairs(sorted) do
-            for k, v in pairs(auralist) do
-                if groupNo == 0 then
-                    -- default aura frame
-                    if k > frame_registry[frame].maxDebuffs then
-                        break
+            for _, debuffs in pairs({ frame.debuffs, frame_registry[frame].debuffs }) do
+                debuffs:Iterate(function(auraInstanceID, aura)
+                    if frameOpt.showDispel and AuraUtil.DispellableDebuffTypes[aura.dispelName] and not dispelDisplayed[aura.dispelName] and dispelFrameNum <= frame.maxDispelDebuffs then
+                        local dispelFrame = frame.dispelDebuffFrames[dispelFrameNum]
+                        UtilSetDispelDebuff(dispelFrame, aura)
+                        dispelDisplayed[aura.dispelName] = true
+                        dispelFrameNum = dispelFrameNum + 1
                     end
-                    frameNum = k + 1
-                    local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
-                    onSetDebuff(debuffFrame, v.aura, v.opt)
-                else
-                    -- aura group frame
-                    local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
-                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                    onSetDebuff(debuffFrame, v.aura, v.opt)
-                    if k >= auraGroup[groupNo].maxAuras then
-                        break
-                    end
-                end
-            end
-        end
 
-        -- reanchor
-        for groupNo, v in pairs(frame_registry[frame].reanchor) do
-            local lastNum = groupFrameNum[groupNo] or 2
-            if v.lastNum ~= lastNum then
-                v.lastNum = lastNum
-                for _, child in pairs(v.children) do
-                    local idx = frame_registry[frame].auraGroupStart[groupNo] + v.lastNum - 2
-                    local parent = frame_registry[frame].extraDebuffFrames[idx]
-                    child.frame:ClearAllPoints()
-                    child.frame:SetPoint(child.conf.point, parent, child.conf.relativePoint, child.conf.xOffset, child.conf.yOffset)
-                end
-            end
-        end
-
-        -- hide left aura frames
-        for debuffFrame in pairs(frame_registry[frame].userPlacedShown) do
-            if not userPlacedShown[debuffFrame] then
-                if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
-                    onUnsetDebuff(debuffFrame)
-                else
-                    userPlacedShown[debuffFrame] = true
-                end
-            end
-        end
-        frame_registry[frame].userPlacedShown = userPlacedShown
-        for i = frameNum, frame_registry[frame].maxDebuffs do
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-            if not debuffFrame:IsShown() then
-                break
-            end
-            onUnsetDebuff(debuffFrame)
-        end
-        -- Modify the anchor of an auraGroup
-        for groupNo, v in pairs(auraGroup) do
-            if groupFrameNum[groupNo] and groupFrameNum[groupNo] > 0 then
-                if v.orientation == 5 or v.orientation == 6 then
-                    local idx = frame_registry[frame].auraGroupStart[groupNo]
-                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                    local x, y = 0, 0
-                    for i = 2, groupFrameNum[groupNo] - 1 do
-                        local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                    if userPlaced[aura.spellId] then
+                        local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
                         local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-                        local w, h = debuffFrame:GetSize()
-                        if v.orientation == 5 then
-                            x = x + w
-                        elseif v.orientation == 6 then
-                            y = y + h
+                        local placed = userPlaced[aura.spellId]
+                        onSetDebuff(debuffFrame, aura, placed)
+                        userPlacedShown[debuffFrame] = true
+                        return false
+                    end
+                    if auraGroupList[aura.spellId] then
+                        local groupNo = auraGroupList[aura.spellId]
+                        local auraList = auraGroup[groupNo].auraList
+                        local auraOpt = auraList[aura.spellId]
+                        local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
+                        if not sorted[groupNo] then sorted[groupNo] = {} end
+                        tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
+                        groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
+                        return false
+                    end
+                    local filtered = filteredAuras[aura.spellId]
+                    local priority = filtered and filtered.priority or 0
+                    tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
+                end)
+            end
+            -- set debuffs after sorting to priority.
+            for _, v in pairs(sorted) do
+                table.sort(v, comparePriority)
+            end
+            for groupNo, auralist in pairs(sorted) do
+                for k, v in pairs(auralist) do
+                    if groupNo == 0 then
+                        -- default aura frame
+                        if k > frame_registry[frame].maxDebuffs then
+                            break
+                        end
+                        frameNum = k + 1
+                        local debuffFrame = frame_registry[frame].extraDebuffFrames[k]
+                        onSetDebuff(debuffFrame, v.aura, v.opt)
+                    else
+                        -- aura group frame
+                        local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
+                        local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                        onSetDebuff(debuffFrame, v.aura, v.opt)
+                        if k >= auraGroup[groupNo].maxAuras then
+                            break
                         end
                     end
-                    debuffFrame:ClearAllPoints()
-                    debuffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
                 end
             end
-            local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
-            for i = groupFrameNum[groupNo] or 1, groupSize do
-                local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+
+            -- reanchor
+            for groupNo, v in pairs(frame_registry[frame].reanchor) do
+                local lastNum = groupFrameNum[groupNo] or 2
+                if v.lastNum ~= lastNum then
+                    v.lastNum = lastNum
+                    for _, child in pairs(v.children) do
+                        local idx = frame_registry[frame].auraGroupStart[groupNo] + v.lastNum - 2
+                        local parent = frame_registry[frame].extraDebuffFrames[idx]
+                        child.frame:ClearAllPoints()
+                        child.frame:SetPoint(child.conf.point, parent, child.conf.relativePoint, child.conf.xOffset, child.conf.yOffset)
+                    end
+                end
+            end
+
+            -- hide left aura frames
+            for debuffFrame in pairs(frame_registry[frame].userPlacedShown) do
+                if not userPlacedShown[debuffFrame] then
+                    if not debuffFrame.auraInstanceID or not (frame.debuffs[debuffFrame.auraInstanceID] or frame_registry[frame].debuffs[debuffFrame.auraInstanceID]) then
+                        onUnsetDebuff(debuffFrame)
+                    else
+                        userPlacedShown[debuffFrame] = true
+                    end
+                end
+            end
+            frame_registry[frame].userPlacedShown = userPlacedShown
+            for i = frameNum, frame_registry[frame].maxDebuffs do
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
                 if not debuffFrame:IsShown() then
                     break
                 end
                 onUnsetDebuff(debuffFrame)
             end
-        end
-
-        if frameOpt.showDispel then
-            for i = dispelFrameNum, frame.maxDispelDebuffs do
-                local dispelFrame = frame.dispelDebuffFrames[i]
-                if not dispelFrame:IsShown() then
-                    break
+            -- Modify the anchor of an auraGroup
+            for groupNo, v in pairs(auraGroup) do
+                if groupFrameNum[groupNo] and groupFrameNum[groupNo] > 0 then
+                    if v.orientation == 5 or v.orientation == 6 then
+                        local idx = frame_registry[frame].auraGroupStart[groupNo]
+                        local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                        local x, y = 0, 0
+                        for i = 2, groupFrameNum[groupNo] - 1 do
+                            local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                            local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                            local w, h = debuffFrame:GetSize()
+                            if v.orientation == 5 then
+                                x = x + w
+                            elseif v.orientation == 6 then
+                                y = y + h
+                            end
+                        end
+                        debuffFrame:ClearAllPoints()
+                        debuffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
+                    end
                 end
-                dispelFrame:Hide()
+                local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
+                for i = groupFrameNum[groupNo] or 1, groupSize do
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    if not debuffFrame:IsShown() then
+                        break
+                    end
+                    onUnsetDebuff(debuffFrame)
+                end
             end
-        end
 
-        onUpdatePrivateAuras(frame)
+            if frameOpt.showDispel then
+                for i = dispelFrameNum, frame.maxDispelDebuffs do
+                    local dispelFrame = frame.dispelDebuffFrames[i]
+                    if not dispelFrame:IsShown() then
+                        break
+                    end
+                    dispelFrame:Hide()
+                end
+            end
+
+            onUpdatePrivateAuras(frame)
+        end, frame)
     end
     self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
 
@@ -625,10 +621,19 @@ function Debuffs:OnEnable()
             end
         end
     end
-    self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetup)
+
+    local function onFrameSetupQueued(frame)
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+        Queue:add(onFrameSetup, frame)
+    end
+
+    self:HookFuncFiltered("DefaultCompactUnitFrameSetup", onFrameSetupQueued)
 
     if frameOpt.petframe then
-        self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetup)
+        self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetupQueued)
     end
 
     if roster_changed then
@@ -645,17 +650,20 @@ function Debuffs:OnEnable()
             end
         end)
     end
+
     for frame, v in pairs(frame_registry) do
         v.dirty = true
-        onFrameSetup(frame)
-        if frame.unit then
-            if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                onUpdateAuras(frame)
+        Queue:add(function(frame)
+            onFrameSetup(frame)
+            if frame.unit then
+                if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
+                    onUpdateAuras(frame)
+                end
+                if frameOpt.petframe and frame.unit:match("pet") then
+                    Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].buffs, onUpdateAuras)
+                end
             end
-            if frameOpt.petframe and frame.unit:match("pet") then
-                Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].buffs, onUpdateAuras)
-            end
-        end
+        end, frame)
     end
 
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
@@ -663,12 +671,15 @@ function Debuffs:OnEnable()
     end)
 
     if frameOpt.petframe then
-        self:HookFunc("CompactUnitFrame_SetUnit", function(frame, unit)
-            if not unit or not unit:match("pet") or not frame_registry[frame] then
-                return
-            end
-            Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs, onUpdateAuras)
-        end)
+        local function onSetUnit(frame, unit)
+            Queue:add(function(frame, init)
+                if not unit or not unit:match("pet") or not frame_registry[frame] then
+                    return
+                end
+                Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs, onUpdateAuras)
+            end, frame, unit)
+        end
+        self:HookFunc("CompactUnitFrame_SetUnit", onSetUnit)
     end
 end
 

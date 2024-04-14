@@ -4519,6 +4519,9 @@ function RaidFrameSettings:CreateMissingAuraEntry(spellId)
         },
 
     }
+    if not dbObj.alter then
+        dbObj.alter = {}
+    end
     for k, alterSpellId in pairs(dbObj.alter) do
         local idx = 10 + k * 3
         missingOptions_entry.args.list.args["newline" .. idx] = {

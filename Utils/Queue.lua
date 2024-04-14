@@ -17,32 +17,40 @@ local coroutine = coroutine
 local queue = {}
 local ticker
 
-local co = coroutine.create(function()
-    while true do
-        local run = 0
-        local count = 0
-        for k, v in next, queue do
-            if v then
-                v.func(SafeUnpack(v.args))
-                coroutine.yield(#queue)
+local co
+
+function Queue:init()
+    co = coroutine.create(function()
+        while true do
+            local run = 0
+            for k, v in next, queue do
+                if v then
+                    v.func(SafeUnpack(v.args))
+                    coroutine.yield(k)
+                end
+                run = k
             end
-            run = k
-            count = count + 1
+            for i = 1, run do
+                queue[i] = nil
+            end
+            -- print("queue end:", run)
+            coroutine.yield(0)
         end
-        for i = 1, run do
-            queue[i] = nil
-        end
-        -- print("queue:", count, run, #queue)
-        coroutine.yield(#queue)
-    end
-end)
+    end)
+end
 
 function Queue:add(func, ...)
+    -- DevTool:AddData(debugstack(2, 3, 0), " ")
     queue[#queue + 1] = {
         func = func,
         args = SafePack(...),
     }
     Queue:run()
+end
+
+function Queue:runAndAdd(func, ...)
+    func(...)
+    Queue:add(func, ...)
 end
 
 function Queue:run()
@@ -51,23 +59,26 @@ function Queue:run()
     end
     local function run()
         local start = debugprofilestop()
+        local ok, idx
         while debugprofilestop() - start < 4 do
             if coroutine.status(co) ~= "dead" then
-                local ok, queueSize = coroutine.resume(co)
+                ok, idx = coroutine.resume(co)
                 if not ok then
                     geterrorhandler()(debugstack(co))
                     ticker:Cancel()
                     break
                 end
-                if queueSize == 0 then
+                if idx == 0 then
                     ticker:Cancel()
                     break
                 end
             else
+                Queue:init()
                 ticker:Cancel()
                 break
             end
         end
+        -- print("queue:", idx)
     end
     ticker = C_Timer.NewTicker(0, run)
 end
@@ -78,12 +89,12 @@ function Queue:flush()
     end
     while true do
         if coroutine.status(co) ~= "dead" then
-            local ok, queueSize = coroutine.resume(co)
+            local ok, idx = coroutine.resume(co)
             if not ok then
                 geterrorhandler()(debugstack(co))
                 break
             end
-            if queueSize == 0 then
+            if idx == 0 then
                 break
             end
         else
@@ -91,3 +102,5 @@ function Queue:flush()
         end
     end
 end
+
+Queue:init()

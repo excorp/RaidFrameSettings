@@ -52,6 +52,9 @@ if not classMod then
 end
 
 local function initRegistry(frame)
+    if frame_registry[frame] then
+        return
+    end
     frame_registry[frame] = {
         maxBuffs        = 0,
         placedAuraStart = 0,
@@ -168,10 +171,15 @@ function Buffs:OnEnable()
     end
     --missing aura
     local missingAuraOpt = {}
+    local missingAuraAll = {}
     for spellId, v in pairs(addon.db.profile.Buffs.MissingAura) do
         local conf = CopyTable(v)
         conf.class = addon:ConvertDbNumberToClass(v.class)
         missingAuraOpt[tonumber(spellId)] = conf
+        missingAuraAll[tonumber(spellId)] = true
+        for _, alterSpellId in pairs(conf.alter) do
+            missingAuraAll[alterSpellId] = true
+        end
     end
     if next(missingAuraOpt) == nil then
         frameOpt.missingAura = false
@@ -197,8 +205,11 @@ function Buffs:OnEnable()
     classMod:onEnable(frameOpt)
 
     local onSetBuff = function(buffFrame, aura, opt)
+        if not buffFrame or buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+            return
+        end
         Queue:add(function(buffFrame, aura, opt)
-            if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+            if not buffFrame or buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
                 return
             end
             local parent = buffFrame:GetParent()
@@ -245,13 +256,19 @@ function Buffs:OnEnable()
     end
 
     local onUnsetBuff = function(buffFrame)
-        Queue:add(function(buffFrame)
+        Queue:runAndAdd(function(buffFrame)
+            if not buffFrame then
+                return
+            end
             self:Glow(buffFrame, false)
             buffFrame:UnsetAura()
         end, buffFrame)
     end
 
     local function onUpdateMissingAuras(frame)
+        if not frame then
+            return
+        end
         Queue:add(function(frame)
             local changed
             if not frame_registry[frame] then
@@ -300,8 +317,17 @@ function Buffs:OnEnable()
     end
 
     onUpdateAuras = function(frame)
+        if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            return
+        end
+        for _, v in next, frame.buffFrames do
+            if not v:IsShown() then
+                break
+            end
+            v:Hide()
+        end
         Queue:add(function(frame)
-            if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
                 return
             end
 
@@ -416,6 +442,7 @@ function Buffs:OnEnable()
                         buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
                     end
                 end
+                DevTool:AddData({ frame_registry[frame], frame_registry[frame].auraGroupEnd or "no group end", groupNo, frame_registry[frame].auraGroupStart or "no group start" }, frame:GetName() or "no name")
                 local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
                 for i = groupFrameNum[groupNo] or 1, groupSize do
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
@@ -428,9 +455,13 @@ function Buffs:OnEnable()
             end
         end, frame)
     end
-    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+    -- self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+    self:HookFunc("CompactUnitFrame_HideAllBuffs", onUpdateAuras)
 
     local function onFrameSetup(frame)
+        if not frame then
+            return
+        end
         if frame.unit and not (frame.unit:match("pet") and frameOpt.petframe) and not UnitIsPlayer(frame.unit) and not UnitInPartyIsAI(frame.unit) then
             return
         end
@@ -500,56 +531,15 @@ function Buffs:OnEnable()
                     })
                 end
             end
-        end
 
-        for _, v in pairs(frame.buffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
-        end
-
-        -- set anchor and resize
-        local anchorSet, prevFrame
-        for i = 1, frame_registry[frame].maxBuffs do
-            local buffFrame = frame_registry[frame].extraBuffFrames[i]
-            if not anchorSet then
-                local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
-                buffFrame:ClearAllPoints()
-                buffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
-                anchorSet = true
-            else
-                buffFrame:ClearAllPoints()
-                buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
-            end
-            prevFrame = buffFrame
-            buffFrame:SetSize(width, height)
-            buffFrame:SetCoord(width, height)
-            buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
-        end
-        local idx = frame_registry[frame].placedAuraStart - 1
-        for _, place in pairs(userPlaced) do
-            idx = frame_registry[frame].placedAuraStart + place.idx - 1
-            local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-            local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
-                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
-            local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
-            buffFrame:ClearAllPoints()
-            buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
-            buffFrame:SetSize(width, height)
-            buffFrame:SetCoord(width, height)
-            buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
-        end
-        for k, v in pairs(auraGroup) do
-            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
-            anchorSet, prevFrame = false, nil
-            for _ = 1, v.maxAuras do
-                idx = idx + 1
-                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+            -- set anchor and resize
+            local anchorSet, prevFrame
+            for i = 1, frame_registry[frame].maxBuffs do
+                local buffFrame = frame_registry[frame].extraBuffFrames[i]
                 if not anchorSet then
-                    local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
-                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
-                    local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
+                    local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
                     buffFrame:ClearAllPoints()
-                    buffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
+                    buffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
                     anchorSet = true
                 else
                     buffFrame:ClearAllPoints()
@@ -560,11 +550,52 @@ function Buffs:OnEnable()
                 buffFrame:SetCoord(width, height)
                 buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
             end
+            local idx = frame_registry[frame].placedAuraStart - 1
+            for _, place in pairs(userPlaced) do
+                idx = frame_registry[frame].placedAuraStart + place.idx - 1
+                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
+                    (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
+                local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
+                buffFrame:ClearAllPoints()
+                buffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
+                buffFrame:SetSize(width, height)
+                buffFrame:SetCoord(width, height)
+                buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
+            end
+            for k, v in pairs(auraGroup) do
+                local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
+                anchorSet, prevFrame = false, nil
+                for _ = 1, v.maxAuras do
+                    idx = idx + 1
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    if not anchorSet then
+                        local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
+                            (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
+                        local parent = parentIdx and frame_registry[frame].extraBuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
+                        buffFrame:ClearAllPoints()
+                        buffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
+                        anchorSet = true
+                    else
+                        buffFrame:ClearAllPoints()
+                        buffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
+                    end
+                    prevFrame = buffFrame
+                    buffFrame:SetSize(width, height)
+                    buffFrame:SetCoord(width, height)
+                    buffFrame.overwrapWithParent = Aura:framesOverlap(frame, buffFrame)
+                end
+            end
+        end
+
+        for _, v in pairs(frame.buffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
         end
 
         if frameOpt.missingAura then
             if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras)
+                Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
             end
         end
     end
@@ -650,10 +681,10 @@ function Buffs:OnEnable()
 
     if frameOpt.petframe then
         local onSetUnit = function(frame, unit)
+            if not unit or not unit:match("pet") or not frame_registry[frame] then
+                return
+            end
             Queue:add(function(frame, unit)
-                if not unit or not unit:match("pet") or not frame_registry[frame] then
-                    return
-                end
                 Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
             end, frame, unit)
         end
@@ -692,7 +723,6 @@ function Buffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)

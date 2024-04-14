@@ -43,6 +43,9 @@ local testmodeTicker
 local onUpdateAuras
 
 local function initRegistry(frame)
+    if frame_registry[frame] then
+        return
+    end
     frame_registry[frame] = {
         maxDebuffs        = 0,
         placedAuraStart   = 0,
@@ -179,8 +182,11 @@ function Debuffs:OnEnable()
     end
 
     local onSetDebuff = function(debuffFrame, aura, opt)
+        if not debuffFrame or debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+            return
+        end
         Queue:add(function(debuffFrame, aura, opt)
-            if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+            if not debuffFrame or debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
                 return
             end
             local parent = debuffFrame:GetParent()
@@ -240,15 +246,21 @@ function Debuffs:OnEnable()
     end
 
     local onUnsetDebuff = function(debuffFrame)
-        Queue:add(function(debuffFrame)
+        Queue:runAndAdd(function(debuffFrame)
+            if not debuffFrame then
+                return
+            end
             self:Glow(debuffFrame, false)
             debuffFrame:UnsetAura()
         end, debuffFrame)
     end
 
     local function onUpdatePrivateAuras(frame)
+        if not frame or not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            return
+        end
         Queue:add(function(frame)
-            if not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            if not frame or not frame.PrivateAuraAnchors or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
                 return
             end
 
@@ -281,8 +293,17 @@ function Debuffs:OnEnable()
     end
 
     onUpdateAuras = function(frame)
+        if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            return
+        end
+        for _, v in next, frame.debuffFrames do
+            if not v:IsShown() then
+                break
+            end
+            v:Hide()
+        end
         Queue:add(function(frame)
-            if not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
                 return
             end
 
@@ -431,9 +452,13 @@ function Debuffs:OnEnable()
             onUpdatePrivateAuras(frame)
         end, frame)
     end
-    self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+    -- self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
+    self:HookFunc("CompactUnitFrame_HideAllDebuffs", onUpdateAuras)
 
     local function onFrameSetup(frame)
+        if not frame then
+            return
+        end
         if frame.unit and not (frame.unit:match("pet") and frameOpt.petframe) and not UnitIsPlayer(frame.unit) and not UnitInPartyIsAI(frame.unit) then
             return
         end
@@ -504,56 +529,15 @@ function Debuffs:OnEnable()
                     })
                 end
             end
-        end
 
-        for _, v in pairs(frame.debuffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
-        end
-
-        -- set anchor and resize
-        local anchorSet, prevFrame
-        for i = 1, frame_registry[frame].maxDebuffs do
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-            if not anchorSet then
-                local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
-                debuffFrame:ClearAllPoints()
-                debuffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
-                anchorSet = true
-            else
-                debuffFrame:ClearAllPoints()
-                debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
-            end
-            prevFrame = debuffFrame
-            debuffFrame:SetSize(width, height)
-            debuffFrame:SetCoord(width, height)
-            debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
-        end
-        local idx = frame_registry[frame].placedAuraStart - 1
-        for _, place in pairs(userPlaced) do
-            idx = frame_registry[frame].placedAuraStart + place.idx - 1
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
-                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
-            local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
-            debuffFrame:ClearAllPoints()
-            debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
-            debuffFrame:SetSize(width, height)
-            debuffFrame:SetCoord(width, height)
-            debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
-        end
-        for k, v in pairs(auraGroup) do
-            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
-            anchorSet, prevFrame = false, nil
-            for _ = 1, v.maxAuras do
-                idx = idx + 1
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+            -- set anchor and resize
+            local anchorSet, prevFrame
+            for i = 1, frame_registry[frame].maxDebuffs do
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
                 if not anchorSet then
-                    local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
-                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
-                    local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
+                    local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
                     debuffFrame:ClearAllPoints()
-                    debuffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
+                    debuffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
                     anchorSet = true
                 else
                     debuffFrame:ClearAllPoints()
@@ -564,7 +548,49 @@ function Debuffs:OnEnable()
                 debuffFrame:SetCoord(width, height)
                 debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
             end
+            local idx = frame_registry[frame].placedAuraStart - 1
+            for _, place in pairs(userPlaced) do
+                idx = frame_registry[frame].placedAuraStart + place.idx - 1
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
+                    (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
+                local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
+                debuffFrame:ClearAllPoints()
+                debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
+                debuffFrame:SetSize(width, height)
+                debuffFrame:SetCoord(width, height)
+                debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
+            end
+            for k, v in pairs(auraGroup) do
+                local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
+                anchorSet, prevFrame = false, nil
+                for _ = 1, v.maxAuras do
+                    idx = idx + 1
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    if not anchorSet then
+                        local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
+                            (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
+                        local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
+                        debuffFrame:ClearAllPoints()
+                        debuffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
+                        anchorSet = true
+                    else
+                        debuffFrame:ClearAllPoints()
+                        debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
+                    end
+                    prevFrame = debuffFrame
+                    debuffFrame:SetSize(width, height)
+                    debuffFrame:SetCoord(width, height)
+                    debuffFrame.overwrapWithParent = Aura:framesOverlap(frame, debuffFrame)
+                end
+            end
         end
+
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+
         if frame.PrivateAuraAnchors then
             for _, privateAuraAnchor in ipairs(frame.PrivateAuraAnchors) do
                 privateAuraAnchor:SetSize(boss_width, boss_height)
@@ -654,6 +680,9 @@ function Debuffs:OnEnable()
     for frame, v in pairs(frame_registry) do
         v.dirty = true
         Queue:add(function(frame)
+            if not frame then
+                return
+            end
             onFrameSetup(frame)
             if frame.unit then
                 if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
@@ -672,10 +701,10 @@ function Debuffs:OnEnable()
 
     if frameOpt.petframe then
         local function onSetUnit(frame, unit)
+            if not frame or not unit or not unit:match("pet") or not frame_registry[frame] then
+                return
+            end
             Queue:add(function(frame, init)
-                if not unit or not unit:match("pet") or not frame_registry[frame] then
-                    return
-                end
                 Aura:SetAuraVar(frame, "debuffs", frame_registry[frame].debuffs, onUpdateAuras)
             end, frame, unit)
         end
@@ -739,7 +768,6 @@ function Debuffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)

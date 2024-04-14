@@ -252,7 +252,7 @@ function Debuffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetDebuffReal = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
+    local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
         if debuffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -334,19 +334,9 @@ function Debuffs:OnEnable()
         debuffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    local onSetDebuff = function(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
-        -- onSetDebuffReal(debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
-        Queue:add(onSetDebuffReal, debuffFrame, unit, index, filter, isBossAura, isBossBuff, opt)
-    end
-
-    local onUnsetDebuffReal = function(debuffFrame)
+    local onUnsetDebuff = function(debuffFrame)
         self:Glow(debuffFrame, false)
         debuffFrame:UnsetAura()
-    end
-
-    local onUnsetDebuff = function(debuffFrame)
-        -- onUnsetDebuffReal(debuffFrame)
-        Queue:add(onUnsetDebuffReal, debuffFrame)
     end
 
     local dispellableDebuffTypes = { Magic = true, Curse = true, Disease = true, Poison = true }
@@ -797,8 +787,6 @@ function Debuffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-
-        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreDebuffFrames(frame)

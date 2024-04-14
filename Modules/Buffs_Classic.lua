@@ -251,7 +251,7 @@ function Buffs:OnEnable()
         return a.priority > b.priority
     end
 
-    local onSetBuffReal = function(buffFrame, unit, index, filter, opt)
+    local onSetBuff = function(buffFrame, unit, index, filter, opt)
         if buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
@@ -316,19 +316,9 @@ function Buffs:OnEnable()
         buffFrame:SetAlpha(opt.alpha or 1)
     end
 
-    local onSetBuff = function(buffFrame, unit, index, filter, opt)
-        -- onSetBuffReal(buffFrame, unit, index, filter, opt)
-        Queue:add(onSetBuffReal, buffFrame, unit, index, filter, opt)
-    end
-
-    local onUnsetBuffReal = function(buffFrame)
+    local onUnsetBuff = function(buffFrame)
         self:Glow(buffFrame, false)
         buffFrame:UnsetAura()
-    end
-
-    local onUnsetBuff = function(buffFrame)
-        -- onUnsetBuffReal(buffFrame)
-        Queue:add(onUnsetBuffReal, buffFrame)
     end
 
     local function onUpdateMissingAuras(frame)
@@ -740,8 +730,6 @@ function Buffs:OnDisable()
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             CompactUnitFrame_UpdateAuras(frame)
         end
-
-        initRegistry(frame)
     end
     for frame in pairs(frame_registry) do
         restoreBuffFrames(frame)

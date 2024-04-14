@@ -527,7 +527,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         end
                     else
                         if auraFrame.auraInstanceID > 0 then
-                            GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                            if C_UnitAuras.GetAuraDataByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID) then
+                                GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                            end
                         else
                             GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
                         end
@@ -553,10 +555,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         end
                     else
                         if self.auraInstanceID > 0 then
-                            if (self.isBossBuff) then
-                                GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
-                            else
-                                GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                            if C_UnitAuras.GetAuraDataByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID) then
+                                if (self.isBossBuff) then
+                                    GameTooltip:SetUnitBuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                                else
+                                    GameTooltip:SetUnitDebuffByAuraInstanceID(self:GetParent().displayedUnit, self.auraInstanceID, self.filter)
+                                end
                             end
                         else
                             GameTooltip:SetSpellByID(-1 * auraFrame.auraInstanceID)
@@ -736,6 +740,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                 if GameTooltip:IsOwned(self) then
                     return
                 end
+                if not self:IsVisible() then
+                    return
+                end
                 if self.tooltipPosition then
                     GameTooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0)
                 else
@@ -788,10 +795,15 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     end
                     local finish
                     if self.QueueUnderFrame[frameName] then
+                        local start = debugprofilestop()
                         for frame in pairs(self.QueueUnderFrame[frameName]) do
                             if frame and frame:IsShown() and frame:IsMouseOver() then
                                 onEnter(frame)
                                 finish = true
+                                break
+                            end
+                            -- 툴팁 찾는데 4ms 이상 걸리면 포기
+                            if debugprofilestop() - start > 4 then
                                 break
                             end
                         end
@@ -900,13 +912,15 @@ local function parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ign
     local batchCount = nil
     local usePackedAura = true
     local function HandleAura(aura)
-        local all
+        local all, filter
         if aura.isHelpful and frame.buffsAll then
             all = frame.buffsAll
+            filter = frame.filter.buffsAll
         elseif aura.isHarmful and frame.debuffsAll then
             all = frame.debuffsAll
+            filter = frame.filter.debuffsAll
         end
-        if all then
+        if all and (not filter or filter[aura.spellId]) then
             all.aura[aura.auraInstanceID] = aura
             all.all[aura.spellId] = all.all[aura.spellId] or {}
             all.all[aura.spellId][aura.auraInstanceID] = aura
@@ -982,15 +996,22 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
     else
         if unitAuraUpdateInfo.addedAuras ~= nil then
             for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                local all
+                local all, filter
                 if aura.isHelpful and frame.buffsAll then
                     all = frame.buffsAll
-                    buffsAllChanged = true
+                    filter = frame.filter.buffsAll
                 elseif aura.isHarmful and frame.debuffsAll then
                     all = frame.debuffsAll
-                    debuffsAllChanged = true
+                    filter = frame.filter.debuffsAll
                 end
-                if all then
+                if all and (not filter or filter[aura.spellId]) then
+                    if aura.isHelpful then
+                        buffsAllChanged = true
+                    end
+                    if aura.isHarmful then
+                        debuffsAllChanged = true
+                    end
+
                     all.aura[aura.auraInstanceID] = aura
                     all.all[aura.spellId] = all.all[aura.spellId] or {}
                     all.all[aura.spellId][aura.auraInstanceID] = aura
@@ -1016,15 +1037,22 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
                 local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
                 if newAura then
-                    local all
+                    local all, filter
                     if newAura.isHelpful and frame.buffsAll then
                         all = frame.buffsAll
-                        buffsAllChanged = true
+                        filter = frame.filter.buffsAll
                     elseif newAura.isHarmful and frame.debuffsAll then
                         all = frame.debuffsAll
-                        debuffsAllChanged = true
+                        filter = frame.filter.debuffsAll
                     end
-                    if all then
+                    if all and (not filter or filter[newAura.spellId]) then
+                        if newAura.isHelpful then
+                            buffsAllChanged = true
+                        end
+                        if newAura.isHarmful then
+                            debuffsAllChanged = true
+                        end
+
                         all.aura[newAura.auraInstanceID] = newAura
                         all.all[newAura.spellId] = all.all[newAura.spellId] or {}
                         all.all[newAura.spellId][newAura.auraInstanceID] = newAura
@@ -1057,13 +1085,13 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
             for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
                 if frame.buffsAll or frame.debuffsAll then
                     local all = frame.buffsAll and frame.buffsAll.aura[auraInstanceID] and frame.buffsAll or frame.debuffsAll and frame.debuffsAll.aura[auraInstanceID] and frame.debuffsAll
-                    if all then
+                    local aura = all and all.aura[auraInstanceID]
+                    if aura then
                         if all == frame.buffsAll then
                             buffsAllChanged = true
                         else
                             debuffsAllChanged = true
                         end
-                        local aura = all.aura[auraInstanceID]
                         all.aura[auraInstanceID] = nil
                         all.all[aura.spellId] = all.all[aura.spellId] or {}
                         all.all[aura.spellId][aura.auraInstanceID] = nil
@@ -1111,12 +1139,17 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
     end
 end
 
-function Aura:SetAuraVar(srcframe, type, var, callback)
+function Aura:SetAuraVar(srcframe, type, var, callback, filter)
     frame_registry[srcframe] = frame_registry[srcframe] or {}
     local frame = frame_registry[srcframe]
+    if frame[type] == var and frame.callback and frame.callback[type] == callback and (not filter and not frame.filter and not frame.filter[type] or frame.filter[type] == filter) then
+        return
+    end
     frame[type] = var
     frame.callback = frame.callback or {}
     frame.callback[type] = callback
+    frame.filter = frame.filter or {}
+    frame.filter[type] = filter
     if not frame.buffs and not frame.debuffs and not frame.buffsAll and not frame.debuffsAll then
         return
     end

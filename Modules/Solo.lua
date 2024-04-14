@@ -32,6 +32,14 @@ end
 function Solo:OnDisable()
     self:DisableHooks()
     if not IsInGroup() or IsInRaid() then
+        if InCombatLockdown() then
+            addon:RunWhenCombatEnds(function()
+                CompactPartyFrame:SetShown(false)
+                PartyFrame:UpdatePaddingAndLayout()
+                last = false
+            end, "Solo")
+            return
+        end
         CompactPartyFrame:SetShown(false)
         PartyFrame:UpdatePaddingAndLayout()
         last = false

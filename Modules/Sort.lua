@@ -892,13 +892,17 @@ function Sort:OnEnable()
         end
     end)
 
-    RegisterAttributeDriver(secureframe, "state-petstate", "[pet] pet; nopet;")
+    addon:RunWhenCombatEnds(function()
+        RegisterAttributeDriver(secureframe, "state-petstate", "[pet] pet; nopet;")
+    end)
 end
 
 function Sort:OnDisable()
     enabled = false
     self:DisableHooks()
-    UnregisterAttributeDriver(secureframe, "state-petstate")
+    addon:RunWhenCombatEnds(function()
+        UnregisterAttributeDriver(secureframe, "state-petstate")
+    end)
 
     LS:Unregister(addon)
 

@@ -190,6 +190,7 @@ local function getTalent()
         end
     end
 
+    canDispel = {}
     for type, confs in pairs(dispelConf) do
         for _, conf in pairs(confs) do
             if conf.traitsEntryId then
@@ -244,10 +245,11 @@ function DebuffHighlight:OnEnable()
                     end
                 elseif conf == 3 then
                     if canDispel[dispelName] then
+                        local GCD_startTime, GCD_duration = GetSpellCooldown(23881)
                         for _, spellId in pairs(canDispel[dispelName]) do
                             local start, duration, enabled = GetSpellCooldown(spellId)
                             local left = start + duration - GetTime()
-                            if enabled and left <= 0 then
+                            if enabled and left <= GCD_duration then
                                 show = true
                                 trackCooldown(spellId, frame)
                             else
@@ -309,9 +311,11 @@ function DebuffHighlight:OnEnable()
         if trackSpellFrame[spellID] then
             local frames = CopyTable(trackSpellFrame[spellID])
             trackSpellFrame[spellID] = nil
-            for frame in next, frames do
-                onUpdateHighlihgt(frame)
-            end
+            C_Timer.After(0, function()
+                for frame in next, frames do
+                    onUpdateHighlihgt(frame)
+                end
+            end)
         end
     end)
 

@@ -1052,7 +1052,8 @@ local function updateAuras(srcframe, unitAuraUpdateInfo)
                         if newAura.isHarmful then
                             debuffsAllChanged = true
                         end
-
+                        local oldDebuffType = all.aura[newAura.auraInstanceID] and all.aura[newAura.auraInstanceID].debuffType
+                        newAura.debuffType = oldDebuffType
                         all.aura[newAura.auraInstanceID] = newAura
                         all.all[newAura.spellId] = all.all[newAura.spellId] or {}
                         all.all[newAura.spellId][newAura.auraInstanceID] = newAura

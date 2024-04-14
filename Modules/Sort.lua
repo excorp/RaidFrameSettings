@@ -778,18 +778,19 @@ local function ConfigureHeader(header)
 end
 
 function Sort:OnEnable()
-    enabled = true
+    addon:RunWhenCombatEnds(function()
+        enabled = true
 
-    sortOpt = CopyTable(addon.db.profile.Sort)
+        sortOpt = CopyTable(addon.db.profile.Sort)
 
-    defaultRealm = GetRealmName() or ""
+        defaultRealm = GetRealmName() or ""
 
-    if not secureframe then
-        secureframe = CreateFrame("FRAME", nil, UIParent, "SecureHandlerStateTemplate")
-        secureframe:SetAttributeNoHandler("InCombat", [[
+        if not secureframe then
+            secureframe = CreateFrame("FRAME", nil, UIParent, "SecureHandlerStateTemplate")
+            secureframe:SetAttributeNoHandler("InCombat", [[
             return SecureCmdOptionParse("[combat] true; false") == "true"
         ]])
-        secureframe:SetAttribute("_onstate-petstate", [[
+            secureframe:SetAttribute("_onstate-petstate", [[
             if newstate == "ignore" then return end
             if not self:RunAttribute("InCombat") then
                 return
@@ -826,73 +827,72 @@ function Sort:OnEnable()
                     CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", last, "BOTTOMRIGHT", 8, -5 - 3)
                 end
             end
-        ]])
+            ]])
 
-        memberHeader = CreateFrame("Frame", nil, UIParent, "SecureGroupHeaderTemplate")
-        petHeader = CreateFrame("Frame", nil, UIParent, "SecureGroupPetHeaderTemplate")
-        local headers = { memberHeader, petHeader }
-        for _, header in ipairs(headers) do
-            ConfigureHeader(header)
-        end
-
-        _G.CompactPartyFrameBorderFrame:SetProtected()
-        secureframe:SetFrameRef("CompactPartyFrameBorderFrame", _G.CompactPartyFrameBorderFrame)
-    end
-    secureframe:SetAttributeNoHandler("frameCount", 0)
-    secureframe:SetAttributeNoHandler("petframeStart", 0)
-
-    self:getFramePoint()
-    self:TrySort()
-
-    LS:Register(addon, function(specId, role, position, sender, channel)
-        unit_spec[sender] = {
-            specId = specId,
-            role = role,
-            position = position,
-        }
-        Sort:TrySort()
-    end)
-    isScheduled = true
-    if scheduler and not scheduler:IsCancelled() then
-        scheduler:Cancel()
-    end
-    scheduler = C_Timer.NewTimer(1, function()
-        isScheduled = false
-        Sort:TrySort()
-    end)
-    LS:RequestSpecialization()
-
-    if isRetail then
-        OnEditModeExited_id = EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExited)
-        self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsApplied)
-    end
-    self:RegisterEvent("CVAR_UPDATE", OnCvarUpdate)
-    if CompactRaidGroup_OnLoad then
-        hooksecurefunc("CompactRaidGroup_OnLoad", OnRaidGroupLoaded)
-    end
-    if CompactRaidFrameContainer_OnSizeChanged then
-        hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
-    end
-    self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        C_Timer.After(0, function() Sort:TrySort() end)
-    end)
-    self:RegisterEvent("UNIT_PET", function(event, unit)
-        if _G.CompactRaidFrameContainer.displayPets then
-            if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
-                C_Timer.After(0, function() Sort:TrySort(true) end)
+            memberHeader = CreateFrame("Frame", nil, UIParent, "SecureGroupHeaderTemplate")
+            petHeader = CreateFrame("Frame", nil, UIParent, "SecureGroupPetHeaderTemplate")
+            local headers = { memberHeader, petHeader }
+            for _, header in ipairs(headers) do
+                ConfigureHeader(header)
             end
-        end
-    end)
-    self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
-        C_Timer.After(0, function() Sort:TrySort() end)
-    end)
-    self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        if needToSort ~= 0 then
-            C_Timer.After(0, function() Sort:TrySort(needToSort == 2) end)
-        end
-    end)
 
-    addon:RunWhenCombatEnds(function()
+            _G.CompactPartyFrameBorderFrame:SetProtected()
+            secureframe:SetFrameRef("CompactPartyFrameBorderFrame", _G.CompactPartyFrameBorderFrame)
+        end
+        secureframe:SetAttributeNoHandler("frameCount", 0)
+        secureframe:SetAttributeNoHandler("petframeStart", 0)
+
+        self:getFramePoint()
+        self:TrySort()
+
+        LS:Register(addon, function(specId, role, position, sender, channel)
+            unit_spec[sender] = {
+                specId = specId,
+                role = role,
+                position = position,
+            }
+            Sort:TrySort()
+        end)
+        isScheduled = true
+        if scheduler and not scheduler:IsCancelled() then
+            scheduler:Cancel()
+        end
+        scheduler = C_Timer.NewTimer(1, function()
+            isScheduled = false
+            Sort:TrySort()
+        end)
+        LS:RequestSpecialization()
+
+        if isRetail then
+            OnEditModeExited_id = EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExited)
+            self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED", OnLayoutsApplied)
+        end
+        self:RegisterEvent("CVAR_UPDATE", OnCvarUpdate)
+        if CompactRaidGroup_OnLoad then
+            hooksecurefunc("CompactRaidGroup_OnLoad", OnRaidGroupLoaded)
+        end
+        if CompactRaidFrameContainer_OnSizeChanged then
+            hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", OnRaidContainerSizeChanged)
+        end
+        self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+            C_Timer.After(0, function() Sort:TrySort() end)
+        end)
+        self:RegisterEvent("UNIT_PET", function(event, unit)
+            if _G.CompactRaidFrameContainer.displayPets then
+                if unit == "player" or strsub(unit, 1, 4) == "raid" or strsub(unit, 1, 5) == "party" then
+                    C_Timer.After(0, function() Sort:TrySort(true) end)
+                end
+            end
+        end)
+        self:RegisterEvent("PLAYER_ROLES_ASSIGNED", function()
+            C_Timer.After(0, function() Sort:TrySort() end)
+        end)
+        self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+            if needToSort ~= 0 then
+                C_Timer.After(0, function() Sort:TrySort(needToSort == 2) end)
+            end
+        end)
+
         RegisterAttributeDriver(secureframe, "state-petstate", "[pet] pet; nopet;")
     end)
 end
@@ -902,78 +902,78 @@ function Sort:OnDisable()
     self:DisableHooks()
     addon:RunWhenCombatEnds(function()
         UnregisterAttributeDriver(secureframe, "state-petstate")
-    end)
 
-    LS:Unregister(addon)
+        LS:Unregister(addon)
 
-    if scheduler and not scheduler:IsCancelled() then
-        scheduler:Cancel()
-    end
-
-    if isRetail then
-        EventRegistry:UnregisterCallback("EditMode.Exit", OnEditModeExited_id)
-        self:UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
-    end
-    self:UnregisterEvent("CVAR_UPDATE")
-    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    self:UnregisterEvent("UNIT_PET")
-    self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
-    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-
-    -- restore anchor
-    self:clearPoints()
-    local first, prev
-    for i, ps in pairs(frame_pos.party) do
-        local frame = _G["CompactPartyFrameMember" .. i]
-        if frame and ps then
-            if not first then
-                first = frame
-            end
-            for _, p in pairs(ps) do
-                frame:SetPoint(unpack(p))
-            end
-            if frame:IsShown() then
-                prev = frame
-            end
+        if scheduler and not scheduler:IsCancelled() then
+            scheduler:Cancel()
         end
-    end
-    if first and prev then
-        _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
-        _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
-    end
-    -- Adjust the position of the first pet frame
-    for i = 1, 5 do
-        local frame = _G["CompactPartyFramePet" .. i]
-        if frame.unit and frame.unitExists then
-            local point, pframe = frame:GetPoint()
-            if pframe and pframe:GetName():match("CompactPartyFrameMember") then
-                for j = 1, frame:GetNumPoints() do
-                    local org = { frame:GetPoint(j) }
-                    local parent = prev
-                    if point == "TOPLEFT" then
-                        parent = first
-                    end
-                    if parent then
-                        frame:SetPoint(org[1], parent, org[3], org[4], org[5])
-                    end
-                end
-                break
-            end
+
+        if isRetail then
+            EventRegistry:UnregisterCallback("EditMode.Exit", OnEditModeExited_id)
+            self:UnregisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
         end
-    end
-    for i, v in pairs(frame_pos.raidgroup) do
-        for j, ps in pairs(v) do
-            local frame = _G["CompactRaidGroup" .. i .. "Member" .. j]
+        self:UnregisterEvent("CVAR_UPDATE")
+        self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        self:UnregisterEvent("UNIT_PET")
+        self:UnregisterEvent("PLAYER_ROLES_ASSIGNED")
+        self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+
+        -- restore anchor
+        self:clearPoints()
+        local first, prev
+        for i, ps in pairs(frame_pos.party) do
+            local frame = _G["CompactPartyFrameMember" .. i]
             if frame and ps then
+                if not first then
+                    first = frame
+                end
                 for _, p in pairs(ps) do
                     frame:SetPoint(unpack(p))
                 end
+                if frame:IsShown() then
+                    prev = frame
+                end
             end
         end
-    end
-    frame_pos = {
-        party = {},
-        raidgroup = {},
-        raid = {},
-    }
+        if first and prev then
+            _G.CompactPartyFrameBorderFrame:SetPoint("TOPLEFT", first, "TOPLEFT", -3, 5)
+            _G.CompactPartyFrameBorderFrame:SetPoint("BOTTOMRIGHT", prev, "BOTTOMRIGHT", 8, -5 - 3)
+        end
+        -- Adjust the position of the first pet frame
+        for i = 1, 5 do
+            local frame = _G["CompactPartyFramePet" .. i]
+            if frame.unit and frame.unitExists then
+                local point, pframe = frame:GetPoint()
+                if pframe and pframe:GetName():match("CompactPartyFrameMember") then
+                    for j = 1, frame:GetNumPoints() do
+                        local org = { frame:GetPoint(j) }
+                        local parent = prev
+                        if point == "TOPLEFT" then
+                            parent = first
+                        end
+                        if parent then
+                            frame:SetPoint(org[1], parent, org[3], org[4], org[5])
+                        end
+                    end
+                    break
+                end
+            end
+        end
+        for i, v in pairs(frame_pos.raidgroup) do
+            for j, ps in pairs(v) do
+                local frame = _G["CompactRaidGroup" .. i .. "Member" .. j]
+                if frame and ps then
+                    for _, p in pairs(ps) do
+                        frame:SetPoint(unpack(p))
+                    end
+                end
+            end
+        end
+        frame_pos = {
+            party = {},
+            raidgroup = {},
+            raid = {},
+        }
+    end)
 end

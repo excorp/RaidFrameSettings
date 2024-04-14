@@ -41,6 +41,7 @@ local roster_changed = true
 local glowOpt
 local testmodeTicker
 local onUpdateAuras
+local onUnsetDebuff
 
 local function initRegistry(frame)
     if frame_registry[frame] then
@@ -245,7 +246,7 @@ function Debuffs:OnEnable()
         end, debuffFrame, aura, opt)
     end
 
-    local onUnsetDebuff = function(debuffFrame)
+    onUnsetDebuff = function(debuffFrame)
         Queue:runAndAdd(function(debuffFrame)
             if not debuffFrame then
                 return
@@ -721,9 +722,7 @@ function Debuffs:OnDisable()
         -- frame.optionTable.displayDebuffs = frame_registry[frame].displayDebuffs
         Aura:SetAuraVar(frame, "debuffs")
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
-            -- onUnsetDebuff(extraDebuffFrame)
-            extraDebuffFrame:UnsetAura()
-            self:Glow(extraDebuffFrame, false)
+            onUnsetDebuff(extraDebuffFrame)
         end
 
         local isPowerBarShowing = frame.powerBar and frame.powerBar:IsShown()

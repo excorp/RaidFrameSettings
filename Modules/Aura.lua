@@ -203,7 +203,7 @@ function Aura:setTimerLimit(conf)
 end
 
 function Aura:reset()
-    TooltipCheckFrame.QueueWhere = {}
+
 end
 
 function Aura:framesOverlap(frame1, frame2)
@@ -1159,5 +1159,7 @@ function Aura:SetAuraVar(srcframe, type, var, callback, filter)
         end
         updateAuras(srcframe, unitAuraUpdateInfo)
     end)
-    updateAuras(srcframe)
+    if var then
+        updateAuras(srcframe)
+    end
 end

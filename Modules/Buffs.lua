@@ -17,7 +17,6 @@ local AuraFilter = addon:GetModule("AuraFilter")
 -- WoW Api
 local UnitIsPlayer = UnitIsPlayer
 local UnitInPartyIsAI = UnitInPartyIsAI
-local GetSpellInfo = GetSpellInfo
 local TableUtil = TableUtil
 local AuraUtil = AuraUtil
 local C_Timer = C_Timer
@@ -39,6 +38,7 @@ local groupClass = {}
 local glowOpt
 local testmodeTicker
 local onUpdateAuras
+local onUnsetBuff
 
 if not classMod then
     classMod = {
@@ -255,7 +255,7 @@ function Buffs:OnEnable()
         end, buffFrame, aura, opt)
     end
 
-    local onUnsetBuff = function(buffFrame)
+    onUnsetBuff = function(buffFrame)
         Queue:runAndAdd(function(buffFrame)
             if not buffFrame then
                 return
@@ -702,9 +702,7 @@ function Buffs:OnDisable()
         Aura:SetAuraVar(frame, "buffs")
         Aura:SetAuraVar(frame, "buffsAll")
         for _, extraBuffFrame in pairs(frame_registry[frame].extraBuffFrames) do
-            -- onUnsetBuff(extraBuffFrame)
-            extraBuffFrame:UnsetAura()
-            self:Glow(extraBuffFrame, false)
+            onUnsetBuff(extraBuffFrame)
         end
 
         local isPowerBarShowing = frame.powerBar and frame.powerBar:IsShown()

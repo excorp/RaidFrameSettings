@@ -464,9 +464,7 @@ function Debuffs:OnEnable()
             return
         end
 
-        if not frame_registry[frame] then
-            initRegistry(frame)
-        end
+        initRegistry(frame)
 
         if frame_registry[frame].dirty then
             frame_registry[frame].maxDebuffs = frameOpt.maxdebuffs
@@ -672,9 +670,7 @@ function Debuffs:OnEnable()
                     return
                 end
             end
-            if not frame_registry[frame] then
-                initRegistry(frame)
-            end
+            onFrameSetup(frame)
         end)
     end
 

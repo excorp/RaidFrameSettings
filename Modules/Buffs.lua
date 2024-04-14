@@ -442,6 +442,7 @@ function Buffs:OnEnable()
                         buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
                     end
                 end
+                DevTool:AddData({ frame_registry[frame], frame_registry[frame].auraGroupEnd[groupNo] or "no end", frame_registry[frame].auraGroupStart[groupNo] or "no start", groupNo })
                 local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
                 for i = groupFrameNum[groupNo] or 1, groupSize do
                     local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
@@ -465,9 +466,7 @@ function Buffs:OnEnable()
             return
         end
 
-        if not frame_registry[frame] then
-            initRegistry(frame)
-        end
+        initRegistry(frame)
 
         if frame_registry[frame].dirty then
             frame_registry[frame].maxBuffs = frameOpt.maxbuffsAuto and frame.maxBuffs or frameOpt.maxbuffs
@@ -645,9 +644,7 @@ function Buffs:OnEnable()
                     return
                 end
             end
-            if not frame_registry[frame] then
-                initRegistry(frame)
-            end
+            onFrameSetup(frame)
         end)
     end
 

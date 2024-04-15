@@ -480,14 +480,14 @@ function RaidFrameSettings:LoadDataBase()
     --db callbacks
 
     self.db.RegisterCallback(self, "OnNewProfile", function()
-        if not self.db.profile.Buffs.MissingAuraLoaded then
+        if addonTable.isRetail and not self.db.profile.Buffs.MissingAuraLoaded then
             self.db.profile.Buffs.MissingAuraLoaded = true
             self.db.profile.Buffs.MissingAura = CopyTable(missingAuras)
         end
         -- Creating a new profile fires the changed event.
     end)
 
-    if not self.db.profile.Buffs.MissingAuraLoaded then
+    if addonTable.isRetail and not self.db.profile.Buffs.MissingAuraLoaded then
         self.db.profile.Buffs.MissingAuraLoaded = true
         self.db.profile.Buffs.MissingAura = CopyTable(missingAuras)
     end

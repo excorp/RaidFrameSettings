@@ -4479,7 +4479,7 @@ function RaidFrameSettings:CreateMissingAuraEntry(spellId)
     local maxEntry = self:count(missingOptions)
     local missingOptions_entry = {
         order = maxEntry + 1,
-        name = spellName,
+        name = (spellName or L["|cffff0000aura not found|r"]) .. " (" .. spellId .. ")",
         type = "group",
         args = {
             list = {

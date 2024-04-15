@@ -4568,12 +4568,12 @@ function RaidFrameSettings:CreateMissingAuraEntry(spellId)
     end
 
     missingOptions_entry.args.list.args.newline = {
-        order = 20 + #dbObj.alter * 3,
+        order = 100 + #dbObj.alter * 3,
         type = "description",
         name = "",
     }
     missingOptions_entry.args.list.args.addAura = {
-        order = 21 + #dbObj.alter * 3,
+        order = 101 + #dbObj.alter * 3,
         name = L["Enter spellId:"],
         desc = "",
         type = "input",
@@ -4581,13 +4581,26 @@ function RaidFrameSettings:CreateMissingAuraEntry(spellId)
         -- pattern = "^%d+$",
         -- usage = L["please enter a number"],
         set = function(_, value)
-            local spellId = RaidFrameSettings:SafeToNumber(value)
-            local spellIds = { spellId }
-            if not spellId then
+            local spellIdnum = tonumber(spellId)
+            local addSpellId = RaidFrameSettings:SafeToNumber(value)
+            local spellIds = { addSpellId }
+            if not addSpellId then
                 spellIds = RaidFrameSettings:GetSpellIdsByName(value)
             end
-            for _, spellId in pairs(spellIds) do
-                tinsert(dbObj.alter, spellId)
+            local alters = {}
+            for _, alterSpellId in pairs(dbObj.alter) do
+                alters[alterSpellId] = true
+            end
+            local added
+            for _, alterSpellId in pairs(spellIds) do
+                if alterSpellId ~= spellIdnum and not alters[alterSpellId] then
+                    tinsert(dbObj.alter, alterSpellId)
+                    alters[alterSpellId] = true
+                    added = true
+                end
+            end
+            if not added then
+                return
             end
             RaidFrameSettings:LoadUserInputEntrys()
             RaidFrameSettings:UpdateModule("Buffs")
@@ -5746,7 +5759,7 @@ function RaidFrameSettings:LoadUserInputEntrys()
         end
     end
 
-    --aura increase
+    -- missing aura
     options.args.Auras.args.Buffs.args.MissingAura.args.MissedAuras.args = {}
     for spellId in pairs(self.db.profile.Buffs.MissingAura) do
         self:CreateMissingAuraEntry(spellId)

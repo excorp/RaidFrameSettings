@@ -11,6 +11,7 @@ local Glow = addonTable.Glow
 local Aura = addonTable.Aura
 local Queue = addonTable.Queue
 local Media = LibStub("LibSharedMedia-3.0")
+local LD = LibStub("LibDispel-1.0")
 
 local AuraFilter = addon:GetModule("AuraFilter")
 
@@ -149,7 +150,7 @@ function Debuffs:OnEnable()
         Poison  = { r = 0.0, g = 0.6, b = 0.0, a = 1 },
         Bleed   = { r = 0.8, g = 0.0, b = 0.0, a = 1 },
     }
-    local Bleeds = addonTable.Bleeds
+    local Bleeds = LD:GetBleedList()
 
     local dbObj = addon.db.profile.MinorModules.DebuffColors
     debuffColors.Curse = dbObj.Curse

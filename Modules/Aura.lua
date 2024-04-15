@@ -1,4 +1,4 @@
-local _, addonTable = ...
+local addonName, addonTable = ...
 local isVanilla, isWrath, isClassic, isRetail = addonTable.isVanilla, addonTable.isWrath, addonTable.isClassic, addonTable.isRetail
 local addon = addonTable.RaidFrameSettings
 
@@ -591,7 +591,7 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     if frameOpt.cleanIcons then
         iconCrop = 0.1
         if category == "Debuff" and type == "blizzard" then
-            auraFrame.border:SetTexture("Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\DebuffOverlay_clean_icons.tga")
+            auraFrame.border:SetTexture("Interface\\AddOns\\" .. addonName .. "\\Media\\Textures\\DebuffOverlay_clean_icons.tga")
             auraFrame.border:SetTexCoord(0, 1, 0, 1)
         end
     else

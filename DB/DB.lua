@@ -253,6 +253,9 @@ local defaults = {
                 Poison  = 3,
                 Bleed   = 1,
             },
+            Etc = {
+                playSound = true,
+            }
         },
         Sort = {
             priority = {
@@ -421,10 +424,74 @@ defaults.profile.Debuffs.DurationDisplay.fontsize = fontheight
 defaults.profile.Debuffs.StacksDisplay.font       = fontstring
 defaults.profile.Debuffs.StacksDisplay.fontsize   = fontheight
 
+
+local missingAuras = {
+    ["1126"] = {
+        other = true,
+        class = 12,
+        alter = {
+            432661,
+        },
+    },
+    ["1459"] = {
+        other = true,
+        class = 9,
+        alter = {
+            432778,
+        },
+    },
+    ["21562"] = {
+        other = true,
+        class = 6,
+        alter = {
+
+        },
+    },
+    ["6673"] = {
+        other = true,
+        class = 2,
+        alter = {
+
+        },
+    },
+    ["364342"] = {
+        other = true,
+        class = 14,
+        alter = {
+            381732,
+            381741,
+            381746,
+            381748,
+            381749,
+            381750,
+            381751,
+            381752,
+            381753,
+            381754,
+            381756,
+            381757,
+            381758,
+        },
+    },
+}
+
 function RaidFrameSettings:LoadDataBase()
     self.db = LibStub("AceDB-3.0"):New("RaidFrameSettingsDB", defaults, true)
     --db callbacks
-    -- self.db.RegisterCallback(self, "OnNewProfile", "ReloadConfig") -- Creating a new profile fires the changed event.
+
+    self.db.RegisterCallback(self, "OnNewProfile", function()
+        if not self.db.profile.Buffs.MissingAuraLoaded then
+            self.db.profile.Buffs.MissingAuraLoaded = true
+            self.db.profile.Buffs.MissingAura = CopyTable(missingAuras)
+        end
+        -- Creating a new profile fires the changed event.
+    end)
+
+    if not self.db.profile.Buffs.MissingAuraLoaded then
+        self.db.profile.Buffs.MissingAuraLoaded = true
+        self.db.profile.Buffs.MissingAura = CopyTable(missingAuras)
+    end
+
     self.db.RegisterCallback(self, "OnProfileDeleted", "ReloadConfig")
     self.db.RegisterCallback(self, "OnProfileChanged", "ReloadConfig")
     self.db.RegisterCallback(self, "OnProfileCopied", "ReloadConfig")

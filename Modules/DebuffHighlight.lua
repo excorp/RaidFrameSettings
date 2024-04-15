@@ -1,9 +1,10 @@
-local _, addonTable = ...
+local addonName, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 local DebuffHighlight = addon:NewModule("DebuffHighlight")
 Mixin(DebuffHighlight, addonTable.hooks)
 local Glow = addonTable.Glow
 local Aura = addonTable.Aura
+local LD = LibStub("LibDispel-1.0")
 
 --WoW Api
 local UnitIsPlayer = UnitIsPlayer
@@ -14,6 +15,7 @@ local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
 local GetSpellCooldown = GetSpellCooldown
 local GetTime = GetTime
 local C_Timer = C_Timer
+local GetLocale = GetLocale
 
 -- Lua
 local CopyTable = CopyTable
@@ -25,6 +27,18 @@ local unpack = unpack
 
 local frame_registry = {}
 local roster_changed = true
+local locale = GetLocale()
+local lastPlayed = {
+    Magic   = 0,
+    Curse   = 0,
+    Disease = 0,
+    Poison  = 0,
+    Bleed   = 0,
+}
+local channel = "Master" -- Music, SFX, Ambience, Dialog
+local ignoreSpells = {
+    [240443] = true,     -- Burst
+}
 
 local dispelConf = {
     Magic = {
@@ -218,9 +232,9 @@ end
 
 local ticker
 function DebuffHighlight:OnEnable()
-    local Bleeds = addonTable.Bleeds
+    local Bleeds = LD:GetBleedList()
 
-    local debuffOpt = CopyTable(addon.db.profile.DebuffHighlight.Config)
+    local debuffOpt = CopyTable(addon.db.profile.DebuffHighlight)
 
     local dbObj = addon.db.profile.MinorModules.DebuffColors
     debuffHighlightConf.Curse.color = dbObj.Curse
@@ -231,49 +245,65 @@ function DebuffHighlight:OnEnable()
 
     onUpdateHighlihgt = function(frame)
         local glow = {}
+        local now = GetTime()
         for auraInstanceID, aura in pairs(frame_registry[frame].allaura.aura) do
-            local dispelName = Bleeds[aura.spellId] or aura.dispelName
-            if dispelName then
-                local show
-                local leftime = {}
-                local conf = debuffOpt[dispelName]
-                if conf == 1 then
-                    show = true
-                elseif conf == 2 then
-                    if canDispel[dispelName] then
+            if not ignoreSpells[aura.spellId] then
+                local dispelName = Bleeds[aura.spellId] and "Bleed" or aura.dispelName
+                if dispelName then
+                    local show
+                    local leftime = {}
+                    local conf = debuffOpt.Config[dispelName]
+                    if conf == 1 then
                         show = true
-                    end
-                elseif conf == 3 then
-                    if canDispel[dispelName] then
-                        local GCD_startTime, GCD_duration = GetSpellCooldown(23881)
-                        for _, spellId in pairs(canDispel[dispelName]) do
-                            local start, duration, enabled = GetSpellCooldown(spellId)
-                            local left = start + duration - GetTime()
-                            if enabled and left <= GCD_duration then
-                                show = true
-                                trackCooldown(spellId, frame)
-                            else
-                                tinsert(leftime, left)
+                    elseif conf == 2 then
+                        if canDispel[dispelName] then
+                            show = true
+                        end
+                    elseif conf == 3 then
+                        if canDispel[dispelName] then
+                            local GCD_startTime, GCD_duration = GetSpellCooldown(23881)
+                            for _, spellId in pairs(canDispel[dispelName]) do
+                                local start, duration, enabled = GetSpellCooldown(spellId)
+                                local left = start + duration - GetTime()
+                                if enabled and left <= GCD_duration then
+                                    show = true
+                                    trackCooldown(spellId, frame)
+                                else
+                                    tinsert(leftime, left)
+                                end
                             end
                         end
                     end
-                end
 
-                if show then
-                    if not frame_registry[frame].glow[dispelName] then
-                        Glow:Start(debuffHighlightConf[dispelName], frame, dispelName)
-                    end
-                    glow[dispelName] = true
-                else
-                    if ticker and not ticker:IsCancelled() then
-                        ticker:Cancel()
-                    end
-                    if #leftime > 0 then
-                        local leasttime = math.min(unpack(leftime))
-                        ticker = C_Timer.NewTimer(leasttime, function()
-                            onUpdateHighlihgt(frame)
-                            ticker = nil
-                        end)
+                    if show then
+                        if not frame_registry[frame].glow[dispelName] then
+                            Glow:Start(debuffHighlightConf[dispelName], frame, dispelName)
+                            -- play sound
+                            if debuffOpt.Etc.playSound and lastPlayed[dispelName] < now - 2 then
+                                local soundPath = string.format("Interface\\Addon\\%s\\Media\\Sounds\\", addonName)
+                                local soundFile = soundPath .. string.format("%s\\%s.mp3", locale, dispelName)
+                                local success = PlaySoundFile(soundFile, channel)
+                                if not success then
+                                    soundFile = soundPath .. string.format("%s\\%s.mp3", "enUS", dispelName)
+                                    success = PlaySoundFile(soundFile, channel)
+                                end
+                                if success then
+                                    lastPlayed[dispelName] = now
+                                end
+                            end
+                        end
+                        glow[dispelName] = true
+                    else
+                        if ticker and not ticker:IsCancelled() then
+                            ticker:Cancel()
+                        end
+                        if #leftime > 0 then
+                            local leasttime = math.min(unpack(leftime))
+                            ticker = C_Timer.NewTimer(leasttime, function()
+                                onUpdateHighlihgt(frame)
+                                ticker = nil
+                            end)
+                        end
                     end
                 end
             end

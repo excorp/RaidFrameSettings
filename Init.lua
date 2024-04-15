@@ -1,10 +1,10 @@
-local _, addonTable = ...
+local addonName, addonTable = ...
 
 addonTable.isRetail = true
 addonTable.isFirstLoad = true
 
 addonTable.texturePaths = {
-    PortraitIcon = "Interface\\AddOns\\RaidFrameSettings_Excorp_Fork\\Textures\\Icon\\Icon.tga",
+    PortraitIcon = "Interface\\AddOns\\" .. addonName .. "\\Media\\Textures\\Icon\\Icon_Circle.tga",
 }
 
 addonTable.playerClass = select(2, UnitClass("player"))

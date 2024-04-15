@@ -2901,6 +2901,22 @@ options = {
                         },
                     },
                 },
+                Etc = {
+                    order = 1,
+                    name = "",
+                    type = "group",
+                    inline = true,
+                    args = {
+                        playSound = {
+                            order = 1,
+                            name = L["Play Sound"],
+                            desc = L["Play a sound if dispel is available."],
+                            type = "toggle",
+                            get = "GetStatus2",
+                            set = "SetStatus2",
+                        },
+                    }
+                }
             },
         },
         Sort = {

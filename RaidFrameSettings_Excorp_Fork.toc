@@ -7,7 +7,7 @@
 ## Author: Slothpala,변하지롱-아즈샤라
 ## SavedVariables: RaidFrameSettingsDB
 ## AddonCompartmentFunc: RaidFrameSettings_AddOnCompartmentClick
-## IconTexture: Interface\AddOns\RaidFrameSettings_Excorp_Fork\Textures\Icon\Icon.tga
+## IconTexture: Interface\AddOns\RaidFrameSettings_Excorp_Fork\Media\Textures\Icon\Icon.tga
 ## OptionalDeps: Ace3, LibDeflate, LibSharedMedia-3.0, AceGUI-3.0-SharedMediaWidgets, LibDDI-1.0, AceGUI-3.0_SFX-Widgets, LibCanDispel-1.0
 
 Init.lua

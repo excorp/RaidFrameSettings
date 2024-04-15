@@ -280,7 +280,7 @@ function DebuffHighlight:OnEnable()
                             Glow:Start(debuffHighlightConf[dispelName], frame, dispelName)
                             -- play sound
                             if debuffOpt.Etc.playSound and lastPlayed[dispelName] < now - 2 then
-                                local soundPath = string.format("Interface\\Addon\\%s\\Media\\Sounds\\", addonName)
+                                local soundPath = string.format("Interface\\AddOns\\%s\\Media\\Sounds\\", addonName)
                                 local soundFile = soundPath .. string.format("%s\\%s.mp3", locale, dispelName)
                                 local success = PlaySoundFile(soundFile, channel)
                                 if not success then

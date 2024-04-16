@@ -56,7 +56,7 @@ local function UnitDebuff2(unit, index, filter)
             return false
         end
         for i = index, 1, -1 do
-            name = UnitDebuff(unit, index, filter)
+            name = UnitDebuff(unit, i, filter)
             if name then
                 index = index - i
                 break
@@ -286,19 +286,21 @@ function Debuffs:OnEnable()
             obj.expirationTime = expirationTime
             obj.refresh        = refresh
         else
-            aurastored[auraInstanceID] = {
-                name            = name,
-                icon            = icon,
-                applications    = applications,
-                debuffType      = debuffType,
-                duration        = duration,
-                expirationTime  = expirationTime,
-                unitCaster      = unitCaster,
-                canStealOrPurge = canStealOrPurge,
-                spellId         = spellId,
-                auraInstanceID  = auraInstanceID,
-                refresh         = refresh,
-            }
+            aurastored[auraInstanceID] = addon:makeFakeAura(spellId, {
+                isHarmful               = true,
+                name                    = name,
+                icon                    = icon,
+                applications            = applications,
+                dispelName              = debuffType,
+                duration                = duration,
+                expirationTime          = expirationTime,
+                sourceUnit              = unitCaster,
+                isStealable             = canStealOrPurge,
+                spellId                 = spellId,
+                auraInstanceID          = auraInstanceID,
+                isFromPlayerOrPlayerPet = (unitCaster == "player" or unitCaster == "pet" or unitCaster == "vehicle"),
+                refresh                 = refresh,
+            })
         end
 
         -- icon, stack, cooldown(duration) start
@@ -364,6 +366,11 @@ function Debuffs:OnEnable()
         local userPlacedShown = {}
         local dispelFrameNum = 1
         local dispelDisplayed = {}
+
+        if (frame.optionTable.displayOnlyDispellableDebuffs) then
+            filter = "RAID"
+        end
+
         while true do
             local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff2(frame.displayedUnit, index, filter)
             if not debuffName then
@@ -585,55 +592,15 @@ function Debuffs:OnEnable()
                     })
                 end
             end
-        end
 
-        for _, v in pairs(frame.debuffFrames) do
-            v:ClearAllPoints()
-            v.cooldown:SetDrawSwipe(false)
-        end
-
-        -- set anchor and resize
-        local anchorSet, prevFrame
-        for i = 1, frame_registry[frame].maxDebuffs do
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
-            if not anchorSet then
-                local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
-                debuffFrame:ClearAllPoints()
-                debuffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
-                anchorSet = true
-            else
-                debuffFrame:ClearAllPoints()
-                debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
-            end
-            prevFrame = debuffFrame
-            debuffFrame:SetSize(width, height)
-            debuffFrame:SetCoord(width, height)
-        end
-        local idx = frame_registry[frame].placedAuraStart - 1
-        for _, place in pairs(userPlaced) do
-            idx = frame_registry[frame].placedAuraStart + place.idx - 1
-            local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
-            local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
-                (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
-            local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
-            debuffFrame:ClearAllPoints()
-            debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
-            debuffFrame:SetSize(width, height)
-            debuffFrame:SetCoord(width, height)
-        end
-        for k, v in pairs(auraGroup) do
-            frame_registry[frame].auraGroupStart[k] = idx + 1
-            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
-            anchorSet, prevFrame = false, nil
-            for _ = 1, v.maxAuras do
-                idx = idx + 1
-                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+            -- set anchor and resize
+            local anchorSet, prevFrame
+            for i = 1, frame_registry[frame].maxDebuffs do
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[i]
                 if not anchorSet then
-                    local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
-                        (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
-                    local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
+                    local parent = (frameOpt.frame == 2 and frame.healthBar) or (frameOpt.frame == 3 and frame.powerBar) or frame
                     debuffFrame:ClearAllPoints()
-                    debuffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
+                    debuffFrame:SetPoint(point, parent, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
                     anchorSet = true
                 else
                     debuffFrame:ClearAllPoints()
@@ -643,7 +610,47 @@ function Debuffs:OnEnable()
                 debuffFrame:SetSize(width, height)
                 debuffFrame:SetCoord(width, height)
             end
-            frame_registry[frame].auraGroupEnd[k] = idx
+            local idx = frame_registry[frame].placedAuraStart - 1
+            for _, place in pairs(userPlaced) do
+                idx = frame_registry[frame].placedAuraStart + place.idx - 1
+                local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                local parentIdx = (place.frame == 2 and place.frameNo > 0 and userPlaced[place.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[place.frameNo].idx - 1)) or
+                    (place.frame == 3 and place.frameNo > 0 and auraGroup[place.frameNo] and (frame_registry[frame].auraGroupStart[place.frameNo] + place.frameNoNo - 1))
+                local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or place.frame == 4 and frame.healthBar or frame
+                debuffFrame:ClearAllPoints()
+                debuffFrame:SetPoint(place.point, parent, place.relativePoint, place.xOffset, place.yOffset)
+                debuffFrame:SetSize(width, height)
+                debuffFrame:SetCoord(width, height)
+            end
+            for k, v in pairs(auraGroup) do
+                frame_registry[frame].auraGroupStart[k] = idx + 1
+                local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(v.orientation, v.gap, "")
+                anchorSet, prevFrame = false, nil
+                for _ = 1, v.maxAuras do
+                    idx = idx + 1
+                    local debuffFrame = frame_registry[frame].extraDebuffFrames[idx]
+                    if not anchorSet then
+                        local parentIdx = (v.frame == 2 and v.frameNo > 0 and userPlaced[v.frameNo] and (frame_registry[frame].placedAuraStart + userPlaced[v.frameNo].idx - 1)) or
+                            (v.frame == 3 and v.frameNo > 0 and auraGroup[v.frameNo] and (frame_registry[frame].auraGroupStart[v.frameNo] + v.frameNoNo - 1))
+                        local parent = parentIdx and frame_registry[frame].extraDebuffFrames[parentIdx] or v.frame == 4 and frame.healthBar or frame
+                        debuffFrame:ClearAllPoints()
+                        debuffFrame:SetPoint(v.point, parent, v.relativePoint, v.xOffset, v.yOffset)
+                        anchorSet = true
+                    else
+                        debuffFrame:ClearAllPoints()
+                        debuffFrame:SetPoint(followPoint, prevFrame, followRelativePoint, followOffsetX, followOffsetY)
+                    end
+                    prevFrame = debuffFrame
+                    debuffFrame:SetSize(width, height)
+                    debuffFrame:SetCoord(width, height)
+                end
+                frame_registry[frame].auraGroupEnd[k] = idx
+            end
+        end
+
+        for _, v in pairs(frame.debuffFrames) do
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
         end
 
         frame.dispelDebuffFrames[1]:ClearAllPoints()
@@ -740,7 +747,6 @@ function Debuffs:OnDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     roster_changed = true
-    Queue:flush()
     local restoreDebuffFrames = function(frame)
         for _, extraDebuffFrame in pairs(frame_registry[frame].extraDebuffFrames) do
             -- onUnsetDebuff(extraDebuffFrame)
@@ -789,8 +795,9 @@ function Debuffs:OnDisable()
             CompactUnitFrame_UpdateAuras(frame)
         end
     end
-    for frame in pairs(frame_registry) do
+    for frame, registry in pairs(frame_registry) do
         restoreDebuffFrames(frame)
+        registry.buffs:Clear()
     end
 end
 

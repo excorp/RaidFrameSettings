@@ -2179,7 +2179,6 @@ options = {
                             },
                         },
                         MissingAura = {
-                            hidden = not isRetail,
                             order = 4,
                             name = L["Missing Aura"],
                             desc = "",

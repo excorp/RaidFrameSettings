@@ -960,173 +960,332 @@ local function GetOptionDisplayOnlyDispellableDebuffs(frame, optionTable)
     return CompactUnitFrame_GetOptionDisplayOnlyDispellableDebuffs(frame, frame.optionTable)
 end
 
-local function updateAuras(srcframe, unitAuraUpdateInfo)
-    local frame = frame_registry[srcframe]
+local updateAuras
+if addonTable.isClassic then
+    updateAuras = function(srcframe)
+        local frame = frame_registry[srcframe]
 
-    if not srcframe.displayedUnit or not frame.buffs and not frame.debuffs and not frame.buffsAll and not frame.debuffsAll then
-        return
-    end
+        if not srcframe.displayedUnit or not frame.buffs and not frame.debuffs and not frame.buffsAll and not frame.debuffsAll then
+            return
+        end
 
-    local buffsChanged = false
-    local debuffsChanged = false
-    local buffsAllChanged = false
-    local debuffsAllChanged = false
+        local buffsChanged = false
+        local debuffsChanged = false
+        local buffsAllChanged = false
+        local debuffsAllChanged = false
 
-    local displayOnlyDispellableDebuffs = GetOptionDisplayOnlyDispellableDebuffs(srcframe, srcframe.optionTable)
-    local ignoreBuffs = not frame.buffs
-    local ignoreDebuffs = not frame.debuffs
-    local ignoreDispelDebuffs = true
+        if frame.buffs or frame.buffsAll then
+            if frame.buffsAll then
+                frame.buffsAll.aura = {}
+                frame.buffsAll.all = {}
+                frame.buffsAll.own = {}
+                buffsAllChanged = true
+            end
+            if frame.buffs then
+                frame.buffs:Clear()
+                buffsChanged = true
+            end
 
-    if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate then
-        parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-        buffsChanged = true
-        debuffsChanged = true
-        buffsAllChanged = true
-        debuffsAllChanged = true
-    else
-        if unitAuraUpdateInfo.addedAuras ~= nil then
-            for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
-                local all, filter
-                if aura.isHelpful and frame.buffsAll then
-                    all = frame.buffsAll
-                    filter = frame.filter.buffsAll
-                elseif aura.isHarmful and frame.debuffsAll then
-                    all = frame.debuffsAll
-                    filter = frame.filter.debuffsAll
+            local unit = srcframe.displayedUnit
+            local index = 1
+            local filter = nil
+            while true do
+                local buffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId, canApplyAura = UnitBuff(unit, index, filter)
+                if not buffName then
+                    break
                 end
-                if all and (not filter or filter[aura.spellId]) then
-                    if aura.isHelpful then
-                        buffsAllChanged = true
-                    end
-                    if aura.isHarmful then
-                        debuffsAllChanged = true
-                    end
 
+                local auraInstanceID = (unitCaster or "X") .. "_" .. spellId
+                local aura = addon:makeFakeAura(spellId, {
+                    isHelpful               = true,
+                    name                    = buffName,
+                    icon                    = icon,
+                    applications            = count,
+                    dispelName              = debuffType,
+                    duration                = duration,
+                    expirationTime          = expirationTime,
+                    sourceUnit              = unitCaster,
+                    isStealable             = canStealOrPurge,
+                    spellId                 = spellId,
+                    canApplyAura            = canApplyAura,
+                    isFromPlayerOrPlayerPet = (unitCaster == "player" or unitCaster == "pet" or unitCaster == "vehicle"),
+                    auraInstanceID          = auraInstanceID,
+                })
+
+                local all = frame.buffsAll
+                local allfilter = frame.filter.buffsAll
+                if all and (not allfilter or allfilter[aura.spellId]) then
                     all.aura[aura.auraInstanceID] = aura
                     all.all[aura.spellId] = all.all[aura.spellId] or {}
                     all.all[aura.spellId][aura.auraInstanceID] = aura
                     if aura.isFromPlayerOrPlayerPet then
                         all.own[aura.spellId] = aura
-                    else
-                        -- all.other[aura.spellId] = all.other[aura.spellId] or {}
-                        -- all.other[aura.spellId][aura.auraInstanceID] = aura
                     end
                 end
-                local type = processAura(srcframe, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
-                if type == AuraUtil.AuraUpdateChangedType.Buff then
-                    frame.buffs[aura.auraInstanceID] = aura
-                    buffsChanged = true
-                elseif type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
-                    frame.debuffs[aura.auraInstanceID] = aura
-                    debuffsChanged = true
+
+                if frame.buffs then
+                    if CompactUnitFrame_UtilShouldDisplayBuff(unit, index, filter) and not CompactUnitFrame_UtilIsBossAura(unit, index, filter, true) then
+                        frame.buffs[aura.auraInstanceID] = aura
+                    end
                 end
+
+                index = index + 1
             end
         end
 
-        if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
-            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
-                local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
-                if newAura then
+        if frame.debuffs or frame.debuffsAll then
+            if frame.debuffsAll then
+                frame.debuffsAll.aura = {}
+                frame.debuffsAll.all = {}
+                frame.debuffsAll.own = {}
+                debuffsAllChanged = true
+            end
+            if frame.debuffs then
+                frame.debuffs:Clear()
+                debuffsChanged = true
+            end
+
+            local unit = srcframe.displayedUnit
+            local index = 1
+            local filter = nil
+
+            if frame.optionTable.displayOnlyDispellableDebuffs then
+                filter = "RAID"
+            end
+
+            while true do
+                local debuffName, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, _, spellId = UnitDebuff(unit, index, filter)
+                if not debuffName then
+                    break
+                end
+                local isBossAura = CompactUnitFrame_UtilIsBossAura(unit, index, filter, false)
+                local isBossBuff = CompactUnitFrame_UtilIsBossAura(unit, index, filter, true)
+
+                local auraInstanceID = (unitCaster or "X") .. "_" .. spellId
+                local aura = addon:makeFakeAura(spellId, {
+                    isHarmful      = true,
+                    name           = debuffName,
+                    icon           = icon,
+                    applications   = count,
+                    dispelName     = debuffType,
+                    duration       = duration,
+                    expirationTime = expirationTime,
+                    sourceUnit     = unitCaster,
+                    isStealable    = canStealOrPurge,
+                    spellId        = spellId,
+                    auraInstanceID = auraInstanceID,
+                    isBossAura     = isBossAura,
+                    isRaid         = frame.optionTable.displayOnlyDispellableDebuffs,
+                })
+
+                local all = frame.debuffsAll
+                local allfilter = frame.filter.debuffsAll
+                if all and (not allfilter or allfilter[aura.spellId]) then
+                    all.aura[aura.auraInstanceID] = aura
+                    all.all[aura.spellId] = all.all[aura.spellId] or {}
+                    all.all[aura.spellId][aura.auraInstanceID] = aura
+                    if aura.isFromPlayerOrPlayerPet then
+                        all.own[aura.spellId] = aura
+                    end
+                end
+
+                if frame.debuffs then
+                    if CompactUnitFrame_UtilShouldDisplayDebuff(unit, index, filter) then
+                        frame.debuffs[aura.auraInstanceID] = aura
+                    end
+                end
+
+                index = index + 1
+            end
+        end
+
+
+        if buffsAllChanged and frame.callback.buffsAll then
+            if frame.callback.buffsAll(srcframe) then
+                buffsChanged = false
+            end
+        end
+
+        if debuffsAllChanged and frame.callback.debuffsAll then
+            frame.callback.debuffsAll(srcframe)
+        end
+
+        if buffsChanged and frame.callback.buffs then
+            frame.callback.buffs(srcframe)
+        end
+        if debuffsChanged and frame.callback.debuffs then
+            frame.callback.debuffs(srcframe)
+        end
+    end
+else
+    updateAuras = function(srcframe, unitAuraUpdateInfo)
+        local frame = frame_registry[srcframe]
+
+        if not srcframe.displayedUnit or not frame.buffs and not frame.debuffs and not frame.buffsAll and not frame.debuffsAll then
+            return
+        end
+
+        local buffsChanged = false
+        local debuffsChanged = false
+        local buffsAllChanged = false
+        local debuffsAllChanged = false
+
+        local displayOnlyDispellableDebuffs = GetOptionDisplayOnlyDispellableDebuffs(srcframe, srcframe.optionTable)
+        local ignoreBuffs = not frame.buffs
+        local ignoreDebuffs = not frame.debuffs
+        local ignoreDispelDebuffs = true
+
+        if unitAuraUpdateInfo == nil or unitAuraUpdateInfo.isFullUpdate then
+            parseAllAuras(srcframe, frame, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+            buffsChanged = true
+            debuffsChanged = true
+            buffsAllChanged = true
+            debuffsAllChanged = true
+        else
+            if unitAuraUpdateInfo.addedAuras ~= nil then
+                for _, aura in ipairs(unitAuraUpdateInfo.addedAuras) do
                     local all, filter
-                    if newAura.isHelpful and frame.buffsAll then
+                    if aura.isHelpful and frame.buffsAll then
                         all = frame.buffsAll
                         filter = frame.filter.buffsAll
-                    elseif newAura.isHarmful and frame.debuffsAll then
+                    elseif aura.isHarmful and frame.debuffsAll then
                         all = frame.debuffsAll
                         filter = frame.filter.debuffsAll
                     end
-                    if all and (not filter or filter[newAura.spellId]) then
-                        if newAura.isHelpful then
+                    if all and (not filter or filter[aura.spellId]) then
+                        if aura.isHelpful then
                             buffsAllChanged = true
                         end
-                        if newAura.isHarmful then
+                        if aura.isHarmful then
                             debuffsAllChanged = true
                         end
-                        local oldDebuffType = all.aura[newAura.auraInstanceID] and all.aura[newAura.auraInstanceID].debuffType
-                        newAura.debuffType = oldDebuffType
-                        all.aura[newAura.auraInstanceID] = newAura
-                        all.all[newAura.spellId] = all.all[newAura.spellId] or {}
-                        all.all[newAura.spellId][newAura.auraInstanceID] = newAura
-                        if newAura.isFromPlayerOrPlayerPet then
-                            all.own[newAura.spellId] = newAura
+
+                        all.aura[aura.auraInstanceID] = aura
+                        all.all[aura.spellId] = all.all[aura.spellId] or {}
+                        all.all[aura.spellId][aura.auraInstanceID] = aura
+                        if aura.isFromPlayerOrPlayerPet then
+                            all.own[aura.spellId] = aura
                         else
-                            -- all.other[newAura.spellId] = all.other[newAura.spellId] or {}
-                            -- all.other[newAura.spellId][newAura.auraInstanceID] = newAura
+                            -- all.other[aura.spellId] = all.other[aura.spellId] or {}
+                            -- all.other[aura.spellId][aura.auraInstanceID] = aura
+                        end
+                    end
+                    local type = processAura(srcframe, aura, displayOnlyDispellableDebuffs, ignoreBuffs, ignoreDebuffs, ignoreDispelDebuffs)
+                    if type == AuraUtil.AuraUpdateChangedType.Buff then
+                        frame.buffs[aura.auraInstanceID] = aura
+                        buffsChanged = true
+                    elseif type == AuraUtil.AuraUpdateChangedType.Debuff or type == AuraUtil.AuraUpdateChangedType.Dispel then
+                        frame.debuffs[aura.auraInstanceID] = aura
+                        debuffsChanged = true
+                    end
+                end
+            end
+
+            if unitAuraUpdateInfo.updatedAuraInstanceIDs ~= nil then
+                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.updatedAuraInstanceIDs) do
+                    local newAura = C_UnitAuras.GetAuraDataByAuraInstanceID(srcframe.displayedUnit, auraInstanceID)
+                    if newAura then
+                        local all, filter
+                        if newAura.isHelpful and frame.buffsAll then
+                            all = frame.buffsAll
+                            filter = frame.filter.buffsAll
+                        elseif newAura.isHarmful and frame.debuffsAll then
+                            all = frame.debuffsAll
+                            filter = frame.filter.debuffsAll
+                        end
+                        if all and (not filter or filter[newAura.spellId]) then
+                            if newAura.isHelpful then
+                                buffsAllChanged = true
+                            end
+                            if newAura.isHarmful then
+                                debuffsAllChanged = true
+                            end
+                            local oldDebuffType = all.aura[newAura.auraInstanceID] and all.aura[newAura.auraInstanceID].debuffType
+                            newAura.debuffType = oldDebuffType
+                            all.aura[newAura.auraInstanceID] = newAura
+                            all.all[newAura.spellId] = all.all[newAura.spellId] or {}
+                            all.all[newAura.spellId][newAura.auraInstanceID] = newAura
+                            if newAura.isFromPlayerOrPlayerPet then
+                                all.own[newAura.spellId] = newAura
+                            else
+                                -- all.other[newAura.spellId] = all.other[newAura.spellId] or {}
+                                -- all.other[newAura.spellId][newAura.auraInstanceID] = newAura
+                            end
+                        end
+                        if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
+                            if newAura ~= nil then
+                                newAura.isBuff = true
+                            end
+                            frame.buffs[auraInstanceID] = newAura
+                            buffsChanged = true
+                        elseif frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
+                            local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
+                            if newAura ~= nil then
+                                newAura.debuffType = oldDebuffType
+                            end
+                            frame.debuffs[auraInstanceID] = newAura
+                            debuffsChanged = true
+                        end
+                    end
+                end
+            end
+
+            if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
+                for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
+                    if frame.buffsAll or frame.debuffsAll then
+                        local all = frame.buffsAll and frame.buffsAll.aura[auraInstanceID] and frame.buffsAll or frame.debuffsAll and frame.debuffsAll.aura[auraInstanceID] and frame.debuffsAll
+                        local aura = all and all.aura[auraInstanceID]
+                        if aura then
+                            if all == frame.buffsAll then
+                                buffsAllChanged = true
+                            else
+                                debuffsAllChanged = true
+                            end
+                            all.aura[auraInstanceID] = nil
+                            all.all[aura.spellId] = all.all[aura.spellId] or {}
+                            all.all[aura.spellId][aura.auraInstanceID] = nil
+                            if next(all.all[aura.spellId]) == nil then
+                                all.all[aura.spellId] = nil
+                            end
+                            if aura.isFromPlayerOrPlayerPet then
+                                all.own[aura.spellId] = nil
+                            else
+                                -- all.other[aura.spellId] = all.other[aura.spellId] or {}
+                                -- all.other[aura.spellId][aura.auraInstanceID] = nil
+                                -- if next(all.other[aura.spellId]) == nil then
+                                --     all.other[aura.spellId] = nil
+                                -- end
+                            end
                         end
                     end
                     if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
-                        if newAura ~= nil then
-                            newAura.isBuff = true
-                        end
-                        frame.buffs[auraInstanceID] = newAura
+                        frame.buffs[auraInstanceID] = nil
                         buffsChanged = true
-                    elseif frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
-                        local oldDebuffType = frame.debuffs[auraInstanceID].debuffType
-                        if newAura ~= nil then
-                            newAura.debuffType = oldDebuffType
-                        end
-                        frame.debuffs[auraInstanceID] = newAura
+                    end
+                    if frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
+                        frame.debuffs[auraInstanceID] = nil
                         debuffsChanged = true
                     end
                 end
             end
         end
 
-        if unitAuraUpdateInfo.removedAuraInstanceIDs ~= nil then
-            for _, auraInstanceID in ipairs(unitAuraUpdateInfo.removedAuraInstanceIDs) do
-                if frame.buffsAll or frame.debuffsAll then
-                    local all = frame.buffsAll and frame.buffsAll.aura[auraInstanceID] and frame.buffsAll or frame.debuffsAll and frame.debuffsAll.aura[auraInstanceID] and frame.debuffsAll
-                    local aura = all and all.aura[auraInstanceID]
-                    if aura then
-                        if all == frame.buffsAll then
-                            buffsAllChanged = true
-                        else
-                            debuffsAllChanged = true
-                        end
-                        all.aura[auraInstanceID] = nil
-                        all.all[aura.spellId] = all.all[aura.spellId] or {}
-                        all.all[aura.spellId][aura.auraInstanceID] = nil
-                        if next(all.all[aura.spellId]) == nil then
-                            all.all[aura.spellId] = nil
-                        end
-                        if aura.isFromPlayerOrPlayerPet then
-                            all.own[aura.spellId] = nil
-                        else
-                            -- all.other[aura.spellId] = all.other[aura.spellId] or {}
-                            -- all.other[aura.spellId][aura.auraInstanceID] = nil
-                            -- if next(all.other[aura.spellId]) == nil then
-                            --     all.other[aura.spellId] = nil
-                            -- end
-                        end
-                    end
-                end
-                if frame.buffs and frame.buffs[auraInstanceID] ~= nil then
-                    frame.buffs[auraInstanceID] = nil
-                    buffsChanged = true
-                end
-                if frame.debuffs and frame.debuffs[auraInstanceID] ~= nil then
-                    frame.debuffs[auraInstanceID] = nil
-                    debuffsChanged = true
-                end
+        if buffsAllChanged and frame.callback.buffsAll then
+            if frame.callback.buffsAll(srcframe) then
+                buffsChanged = false
             end
         end
-    end
 
-    if buffsAllChanged and frame.callback.buffsAll then
-        if frame.callback.buffsAll(srcframe) then
-            buffsChanged = false
+        if debuffsAllChanged and frame.callback.debuffsAll then
+            frame.callback.debuffsAll(srcframe)
         end
-    end
 
-    if debuffsAllChanged and frame.callback.debuffsAll then
-        frame.callback.debuffsAll(srcframe)
-    end
-
-    if buffsChanged and frame.callback.buffs then
-        frame.callback.buffs(srcframe)
-    end
-    if debuffsChanged and frame.callback.debuffs then
-        frame.callback.debuffs(srcframe)
+        if buffsChanged and frame.callback.buffs then
+            frame.callback.buffs(srcframe)
+        end
+        if debuffsChanged and frame.callback.debuffs then
+            frame.callback.debuffs(srcframe)
+        end
     end
 end
 

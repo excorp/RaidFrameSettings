@@ -797,7 +797,7 @@ function Debuffs:OnDisable()
     end
     for frame, registry in pairs(frame_registry) do
         restoreDebuffFrames(frame)
-        registry.buffs:Clear()
+        registry.debuffs:Clear()
     end
 end
 

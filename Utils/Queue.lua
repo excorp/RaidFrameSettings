@@ -19,6 +19,8 @@ local ticker
 
 local co
 
+Queue.use = true
+
 function Queue:init()
     co = coroutine.create(function()
         while true do
@@ -41,6 +43,10 @@ end
 
 function Queue:add(func, ...)
     -- DevTool:AddData(debugstack(2, 3, 0), " ")
+    if not Queue.use then
+        func(...)
+        return
+    end
     queue[#queue + 1] = {
         func = func,
         args = SafePack(...),
@@ -50,6 +56,9 @@ end
 
 function Queue:runAndAdd(func, ...)
     func(...)
+    if not Queue.use then
+        return
+    end
     Queue:add(func, ...)
 end
 

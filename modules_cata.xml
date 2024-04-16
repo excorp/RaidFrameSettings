@@ -11,4 +11,5 @@
     <Script file="Modules\Solo_Classic.lua" />
     <Script file="Modules\FrameColorSkin.lua" />
     <Script file="Modules\MinimapButton.lua" />
+    <Script file="Modules\Queue.lua" />
 </Ui>

@@ -405,3 +405,6 @@ L["Use"] = "사용"
 L["Not Use"] = "미사용"
 L["Play Sound"] = "사운드 재생"
 L["Play a sound if dispel is available."] = "해제 가능한 경우 소리로 알립니다"
+
+L["Queue"] = "큐"
+L["Toggle whether to use Queue."] = "큐 사용 여부. 버프/디버프 모듈의 각종 동작들을 큐를 이용해서 백그라운드에서 진행하게 하여 프레임을 고르게 만듭니다 (실험적인 기능)"

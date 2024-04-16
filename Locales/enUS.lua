@@ -406,3 +406,6 @@ L["Use"] = "Use"
 L["Not Use"] = "Not Use"
 L["Play Sound"] = "Play Sound"
 L["Play a sound if dispel is available."] = "Play a sound if dispel is available."
+
+L["Queue"] = "Queue"
+L["Toggle whether to use Queue."] = "Toggle whether to use Queue. Buff/Debuff modules can use queues to run in the background to even out frames (experimental)"

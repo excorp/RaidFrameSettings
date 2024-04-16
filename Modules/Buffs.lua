@@ -649,6 +649,16 @@ function Buffs:OnEnable()
 
     groupClass = {}
     for frame, v in pairs(frame_registry) do
+        if frame.unit then
+            if UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
+                local class = select(2, UnitClass(frame.unit))
+                groupClass[class] = true
+            end
+        end
+    end
+
+    groupClass = {}
+    for frame, v in pairs(frame_registry) do
         v.dirty = true
         Queue:add(function(frame)
             onFrameSetup(frame)
@@ -664,10 +674,6 @@ function Buffs:OnEnable()
                 end
                 if frameOpt.petframe and frame.unit:match("pet") then
                     Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
-                end
-                if UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
-                    local class = select(2, UnitClass(frame.unit))
-                    groupClass[class] = true
                 end
             end
             classMod:init(frame)

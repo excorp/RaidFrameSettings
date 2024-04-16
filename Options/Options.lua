@@ -2216,7 +2216,7 @@ options = {
                                             value = tostring(spellId)
                                             local opt = {
                                                 other = false,
-                                                class = nil,
+                                                class = 1,
                                                 alter = {},
                                             }
                                             RaidFrameSettings.db.profile.Buffs.MissingAura[value] = opt

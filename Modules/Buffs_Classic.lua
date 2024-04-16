@@ -706,14 +706,17 @@ function Buffs:OnEnable()
 
     groupClass = {}
     for frame, v in pairs(frame_registry) do
+        if frame.unit and UnitIsPlayer(frame.unit) then
+            local class = select(2, UnitClass(frame.unit))
+            groupClass[class] = true
+        end
+    end
+
+    for frame, v in pairs(frame_registry) do
         v.dirty = true
         onFrameSetup(frame)
         if frame.unit and frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
             onUpdateAuras(frame)
-            if frame.unit and UnitIsPlayer(frame.unit) then
-                local class = select(2, UnitClass(frame.unit))
-                groupClass[class] = true
-            end
         end
     end
 end

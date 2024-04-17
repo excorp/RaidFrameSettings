@@ -659,7 +659,6 @@ function Buffs:OnEnable()
         end
     end
 
-    groupClass = {}
     for frame, v in pairs(frame_registry) do
         v.dirty = true
         Queue:add(function(frame)

@@ -250,23 +250,28 @@ function DebuffHighlight:OnEnable()
             if not ignoreSpells[aura.spellId] then
                 local dispelName = Bleeds[aura.spellId] and "Bleed" or aura.dispelName
                 if dispelName then
-                    local show
+                    local show, sound
                     local leftime = {}
                     local conf = debuffOpt.Config[dispelName]
                     if conf == 1 then
                         show = true
+                        sound = debuffOpt.Etc.playSound == 2
                     elseif conf == 2 then
                         if canDispel[dispelName] then
                             show = true
+                            sound = debuffOpt.Etc.playSound == 2
                         end
-                    elseif conf == 3 then
+                    end
+
+                    if conf == 3 or debuffOpt.Etc.playSound == 3 then
                         if canDispel[dispelName] then
                             local GCD_startTime, GCD_duration = GetSpellCooldown(23881)
                             for _, spellId in pairs(canDispel[dispelName]) do
                                 local start, duration, enabled = GetSpellCooldown(spellId)
                                 local left = start + duration - GetTime()
                                 if enabled and left <= GCD_duration then
-                                    show = true
+                                    show = conf == 3
+                                    sound = debuffOpt.Etc.playSound == 3
                                     trackCooldown(spellId, frame)
                                 else
                                     tinsert(leftime, left)
@@ -279,7 +284,7 @@ function DebuffHighlight:OnEnable()
                         if not frame_registry[frame].glow[dispelName] then
                             Glow:Start(debuffHighlightConf[dispelName], frame, dispelName)
                             -- play sound
-                            if debuffOpt.Etc.playSound and lastPlayed[dispelName] < now - 2 then
+                            if sound and lastPlayed[dispelName] < now - 2 then
                                 local soundPath = string.format("Interface\\AddOns\\%s\\Media\\Sounds\\", addonName)
                                 local soundFile = soundPath .. string.format("%s\\%s.mp3", locale, dispelName)
                                 local success = PlaySoundFile(soundFile, channel)

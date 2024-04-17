@@ -404,6 +404,8 @@ L["Can Dispel"] = "Can Dispel"
 L["Use"] = "Use"
 L["Not Use"] = "Not Use"
 L["Play Sound"] = "Play Sound"
+L["Play sound when glowing"] = "Play sound when glowing"
+L["Play sound only if dispelable"] = "Play sound only if dispelable"
 L["Play a sound if dispel is available."] = "Play a sound if dispel is available."
 
 L["Queue"] = "Queue"

@@ -254,7 +254,7 @@ local defaults = {
                 Bleed   = 1,
             },
             Etc = {
-                playSound = true,
+                playSound = 3,
             }
         },
         Sort = {

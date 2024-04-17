@@ -403,6 +403,8 @@ L["Can Dispel"] = "해제 가능"
 L["Use"] = "사용"
 L["Not Use"] = "미사용"
 L["Play Sound"] = "사운드 재생"
+L["Play sound when glowing"] = "반짝일때 소리도 재생"
+L["Play sound only if dispelable"] = "해제 가능한 경우에만 소래 재생"
 L["Play a sound if dispel is available."] = "해제 가능한 경우 소리로 알립니다"
 
 L["Queue"] = "큐"

@@ -652,7 +652,9 @@ function Buffs:OnEnable()
         if frame.unit then
             if UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
                 local class = select(2, UnitClass(frame.unit))
-                groupClass[class] = true
+                if class then
+                    groupClass[class] = true
+                end
             end
         end
     end

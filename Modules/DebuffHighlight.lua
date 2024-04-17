@@ -255,11 +255,9 @@ function DebuffHighlight:OnEnable()
                     local conf = debuffOpt.Config[dispelName]
                     if conf == 1 then
                         show = true
-                        sound = debuffOpt.Etc.playSound == 2
                     elseif conf == 2 then
                         if canDispel[dispelName] then
                             show = true
-                            sound = debuffOpt.Etc.playSound == 2
                         end
                     end
 
@@ -270,8 +268,12 @@ function DebuffHighlight:OnEnable()
                                 local start, duration, enabled = GetSpellCooldown(spellId)
                                 local left = start + duration - GetTime()
                                 if enabled and left <= GCD_duration then
-                                    show = conf == 3
-                                    sound = debuffOpt.Etc.playSound == 3
+                                    if conf == 3 then
+                                        show = true
+                                    end
+                                    if debuffOpt.Etc.playSound == 3 then
+                                        sound = true
+                                    end
                                     trackCooldown(spellId, frame)
                                 else
                                     tinsert(leftime, left)
@@ -283,32 +285,34 @@ function DebuffHighlight:OnEnable()
                     if show then
                         if not frame_registry[frame].glow[dispelName] then
                             Glow:Start(debuffHighlightConf[dispelName], frame, dispelName)
-                            -- play sound
-                            if sound and lastPlayed[dispelName] < now - 2 then
-                                local soundPath = string.format("Interface\\AddOns\\%s\\Media\\Sounds\\", addonName)
-                                local soundFile = soundPath .. string.format("%s\\%s.mp3", locale, dispelName)
-                                local success = PlaySoundFile(soundFile, channel)
-                                if not success then
-                                    soundFile = soundPath .. string.format("%s\\%s.mp3", "enUS", dispelName)
-                                    success = PlaySoundFile(soundFile, channel)
-                                end
-                                if success then
-                                    lastPlayed[dispelName] = now
-                                end
+                            if debuffOpt.Etc.playSound == 2 then
+                                sound = true
+                            end
+                        end
+                        -- play sound
+                        if sound and lastPlayed[dispelName] < now - 2 then
+                            local soundPath = string.format("Interface\\AddOns\\%s\\Media\\Sounds\\", addonName)
+                            local soundFile = soundPath .. string.format("%s\\%s.mp3", locale, dispelName)
+                            local success = PlaySoundFile(soundFile, channel)
+                            if not success then
+                                soundFile = soundPath .. string.format("%s\\%s.mp3", "enUS", dispelName)
+                                success = PlaySoundFile(soundFile, channel)
+                            end
+                            if success then
+                                lastPlayed[dispelName] = now
                             end
                         end
                         glow[dispelName] = true
-                    else
+                    end
+                    if #leftime > 0 then
                         if ticker and not ticker:IsCancelled() then
                             ticker:Cancel()
                         end
-                        if #leftime > 0 then
-                            local leasttime = math.min(unpack(leftime))
-                            ticker = C_Timer.NewTimer(leasttime, function()
-                                onUpdateHighlihgt(frame)
-                                ticker = nil
-                            end)
-                        end
+                        local leasttime = math.min(unpack(leftime))
+                        ticker = C_Timer.NewTimer(leasttime, function()
+                            onUpdateHighlihgt(frame)
+                            ticker = nil
+                        end)
                     end
                 end
             end

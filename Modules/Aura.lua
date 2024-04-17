@@ -285,8 +285,8 @@ local tooltipChecker = function(self, elapsed)
         end
 
         local focusFrame = GetMouseFocus()
-        local frameName = focusFrame and focusFrame.GetName and focusFrame:GetName()
-        if not frameName then
+        local ok, frameName = pcall(function() return focusFrame and focusFrame:GetName() end)
+        if not ok or not frameName then
             return
         end
         local finish

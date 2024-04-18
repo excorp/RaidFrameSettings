@@ -19,8 +19,10 @@ local ticker
 
 local co
 
-Queue.use = true
+Queue.use = false
 
+-- local stat = {}
+-- DevTool:AddData(stat, "stat")
 function Queue:init()
     co = coroutine.create(function()
         while true do
@@ -35,14 +37,16 @@ function Queue:init()
             for i = 1, run do
                 queue[i] = nil
             end
-            -- print("queue end:", run)
+            print("queue end:", run)
             coroutine.yield(0)
         end
     end)
 end
 
 function Queue:add(func, ...)
-    -- DevTool:AddData(debugstack(2, 3, 0), " ")
+    -- local key = debugstack(2, 2, 0) or "no key"
+    -- if not stat[key] then stat[key] = 0 end
+    -- stat[key] = stat[key] + 1
     if not Queue.use then
         func(...)
         return

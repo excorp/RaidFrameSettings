@@ -249,6 +249,9 @@ function Debuffs:OnEnable()
     end
 
     onUnsetDebuff = function(debuffFrame)
+        if not debuffFrame:IsShown() then
+            return
+        end
         Queue:runAndAdd(function(debuffFrame)
             if not debuffFrame then
                 return

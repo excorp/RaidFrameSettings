@@ -484,13 +484,8 @@ options = {
                             type = "toggle",
                             name = L["Queue"],
                             desc = L["Toggle whether to use Queue."],
-                            get = function()
-                                return RaidFrameSettings.db.global.Queue.enabled
-                            end,
-                            set = function(_, value)
-                                RaidFrameSettings.db.global.Queue.enabled = value
-                                RaidFrameSettings:UpdateModule("Queue")
-                            end,
+                            get = "GetModuleStatus",
+                            set = "SetModuleStatus",
                         },
                     },
                 },

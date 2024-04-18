@@ -256,6 +256,9 @@ function Buffs:OnEnable()
     end
 
     onUnsetBuff = function(buffFrame)
+        if not buffFrame:IsShown() then
+            return
+        end
         Queue:runAndAdd(function(buffFrame)
             if not buffFrame then
                 return

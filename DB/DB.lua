@@ -400,9 +400,6 @@ local defaults = {
         MinimapButton = {
             enabled = true,
         },
-        Queue = {
-            enabled = true,
-        },
     },
 }
 

@@ -37,7 +37,7 @@ function Queue:init()
             for i = 1, run do
                 queue[i] = nil
             end
-            print("queue end:", run)
+            -- print("queue end:", run)
             coroutine.yield(0)
         end
     end)

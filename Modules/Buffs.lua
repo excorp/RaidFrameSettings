@@ -204,258 +204,292 @@ function Buffs:OnEnable()
 
     classMod:onEnable(frameOpt)
 
+    local _onSetBuff = function(buffFrame, aura, opt)
+        if not buffFrame or buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
+            return
+        end
+        if buffFrame.aura == aura and buffFrame:IsShown() then
+            return
+        end
+
+        local parent = buffFrame:GetParent()
+        if not parent or not frame_registry[parent] then
+            return
+        end
+
+        local aurastored = frame_registry[parent].aura
+        local oldAura = aurastored[aura.auraInstanceID]
+        if frameOpt.refreshAni and oldAura then
+            if math.abs(aura.expirationTime - oldAura.expirationTime) > 1 or (aura.applications + oldAura.applications ~= 1 and oldAura.applications ~= aura.applications) then
+                aura.refresh = true
+            end
+        end
+        aurastored[aura.auraInstanceID] = aura
+
+        classMod:onSetBuff(buffFrame, aura, oldAura, opt)
+
+        -- icon, stack, cooldown(duration) start
+        buffFrame:SetAura(aura)
+
+        if aura then
+            local auraGroupNo = auraGroupList[aura.spellId]
+            if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
+                local placed = userPlaced[aura.spellId]
+                buffFrame:SetSize(placed.width, placed.height)
+            elseif auraGroupNo and auraGroup[auraGroupNo].setSize then
+                local group = auraGroup[auraGroupNo]
+                buffFrame:SetSize(group.width, group.height)
+            elseif increase[aura.spellId] then
+                buffFrame:SetSize(big_width, big_height)
+            else
+                buffFrame:SetSize(width, height)
+            end
+        end
+
+        self:Glow(buffFrame, aura.empowered or opt.glow)
+        buffFrame:SetAlpha(opt.alpha or 1)
+    end
     local onSetBuff = function(buffFrame, aura, opt)
         if not buffFrame or buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
             return
         end
-        Queue:add(function(buffFrame, aura, opt)
-            if not buffFrame or buffFrame:IsForbidden() then --not sure if this is still neede but when i created it at the start if dragonflight it was
-                return
-            end
-            local parent = buffFrame:GetParent()
-            if not parent or not frame_registry[parent] then
-                return
-            end
-
-            if buffFrame.aura == aura and buffFrame:IsShown() then
-                return
-            end
-
-            local aurastored = frame_registry[parent].aura
-            local oldAura = aurastored[aura.auraInstanceID]
-            if frameOpt.refreshAni and oldAura then
-                if math.abs(aura.expirationTime - oldAura.expirationTime) > 1 or (aura.applications + oldAura.applications ~= 1 and oldAura.applications ~= aura.applications) then
-                    aura.refresh = true
-                end
-            end
-            aurastored[aura.auraInstanceID] = aura
-
-            classMod:onSetBuff(buffFrame, aura, oldAura, opt)
-
-            -- icon, stack, cooldown(duration) start
-            buffFrame:SetAura(aura)
-
-            if aura then
-                local auraGroupNo = auraGroupList[aura.spellId]
-                if userPlaced[aura.spellId] and userPlaced[aura.spellId].setSize then
-                    local placed = userPlaced[aura.spellId]
-                    buffFrame:SetSize(placed.width, placed.height)
-                elseif auraGroupNo and auraGroup[auraGroupNo].setSize then
-                    local group = auraGroup[auraGroupNo]
-                    buffFrame:SetSize(group.width, group.height)
-                elseif increase[aura.spellId] then
-                    buffFrame:SetSize(big_width, big_height)
-                else
-                    buffFrame:SetSize(width, height)
-                end
-            end
-
-            self:Glow(buffFrame, aura.empowered or opt.glow)
-            buffFrame:SetAlpha(opt.alpha or 1)
-        end, buffFrame, aura, opt)
-    end
-
-    onUnsetBuff = function(buffFrame)
-        if not buffFrame:IsShown() then
+        if buffFrame.aura == aura and buffFrame:IsShown() then
             return
         end
-        Queue:runAndAdd(function(buffFrame)
-            if not buffFrame then
-                return
-            end
-            self:Glow(buffFrame, false)
-            buffFrame:UnsetAura()
-        end, buffFrame)
+        Queue:add(_onSetBuff, buffFrame, aura, opt)
     end
 
+    local _onUnsetBuff = function(buffFrame)
+        if not buffFrame or not buffFrame:IsShown() then
+            return
+        end
+        self:Glow(buffFrame, false)
+        buffFrame:UnsetAura()
+    end
+    onUnsetBuff = function(buffFrame)
+        Queue:runAndAdd(_onUnsetBuff, buffFrame)
+    end
+
+    local function _onUpdateMissingAuras(frame)
+        if not frame then
+            return
+        end
+        local changed
+        if not frame_registry[frame] then
+            return
+        end
+
+        for spellId, v in pairs(missingAuraOpt) do
+            local check
+            if v.other then
+                if groupClass[v.class] then
+                    check = frame_registry[frame].allaura.all
+                end
+            else
+                check = frame_registry[frame].allaura.own
+            end
+            if check then
+                local checkId = spellId
+                if not check[checkId] then
+                    for _, alterId in pairs(v.alter) do
+                        if check[alterId] then
+                            checkId = alterId
+                        end
+                    end
+                end
+                if check[checkId] then
+                    if frame_registry[frame].buffs[-spellId] then
+                        frame_registry[frame].buffs[-spellId] = nil
+                        changed = true
+                    end
+                else
+                    if not frame_registry[frame].buffs[-spellId] then
+                        frame_registry[frame].buffs[-spellId] = addon:makeFakeAura(spellId, {
+                            expirationTime = 1,
+                        })
+                        changed = true
+                    end
+                end
+            end
+        end
+
+        if changed then
+            onUpdateAuras(frame)
+        end
+        return changed
+    end
     local function onUpdateMissingAuras(frame)
         if not frame then
             return
         end
-        Queue:add(function(frame)
-            local changed
-            if not frame_registry[frame] then
-                return
-            end
-
-            for spellId, v in pairs(missingAuraOpt) do
-                local check
-                if v.other then
-                    if groupClass[v.class] then
-                        check = frame_registry[frame].allaura.all
-                    end
-                else
-                    check = frame_registry[frame].allaura.own
-                end
-                if check then
-                    local checkId = spellId
-                    if not check[checkId] then
-                        for _, alterId in pairs(v.alter) do
-                            if check[alterId] then
-                                checkId = alterId
-                            end
-                        end
-                    end
-                    if check[checkId] then
-                        if frame_registry[frame].buffs[-spellId] then
-                            frame_registry[frame].buffs[-spellId] = nil
-                            changed = true
-                        end
-                    else
-                        if not frame_registry[frame].buffs[-spellId] then
-                            frame_registry[frame].buffs[-spellId] = addon:makeFakeAura(spellId, {
-                                expirationTime = 1,
-                            })
-                            changed = true
-                        end
-                    end
-                end
-            end
-
-            if changed then
-                onUpdateAuras(frame)
-            end
-            return changed
-        end, frame)
+        Queue:add(_onUpdateMissingAuras, frame)
     end
 
-    onUpdateAuras = function(frame)
-        if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+    local _onUpdateAuras = function(frame)
+        if not frame or not frame_registry[frame] or frame_registry[frame].dirty or frame:IsForbidden() or not frame:IsVisible() then
             return
         end
+        for k = 1, frame.maxBuffs do
+            local v = frame.buffFrames[k]
+            if not v:IsShown() then
+                break
+            end
+            v:Hide()
+        end
+        --[[
         for _, v in next, frame.buffFrames do
             if not v:IsShown() then
                 break
             end
             v:Hide()
         end
-        Queue:add(function(frame)
-            if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
-                return
-            end
+        ]]
+        if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            return
+        end
 
-            -- set placed aura / other aura
-            local frameNum = 1
-            local groupFrameNum = {}
-            local sorted = {
-                [0] = {},
-            }
-            local userPlacedShown = {}
-            for _, buffs in pairs({ frame.buffs, frame_registry[frame].buffs }) do
-                buffs:Iterate(function(auraInstanceID, aura)
-                    if userPlaced[aura.spellId] then
-                        local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
+        -- set placed aura / other aura
+        local frameNum = 1
+        local groupFrameNum = {}
+        local sorted = {
+            [0] = {},
+        }
+        local userPlacedShown = {}
+        for _, buffs in pairs({ frame.buffs, frame_registry[frame].buffs }) do
+            buffs:Iterate(function(auraInstanceID, aura)
+                if userPlaced[aura.spellId] then
+                    local idx = frame_registry[frame].placedAuraStart + userPlaced[aura.spellId].idx - 1
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    local placed = userPlaced[aura.spellId]
+                    onSetBuff(buffFrame, aura, placed)
+                    userPlacedShown[buffFrame] = true
+                    return false
+                end
+                if auraGroupList[aura.spellId] then
+                    local groupNo = auraGroupList[aura.spellId]
+                    local auraList = auraGroup[groupNo].auraList
+                    local auraOpt = auraList[aura.spellId]
+                    local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
+                    if not sorted[groupNo] then sorted[groupNo] = {} end
+                    tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
+                    groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
+                    return false
+                end
+                local filtered = filteredAuras[aura.spellId]
+                local priority = filtered and filtered.priority or 0
+                tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
+            end)
+        end
+        -- set buffs after sorting to priority.
+        for _, v in pairs(sorted) do
+            table.sort(v, comparePriority)
+        end
+        for groupNo, auralist in pairs(sorted) do
+            for k, v in pairs(auralist) do
+                if groupNo == 0 then
+                    -- default aura frame
+                    if k > frame_registry[frame].maxBuffs then
+                        break
+                    end
+                    frameNum = k + 1
+                    local buffFrame = frame_registry[frame].extraBuffFrames[k]
+                    onSetBuff(buffFrame, v.aura, v.opt)
+                else
+                    -- aura group frame
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    onSetBuff(buffFrame, v.aura, v.opt)
+                    if k >= auraGroup[groupNo].maxAuras then
+                        break
+                    end
+                end
+            end
+        end
+
+        -- reanchor
+        for groupNo, v in pairs(frame_registry[frame].reanchor) do
+            local lastNum = groupFrameNum[groupNo] or 2
+            if v.lastNum ~= lastNum then
+                v.lastNum = lastNum
+                for _, child in pairs(v.children) do
+                    local idx = frame_registry[frame].auraGroupStart[groupNo] + v.lastNum - 2
+                    local parent = frame_registry[frame].extraBuffFrames[idx]
+                    child.frame:ClearAllPoints()
+                    child.frame:SetPoint(child.conf.point, parent, child.conf.relativePoint, child.conf.xOffset, child.conf.yOffset)
+                end
+            end
+        end
+
+        -- hide left aura frames
+        for buffFrame in pairs(frame_registry[frame].userPlacedShown) do
+            if not userPlacedShown[buffFrame] then
+                if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
+                    onUnsetBuff(buffFrame)
+                else
+                    userPlacedShown[buffFrame] = true
+                end
+            end
+        end
+        frame_registry[frame].userPlacedShown = userPlacedShown
+        for i = frameNum, frame_registry[frame].maxBuffs do
+            local buffFrame = frame_registry[frame].extraBuffFrames[i]
+            if not buffFrame:IsShown() then
+                break
+            end
+            onUnsetBuff(buffFrame)
+        end
+        -- Modify the anchor of an auraGroup and hide left aura group
+        for groupNo, v in pairs(auraGroup) do
+            if groupFrameNum[groupNo] and groupFrameNum[groupNo] > 0 then
+                if v.orientation == 5 or v.orientation == 6 then
+                    local idx = frame_registry[frame].auraGroupStart[groupNo]
+                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
+                    local x, y = 0, 0
+                    for i = 2, groupFrameNum[groupNo] - 1 do
+                        local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
                         local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                        local placed = userPlaced[aura.spellId]
-                        onSetBuff(buffFrame, aura, placed)
-                        userPlacedShown[buffFrame] = true
-                        return false
-                    end
-                    if auraGroupList[aura.spellId] then
-                        local groupNo = auraGroupList[aura.spellId]
-                        local auraList = auraGroup[groupNo].auraList
-                        local auraOpt = auraList[aura.spellId]
-                        local priority = auraOpt.priority > 0 and auraOpt.priority or filteredAuras[aura.spellId] and filteredAuras[aura.spellId].priority or 0
-                        if not sorted[groupNo] then sorted[groupNo] = {} end
-                        tinsert(sorted[groupNo], { spellId = aura.spellId, priority = priority, aura = aura, opt = auraOpt })
-                        groupFrameNum[groupNo] = groupFrameNum[groupNo] and (groupFrameNum[groupNo] + 1) or 2
-                        return false
-                    end
-                    local filtered = filteredAuras[aura.spellId]
-                    local priority = filtered and filtered.priority or 0
-                    tinsert(sorted[0], { spellId = aura.spellId, priority = priority, aura = aura, opt = filtered or {} })
-                end)
-            end
-            -- set buffs after sorting to priority.
-            for _, v in pairs(sorted) do
-                table.sort(v, comparePriority)
-            end
-            for groupNo, auralist in pairs(sorted) do
-                for k, v in pairs(auralist) do
-                    if groupNo == 0 then
-                        -- default aura frame
-                        if k > frame_registry[frame].maxBuffs then
-                            break
-                        end
-                        frameNum = k + 1
-                        local buffFrame = frame_registry[frame].extraBuffFrames[k]
-                        onSetBuff(buffFrame, v.aura, v.opt)
-                    else
-                        -- aura group frame
-                        local idx = frame_registry[frame].auraGroupStart[groupNo] + k - 1
-                        local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                        onSetBuff(buffFrame, v.aura, v.opt)
-                        if k >= auraGroup[groupNo].maxAuras then
-                            break
+                        local w, h = buffFrame:GetSize()
+                        if v.orientation == 5 then
+                            x = x + w
+                        elseif v.orientation == 6 then
+                            y = y + h
                         end
                     end
+                    buffFrame:ClearAllPoints()
+                    buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
                 end
             end
-
-            -- reanchor
-            for groupNo, v in pairs(frame_registry[frame].reanchor) do
-                local lastNum = groupFrameNum[groupNo] or 2
-                if v.lastNum ~= lastNum then
-                    v.lastNum = lastNum
-                    for _, child in pairs(v.children) do
-                        local idx = frame_registry[frame].auraGroupStart[groupNo] + v.lastNum - 2
-                        local parent = frame_registry[frame].extraBuffFrames[idx]
-                        child.frame:ClearAllPoints()
-                        child.frame:SetPoint(child.conf.point, parent, child.conf.relativePoint, child.conf.xOffset, child.conf.yOffset)
-                    end
-                end
-            end
-
-            -- hide left aura frames
-            for buffFrame in pairs(frame_registry[frame].userPlacedShown) do
-                if not userPlacedShown[buffFrame] then
-                    if not buffFrame.auraInstanceID or not (frame.buffs[buffFrame.auraInstanceID] or frame_registry[frame].buffs[buffFrame.auraInstanceID]) then
-                        onUnsetBuff(buffFrame)
-                    else
-                        userPlacedShown[buffFrame] = true
-                    end
-                end
-            end
-            frame_registry[frame].userPlacedShown = userPlacedShown
-            for i = frameNum, frame_registry[frame].maxBuffs do
-                local buffFrame = frame_registry[frame].extraBuffFrames[i]
+            local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
+            for i = groupFrameNum[groupNo] or 1, groupSize do
+                local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
+                local buffFrame = frame_registry[frame].extraBuffFrames[idx]
                 if not buffFrame:IsShown() then
                     break
                 end
                 onUnsetBuff(buffFrame)
             end
-            -- Modify the anchor of an auraGroup and hide left aura group
-            for groupNo, v in pairs(auraGroup) do
-                if groupFrameNum[groupNo] and groupFrameNum[groupNo] > 0 then
-                    if v.orientation == 5 or v.orientation == 6 then
-                        local idx = frame_registry[frame].auraGroupStart[groupNo]
-                        local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                        local x, y = 0, 0
-                        for i = 2, groupFrameNum[groupNo] - 1 do
-                            local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
-                            local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                            local w, h = buffFrame:GetSize()
-                            if v.orientation == 5 then
-                                x = x + w
-                            elseif v.orientation == 6 then
-                                y = y + h
-                            end
-                        end
-                        buffFrame:ClearAllPoints()
-                        buffFrame:SetPoint(v.point, frame, v.relativePoint, v.xOffset - x / 2, v.yOffset + y / 2)
-                    end
-                end
-                local groupSize = frame_registry[frame].auraGroupEnd[groupNo] - frame_registry[frame].auraGroupStart[groupNo] + 1
-                for i = groupFrameNum[groupNo] or 1, groupSize do
-                    local idx = frame_registry[frame].auraGroupStart[groupNo] + i - 1
-                    local buffFrame = frame_registry[frame].extraBuffFrames[idx]
-                    if not buffFrame:IsShown() then
-                        break
-                    end
-                    onUnsetBuff(buffFrame)
-                end
+        end
+    end
+    onUpdateAuras = function(frame)
+        if not frame or not frame_registry[frame] or frame:IsForbidden() or not frame:IsVisible() then
+            return
+        end
+        for k = 1, frame.maxBuffs do
+            local v = frame.buffFrames[k]
+            if not v:IsShown() then
+                break
             end
-        end, frame)
+            v:Hide()
+        end
+        --[[
+        for _, v in next, frame.buffFrames do
+            if not v:IsShown() then
+                break
+            end
+            v:Hide()
+        end
+        ]]
+        Queue:add(_onUpdateAuras, frame)
     end
     -- self:HookFunc("CompactUnitFrame_UpdateAuras", onUpdateAuras)
     self:HookFunc("CompactUnitFrame_HideAllBuffs", onUpdateAuras)
@@ -600,9 +634,25 @@ function Buffs:OnEnable()
         end
     end
     local function onFrameSetupQueued(frame)
-        for _, v in pairs(frame.buffFrames) do
+        for k = 1, frame.maxBuffs do
+            local v = frame.buffFrames[k]
+            if v:GetNumPoints() == 0 then
+                break
+            end
             v:ClearAllPoints()
             v.cooldown:SetDrawSwipe(false)
+        end
+        --[[
+        for _, v in pairs(frame.buffFrames) do
+            if v:GetNumPoints() == 0 then
+                break
+            end
+            v:ClearAllPoints()
+            v.cooldown:SetDrawSwipe(false)
+        end
+        ]]
+        if frame_registry[frame] and not frame_registry[frame].dirty then
+            return
         end
         Queue:add(onFrameSetup, frame)
     end
@@ -662,26 +712,27 @@ function Buffs:OnEnable()
         end
     end
 
-    for frame, v in pairs(frame_registry) do
-        v.dirty = true
-        Queue:add(function(frame)
-            onFrameSetup(frame)
-            if frame.unit then
-                if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
-                    if frameOpt.missingAura and frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                        if not onUpdateMissingAuras(frame) then
-                            onUpdateAuras(frame)
-                        end
-                    else
+    local function init(frame)
+        onFrameSetup(frame)
+        if frame.unit then
+            if frame.unitExists and frame:IsShown() and not frame:IsForbidden() then
+                if frameOpt.missingAura and frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                    if not onUpdateMissingAuras(frame) then
                         onUpdateAuras(frame)
                     end
-                end
-                if frameOpt.petframe and frame.unit:match("pet") then
-                    Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+                else
+                    onUpdateAuras(frame)
                 end
             end
-            classMod:init(frame)
-        end, frame)
+            if frameOpt.petframe and frame.unit:match("pet") then
+                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+            end
+        end
+        classMod:init(frame)
+    end
+    for frame, v in pairs(frame_registry) do
+        v.dirty = true
+        Queue:add(init, frame)
     end
 
     if frameOpt.petframe then

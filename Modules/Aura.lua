@@ -508,14 +508,15 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                     self.duration = aura.duration
 
                     if aura.expirationTime > now then
+                        self:SetMinMaxValues(0, aura.duration)
+                        self:SetValue(0)
+
                         if self.timerText then
                             queue.setText(self)
                         end
 
                         if self.swipe or self.edge then
-                            self:SetMinMaxValues(0, aura.duration)
                             self:SetValue(elasped)
-                            self:Show()
 
                             local frameSize = 0
                             if self.edge then
@@ -542,6 +543,8 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                                 self.sparkTurnPoint = (frameSize - border_size) / (frameSize / aura.duration)
                             end
                         end
+
+                        self:Show()
 
                         queue.add(self)
                         queue.run()
@@ -601,8 +604,11 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
                         TooltipCheckFrame.QueueUnknownPos[self] = true
                     end
 
+                    local needToStart = next(TooltipCheckFrame.QueueAll) == nil
                     TooltipCheckFrame.QueueAll[self] = true
-                    TooltipCheckFrame:SetScript("OnUpdate", tooltipChecker)
+                    if needToStart then
+                        TooltipCheckFrame:SetScript("OnUpdate", tooltipChecker)
+                    end
                 end
             end
 

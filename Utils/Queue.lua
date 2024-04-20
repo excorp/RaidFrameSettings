@@ -20,8 +20,9 @@ local ticker
 local co
 
 Queue.use = false
+Queue.running = false
 
--- local stat = {}
+local stat = {}
 -- DevTool:AddData(stat, "stat")
 function Queue:init()
     co = coroutine.create(function()
@@ -29,7 +30,9 @@ function Queue:init()
             local run = 0
             for k, v in next, queue do
                 if v then
+                    Queue.running = true
                     v.func(SafeUnpack(v.args))
+                    Queue.running = false
                     coroutine.yield(k)
                 end
                 run = k
@@ -43,14 +46,45 @@ function Queue:init()
     end)
 end
 
+local function explode(d, p)
+    local t, ll
+    t = {}
+    ll = 0
+    if (#p == 1) then
+        return { p }
+    end
+    while true do
+        l = string.find(p, d, ll, true)               -- find the next d in the string
+        if l ~= nil then                              -- if "not not" found then..
+            table.insert(t, string.sub(p, ll, l - 1)) -- Save it in our array.
+            ll = l + 1                                -- save just after where we found it for searching next time.
+        else
+            table.insert(t, string.sub(p, ll))        -- Save what's left in our array.
+            break                                     -- Break at end, as it should be, according to the lua manual.
+        end
+    end
+    return t
+end
+
 function Queue:add(func, ...)
-    -- local key = debugstack(2, 2, 0) or "no key"
-    -- if not stat[key] then stat[key] = 0 end
-    -- stat[key] = stat[key] + 1
-    if not Queue.use then
+    -- stat[func] = (stat[func] or 0) + 1
+
+    if Queue.running or not Queue.use then
         func(...)
         return
     end
+
+    --[[
+    local key = debugstack(2, 3, 0) or "no key"
+    if not stat[key] then
+        stat[key] = {
+            count = 0,
+            stack = explode("[string", key)
+        }
+    end
+    stat[key].count = stat[key].count + 1
+    ]]
+
     queue[#queue + 1] = {
         func = func,
         args = SafePack(...),

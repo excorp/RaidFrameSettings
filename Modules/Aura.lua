@@ -357,10 +357,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             textFrame:SetFrameLevel(auraFrame.cooldown:GetFrameLevel() + 1)
             auraFrame.count:SetParent(textFrame)
 
+            --[[
             auraFrame:SetScript("OnSizeChanged", function(self, width, height)
                 -- keep aspect ratio
                 auraFrame:SetCoord(width, height)
             end)
+            ]]
 
             function auraFrame:SetCoord(width, height)
                 -- keep aspect ratio
@@ -475,10 +477,12 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
             maskIcon:SetVertexColor(0.5, 0.5, 0.5, 1)
             maskIcon:AddMaskTexture(mask)
 
+            --[[
             auraFrame:SetScript("OnSizeChanged", function(self, width, height)
                 self.overwrapWithParent = Aura:framesOverlap(frame, self)
                 self:SetCoord(width, height)
             end)
+            ]]
 
             local textFrame = CreateFrame("Frame", nil, auraFrame)
             auraFrame.textFrame = textFrame

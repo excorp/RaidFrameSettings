@@ -664,9 +664,6 @@ function Debuffs:OnEnable()
             v:ClearAllPoints()
             v.cooldown:SetDrawSwipe(false)
         end
-        if frame_registry[frame] and not frame_registry[frame].dirty then
-            return
-        end
         Queue:add(onFrameSetup, frame)
     end
 

@@ -27,6 +27,11 @@ local Sort_disabled                           = function() return not RaidFrameS
 --LibDDI-1.0
 local statusbars                              = LibStub("LibSharedMedia-3.0"):List("statusbar")
 
+
+Media.MediaTable.statusbar["Blizzard Raid Bar Background"] = [[Interface\RaidFrame\Raid-Bar-Hp-Bg]]
+Media.MediaTable.statusbar["Blizzard Raid Bar Resource"]   = [[Interface\RaidFrame\Raid-Bar-Resource-Fill]]
+
+
 --[[
     tmp locals
 ]]

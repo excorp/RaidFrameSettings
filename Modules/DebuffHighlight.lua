@@ -231,6 +231,7 @@ local function trackCooldown(spellId, frame)
 end
 
 local ticker
+local needUpdateFrames = {}
 function DebuffHighlight:OnEnable()
     local Bleeds = LD:GetBleedList()
 
@@ -305,12 +306,16 @@ function DebuffHighlight:OnEnable()
                         glow[dispelName] = true
                     end
                     if #leftime > 0 then
+                        needUpdateFrames[frame] = true
                         if ticker and not ticker:IsCancelled() then
                             ticker:Cancel()
                         end
                         local leasttime = math.min(unpack(leftime))
                         ticker = C_Timer.NewTimer(leasttime, function()
-                            onUpdateHighlihgt(frame)
+                            for frame2 in pairs(needUpdateFrames) do
+                                onUpdateHighlihgt(frame2)
+                                needUpdateFrames[frame2] = nil
+                            end
                             ticker = nil
                         end)
                     end

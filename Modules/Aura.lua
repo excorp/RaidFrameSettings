@@ -113,7 +113,7 @@ queue.setText = function(cooldown)
     if not fs then
         return
     end
-    if time > 0 then
+    if time > -0.5 then
         fs:SetText(queue.getTimerText(time))
         fs:Show()
     else

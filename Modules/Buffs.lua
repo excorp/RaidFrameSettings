@@ -35,6 +35,7 @@ local random = random
 local frame_registry = {}
 local roster_changed = true
 local groupClass = {}
+local unitFrame = {}
 local glowOpt
 local testmodeTicker
 local onUpdateAuras
@@ -278,15 +279,30 @@ function Buffs:OnEnable()
         if not frame_registry[frame] then
             return
         end
+        local registry = frame_registry[frame]
+
+        if not UnitInRange(frame.displayedUnit or "") then
+            if registry.buffs:Size() == 0 then
+                return
+            end
+            registry.buffs:Clear()
+            onUpdateAuras(frame)
+            return
+        end
 
         for spellId, v in pairs(missingAuraOpt) do
             local check
             if v.other then
                 if groupClass[v.class] then
-                    check = frame_registry[frame].allaura.all
+                    for frame2 in pairs(groupClass[v.class]) do
+                        if UnitInRange(frame2.unit or "") then
+                            check = registry.allaura.all
+                            break
+                        end
+                    end
                 end
             else
-                check = frame_registry[frame].allaura.own
+                check = registry.allaura.own
             end
             if check then
                 local checkId = spellId
@@ -298,13 +314,13 @@ function Buffs:OnEnable()
                     end
                 end
                 if check[checkId] then
-                    if frame_registry[frame].buffs[-spellId] then
-                        frame_registry[frame].buffs[-spellId] = nil
+                    if registry.buffs[-spellId] then
+                        registry.buffs[-spellId] = nil
                         changed = true
                     end
                 else
-                    if not frame_registry[frame].buffs[-spellId] then
-                        frame_registry[frame].buffs[-spellId] = addon:makeFakeAura(spellId, {
+                    if not registry.buffs[-spellId] then
+                        registry.buffs[-spellId] = addon:makeFakeAura(spellId, {
                             expirationTime = 1,
                         })
                         changed = true
@@ -660,23 +676,65 @@ function Buffs:OnEnable()
         self:HookFuncFiltered("DefaultCompactMiniFrameSetup", onFrameSetupQueued)
     end
 
+    if frameOpt.missingAura then
+        local function checkRange(frame)
+            local unit = frame.unit
+            if not unit or not frame_registry[frame] or not (UnitIsPlayer(unit) or UnitInPartyIsAI(unit)) then
+                return
+            end
+            -- Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+            onUpdateMissingAuras(frame)
+        end
+        self:HookFuncFiltered("CompactUnitFrame_UpdateInRange", checkRange)
+
+        --[[
+        self:RegisterEvent("UNIT_DISTANCE_CHECK_UPDATE", function(event, unit, isInDistance)
+            if not unitFrame[unit] or not UnitIsPlayer(unit) or not UnitInPartyIsAI(unit) then
+                return
+            end
+            for frame in pairs(unitFrame[unit]) do
+                if isInDistance then
+                    Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+                end
+            end
+        end)
+    ]]
+    end
+
+    if frameOpt.sotf then
+        self:RegisterEvent("UNIT_STATS", function(event, unit)
+            if not unitFrame[unit] then
+                return
+            end
+            for frame in pairs(unitFrame[unit]) do
+                classMod:init(frame)
+            end
+        end)
+    end
+
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
         roster_changed = true
         C_Timer.After(0, function()
             groupClass = {}
+            unitFrame = {}
             addon:IterateRoster(function(frame)
                 if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                    if frame_registry[frame] then
+                        unitFrame[frame.unit] = unitFrame[frame.unit] or {}
+                        unitFrame[frame.unit][frame] = true
+                    end
                     local class = select(2, UnitClass(frame.unit))
                     if class then
-                        groupClass[class] = true
+                        groupClass[class] = groupClass[class] or {}
+                        groupClass[class][frame] = true
                     end
                 end
+                classMod:init(frame)
             end)
             if frameOpt.missingAura then
                 addon:IterateRoster(function(frame)
                     if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                        -- onUpdateMissingAuras(frame)
-                        Queue:add(onUpdateMissingAuras, frame)
+                        onUpdateMissingAuras(frame)
                     end
                 end)
             end
@@ -698,12 +756,18 @@ function Buffs:OnEnable()
     end
 
     groupClass = {}
+    unitFrame = {}
     for frame, v in pairs(frame_registry) do
         if frame.unit then
+            if frame_registry[frame] then
+                unitFrame[frame.unit] = unitFrame[frame.unit] or {}
+                unitFrame[frame.unit][frame] = true
+            end
             if UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
                 local class = select(2, UnitClass(frame.unit))
                 if class then
-                    groupClass[class] = true
+                    groupClass[class] = groupClass[class] or {}
+                    groupClass[class][frame] = true
                 end
             end
         end
@@ -750,6 +814,8 @@ function Buffs:OnDisable()
     classMod:onDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    self:UnregisterEvent("UNIT_DISTANCE_CHECK_UPDATE")
+    self:UnregisterEvent("UNIT_STATS")
     roster_changed = true
     local restoreBuffFrames = function(frame)
         -- frame.optionTable.displayDebuffs = frame_registry[frame].displayBuffs

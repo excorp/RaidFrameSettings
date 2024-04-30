@@ -68,7 +68,7 @@ function AuraFilter:reloadConf()
             filteredAuras[tonumber(spellId)] = filteredAuras[tonumber(spellId)] or value
         end
     end
-    for _, groupInfo in pairs(addon.db.profile.AuraFilter.FilterGroup.Buffs) do
+    for _, groupInfo in pairs(addon.db.profile.AuraFilter.FilterGroup.Debuffs) do
         for spellId, value in pairs(groupInfo.auraList) do
             value.debuff = false
             filteredAuras[tonumber(spellId)] = filteredAuras[tonumber(spellId)] or value

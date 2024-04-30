@@ -281,7 +281,7 @@ function Buffs:OnEnable()
         end
         local registry = frame_registry[frame]
 
-        if not UnitInRange(frame.displayedUnit or "") then
+        if not UnitIsUnit("player", frame.unit) and not UnitInRange(frame.unit or "") then
             if registry.buffs:Size() == 0 then
                 return
             end
@@ -295,7 +295,7 @@ function Buffs:OnEnable()
             if v.other then
                 if groupClass[v.class] then
                     for frame2 in pairs(groupClass[v.class]) do
-                        if UnitInRange(frame2.unit or "") then
+                        if UnitIsUnit("player", frame2.unit) or UnitInRange(frame2.unit or "") then
                             check = registry.allaura.all
                             break
                         end

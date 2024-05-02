@@ -272,7 +272,7 @@ function Buffs:OnEnable()
     end
 
     local function _onUpdateMissingAuras(frame)
-        if not frame then
+        if not frame or not frame.unit then
             return
         end
         local changed
@@ -281,7 +281,7 @@ function Buffs:OnEnable()
         end
         local registry = frame_registry[frame]
 
-        if not UnitIsUnit("player", frame.unit) and not UnitInRange(frame.unit or "") then
+        if not (UnitIsUnit("player", frame.unit) or UnitInRange(frame.unit)) then
             if registry.buffs:Size() == 0 then
                 return
             end
@@ -295,7 +295,7 @@ function Buffs:OnEnable()
             if v.other then
                 if groupClass[v.class] then
                     for frame2 in pairs(groupClass[v.class]) do
-                        if UnitIsUnit("player", frame2.unit) or UnitInRange(frame2.unit or "") then
+                        if frame2.unit and (UnitIsUnit("player", frame2.unit) or UnitInRange(frame2.unit)) then
                             check = registry.allaura.all
                             break
                         end
@@ -642,12 +642,6 @@ function Buffs:OnEnable()
             v:ClearAllPoints()
             v.cooldown:SetDrawSwipe(false)
         end
-
-        if frameOpt.missingAura then
-            if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
-            end
-        end
     end
     local function onFrameSetupQueued(frame)
         for k = 1, frame.maxBuffs do
@@ -796,14 +790,47 @@ function Buffs:OnEnable()
         Queue:add(init, frame)
     end
 
-    if frameOpt.petframe then
+
+    if frameOpt.petframe or frameOpt.missingAura then
         local onSetUnit = function(frame, unit)
-            if not unit or not unit:match("pet") or not frame_registry[frame] then
+            if unit == nil then
+                if frame_registry[frame] then
+                    -- 설정된것 해제
+                    if frameOpt.petframe then
+                        if frame:GetName():match("Pet") then
+                            Queue:add(function(frame, unit)
+                                Aura:SetAuraVar(frame, "buffs")
+                            end, frame, unit)
+                        end
+                    end
+                    if frameOpt.missingAura then
+                        if not frame:GetName():match("Pet") then
+                            Queue:add(function(frame, unit)
+                                Aura:SetAuraVar(frame, "buffsAll")
+                            end, frame, unit)
+                        end
+                    end
+                end
+                return
+            elseif unit:match("na") then
                 return
             end
-            Queue:add(function(frame, unit)
+
+            if not frame_registry[frame] then
+                initRegistry(frame)
+            end
+
+            if frameOpt.petframe and unit:match("pet") then
                 Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
-            end, frame, unit)
+            end
+
+            if frameOpt.missingAura then
+                if UnitIsPlayer(unit) or UnitInPartyIsAI(unit) then
+                    Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+                else
+                    Aura:SetAuraVar(frame, "buffsAll")
+                end
+            end
         end
         self:HookFunc("CompactUnitFrame_SetUnit", onSetUnit)
     end

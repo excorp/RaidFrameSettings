@@ -35,6 +35,7 @@ local random = random
 local frame_registry = {}
 local roster_changed = true
 local groupClass = {}
+local groupClassRangeIn = {}
 local unitFrame = {}
 local glowOpt
 local testmodeTicker
@@ -296,6 +297,8 @@ function Buffs:OnEnable()
                 if groupClass[v.class] then
                     for frame2 in pairs(groupClass[v.class]) do
                         if frame2.unit and (UnitIsUnit("player", frame2.unit) or UnitInRange(frame2.unit)) then
+                            groupClassRangeIn[class] = groupClassRangeIn[class] or {}
+                            groupClassRangeIn[v.class][frame2] = true
                             check = registry.allaura.all
                             break
                         end
@@ -677,6 +680,20 @@ function Buffs:OnEnable()
                 return
             end
             -- Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+
+            local class = select(2, UnitClass(frame.unit))
+            if class then
+                groupClassRangeIn[class] = groupClassRangeIn[class] or {}
+                local classExists = next(groupClassRangeIn[class])
+                groupClassRangeIn[class][frame] = UnitInRange(frame.unit) and true or nil
+                if not classExists and next(groupClassRangeIn[class]) ~= nil then
+                    for frame2 in pairs(frame_registry) do
+                        onUpdateMissingAuras(frame2)
+                    end
+                    return
+                end
+            end
+
             onUpdateMissingAuras(frame)
         end
         self:HookFuncFiltered("CompactUnitFrame_UpdateInRange", checkRange)
@@ -821,14 +838,20 @@ function Buffs:OnEnable()
             end
 
             if frameOpt.petframe and unit:match("pet") then
-                Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+                Queue:add(function(frame, unit)
+                    Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+                end, frame, unit)
             end
 
             if frameOpt.missingAura then
                 if UnitIsPlayer(unit) or UnitInPartyIsAI(unit) then
-                    Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+                    Queue:add(function(frame, unit)
+                        Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+                    end, frame, unit)
                 else
-                    Aura:SetAuraVar(frame, "buffsAll")
+                    Queue:add(function(frame, unit)
+                        Aura:SetAuraVar(frame, "buffsAll")
+                    end, frame, unit)
                 end
             end
         end

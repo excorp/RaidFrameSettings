@@ -33,7 +33,6 @@ local random = random
 
 
 local frame_registry = {}
-local roster_changed = true
 local groupClass = {}
 local groupClassRangeIn = {}
 local unitFrame = {}
@@ -41,6 +40,16 @@ local glowOpt
 local testmodeTicker
 local onUpdateAuras
 local onUnsetBuff
+
+local unitToPetUnit = {
+    player = "pet"
+}
+for i = 1, 40 do
+    unitToPetUnit["raid" .. i] = "raidpet" .. i
+end
+for i = 1, 4 do
+    unitToPetUnit["party" .. i] = "partypet" .. i
+end
 
 if not classMod then
     classMod = {
@@ -295,12 +304,12 @@ function Buffs:OnEnable()
             local check
             if v.other then
                 if groupClass[v.class] then
-                    for frame2 in pairs(groupClass[v.class]) do
-                        if frame2.unit and (UnitIsUnit("player", frame2.unit) or UnitInRange(frame2.unit)) then
-                            groupClassRangeIn[class] = groupClassRangeIn[class] or {}
-                            groupClassRangeIn[v.class][frame2] = true
-                            check = registry.allaura.all
-                            break
+                    if next(groupClassRangeIn[v.class]) ~= nil then
+                        check = registry.allaura.all
+                    else
+                        if registry.buffs[-spellId] then
+                            registry.buffs[-spellId] = nil
+                            changed = true
                         end
                     end
                 end
@@ -645,6 +654,12 @@ function Buffs:OnEnable()
             v:ClearAllPoints()
             v.cooldown:SetDrawSwipe(false)
         end
+
+        if frameOpt.missingAura then
+            if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
+                Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+            end
+        end
     end
     local function onFrameSetupQueued(frame)
         for k = 1, frame.maxBuffs do
@@ -684,11 +699,13 @@ function Buffs:OnEnable()
             local class = select(2, UnitClass(frame.unit))
             if class then
                 groupClassRangeIn[class] = groupClassRangeIn[class] or {}
-                local classExists = next(groupClassRangeIn[class])
-                groupClassRangeIn[class][frame] = UnitInRange(frame.unit) and true or nil
-                if not classExists and next(groupClassRangeIn[class]) ~= nil then
+                local classExists = next(groupClassRangeIn[class]) and true or false
+                groupClassRangeIn[class][frame] = (UnitIsUnit(frame.unit, "player") and true) or (UnitInRange(frame.unit) and true or nil)
+                if classExists ~= (next(groupClassRangeIn[class]) ~= nil) then
                     for frame2 in pairs(frame_registry) do
-                        onUpdateMissingAuras(frame2)
+                        if frame2.unit and frame_registry[frame2] and (UnitIsPlayer(frame2.unit) or UnitInPartyIsAI(frame2.unit)) then
+                            onUpdateMissingAuras(frame2)
+                        end
                     end
                     return
                 end
@@ -697,24 +714,11 @@ function Buffs:OnEnable()
             onUpdateMissingAuras(frame)
         end
         self:HookFuncFiltered("CompactUnitFrame_UpdateInRange", checkRange)
-
-        --[[
-        self:RegisterEvent("UNIT_DISTANCE_CHECK_UPDATE", function(event, unit, isInDistance)
-            if not unitFrame[unit] or not UnitIsPlayer(unit) or not UnitInPartyIsAI(unit) then
-                return
-            end
-            for frame in pairs(unitFrame[unit]) do
-                if isInDistance then
-                    Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
-                end
-            end
-        end)
-    ]]
     end
 
     if frameOpt.sotf then
         self:RegisterEvent("UNIT_STATS", function(event, unit)
-            if not unitFrame[unit] then
+            if not unitFrame[unit] or next(unitFrame[unit]) == nil then
                 return
             end
             for frame in pairs(unitFrame[unit]) do
@@ -723,29 +727,40 @@ function Buffs:OnEnable()
         end)
     end
 
+    local function groupInit(frame)
+        if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) or (frameOpt.petframe and frame.unit:match("pet"))) then
+            onFrameSetup(frame)
+            if frame_registry[frame] then
+                unitFrame[frame.unit] = unitFrame[frame.unit] or {}
+                unitFrame[frame.unit][frame] = true
+            end
+            if not frame.unit:match("pet") then
+                local class = select(2, UnitClass(frame.unit))
+                if class then
+                    groupClass[class] = groupClass[class] or {}
+                    groupClass[class][frame] = true
+                    groupClassRangeIn[class] = groupClassRangeIn[class] or {}
+                    groupClassRangeIn[class][frame] = (UnitIsUnit(frame.unit, "player") and true) or (UnitInRange(frame.unit) and true or nil)
+                end
+            end
+            classMod:init(frame)
+        end
+    end
+
     self:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-        roster_changed = true
         C_Timer.After(0, function()
             groupClass = {}
+            groupClassRangeIn = {}
             unitFrame = {}
-            addon:IterateRoster(function(frame)
-                if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                    if frame_registry[frame] then
-                        unitFrame[frame.unit] = unitFrame[frame.unit] or {}
-                        unitFrame[frame.unit][frame] = true
-                    end
-                    local class = select(2, UnitClass(frame.unit))
-                    if class then
-                        groupClass[class] = groupClass[class] or {}
-                        groupClass[class][frame] = true
-                    end
-                end
-                classMod:init(frame)
-            end)
+            -- 그룹정리 먼저
+            addon:IterateRoster(groupInit)
+
             if frameOpt.missingAura then
                 addon:IterateRoster(function(frame)
                     if frame.unit and (UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit)) then
-                        onUpdateMissingAuras(frame)
+                        Queue:add(function(frame)
+                            Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
+                        end, frame)
                     end
                 end)
             end
@@ -753,35 +768,51 @@ function Buffs:OnEnable()
         end)
     end)
 
-    if roster_changed then
-        roster_changed = false
-        addon:IterateRoster(function(frame)
-            if not frameOpt.petframe then
-                local fname = frame:GetName()
-                if not fname or fname:match("Pet") then
-                    return
-                end
+    if frameOpt.petframe then
+        self:RegisterEvent("UNIT_PET", function(event, unit)
+            local petunit = unitToPetUnit[unit]
+            if not petunit then
+                return
             end
-            onFrameSetup(frame)
+            Queue:add(function(unit)
+                if not unitFrame[unit] or next(unitFrame[unit]) == nil then
+                    addon:IterateRoster(function(frame)
+                        if frame.unit == unit then
+                            unitFrame[unit] = unitFrame[unit] or {}
+                            unitFrame[unit][frame] = true
+                        end
+                    end)
+                    if not unitFrame[unit] or next(unitFrame[unit]) == nil then
+                        return
+                    end
+                end
+                for frame in pairs(unitFrame[unit]) do
+                    if UnitExists(unit) then
+                        initRegistry(frame)
+                        Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
+                    else
+                        Aura:SetAuraVar(frame, "buffs")
+                    end
+                end
+            end, petunit)
         end)
     end
 
-    groupClass = {}
-    unitFrame = {}
-    for frame, v in pairs(frame_registry) do
-        if frame.unit then
-            if frame_registry[frame] then
-                unitFrame[frame.unit] = unitFrame[frame.unit] or {}
-                unitFrame[frame.unit][frame] = true
-            end
-            if UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
-                local class = select(2, UnitClass(frame.unit))
-                if class then
-                    groupClass[class] = groupClass[class] or {}
-                    groupClass[class][frame] = true
-                end
+    addon:IterateRoster(function(frame)
+        if not frameOpt.petframe then
+            local fname = frame:GetName()
+            if not fname or fname:match("Pet") then
+                return
             end
         end
+        onFrameSetup(frame)
+    end)
+
+    groupClass = {}
+    groupClassRangeIn = {}
+    unitFrame = {}
+    for frame, v in pairs(frame_registry) do
+        groupInit(frame)
     end
 
     local function init(frame)
@@ -806,57 +837,6 @@ function Buffs:OnEnable()
         v.dirty = true
         Queue:add(init, frame)
     end
-
-
-    if frameOpt.petframe or frameOpt.missingAura then
-        local onSetUnit = function(frame, unit)
-            if unit == nil then
-                if frame_registry[frame] then
-                    -- 설정된것 해제
-                    if frameOpt.petframe then
-                        if frame:GetName():match("Pet") then
-                            Queue:add(function(frame, unit)
-                                Aura:SetAuraVar(frame, "buffs")
-                            end, frame, unit)
-                        end
-                    end
-                    if frameOpt.missingAura then
-                        if not frame:GetName():match("Pet") then
-                            Queue:add(function(frame, unit)
-                                Aura:SetAuraVar(frame, "buffsAll")
-                            end, frame, unit)
-                        end
-                    end
-                end
-                return
-            elseif unit:match("na") then
-                return
-            end
-
-            if not frame_registry[frame] then
-                initRegistry(frame)
-            end
-
-            if frameOpt.petframe and unit:match("pet") then
-                Queue:add(function(frame, unit)
-                    Aura:SetAuraVar(frame, "buffs", frame_registry[frame].buffs, onUpdateAuras)
-                end, frame, unit)
-            end
-
-            if frameOpt.missingAura then
-                if UnitIsPlayer(unit) or UnitInPartyIsAI(unit) then
-                    Queue:add(function(frame, unit)
-                        Aura:SetAuraVar(frame, "buffsAll", frame_registry[frame].allaura, onUpdateMissingAuras, missingAuraAll)
-                    end, frame, unit)
-                else
-                    Queue:add(function(frame, unit)
-                        Aura:SetAuraVar(frame, "buffsAll")
-                    end, frame, unit)
-                end
-            end
-        end
-        self:HookFunc("CompactUnitFrame_SetUnit", onSetUnit)
-    end
 end
 
 --parts of this code are from FrameXML/CompactUnitFrame.lua
@@ -864,9 +844,8 @@ function Buffs:OnDisable()
     classMod:onDisable()
     self:DisableHooks()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    self:UnregisterEvent("UNIT_DISTANCE_CHECK_UPDATE")
     self:UnregisterEvent("UNIT_STATS")
-    roster_changed = true
+    self:UnregisterEvent("UNIT_PET")
     local restoreBuffFrames = function(frame)
         -- frame.optionTable.displayDebuffs = frame_registry[frame].displayBuffs
         Aura:SetAuraVar(frame, "buffs")

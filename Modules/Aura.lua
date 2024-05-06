@@ -1303,6 +1303,7 @@ function Aura:SetAuraVar(srcframe, type, var, callback, filter)
     frame_registry[srcframe] = frame_registry[srcframe] or {}
     local frame = frame_registry[srcframe]
     if frame[type] == var and frame.callback and frame.callback[type] == callback and (not filter and not frame.filter and not frame.filter[type] or frame.filter[type] == filter) then
+        updateAuras(srcframe)
         return
     end
     frame[type] = var
@@ -1315,6 +1316,9 @@ function Aura:SetAuraVar(srcframe, type, var, callback, filter)
     end
     self:HookScript(srcframe, "OnEvent", function(srcframe, event, unit, unitAuraUpdateInfo)
         if event ~= "UNIT_AURA" then
+            return
+        end
+        if srcframe.unit ~= unit then
             return
         end
         updateAuras(srcframe, unitAuraUpdateInfo)

@@ -28,12 +28,15 @@ Options\OptionsFrame.lua
 #Utils 
 Utils\GroupType.lua
 Utils\ProfileSwitcher.lua
-Utils\Glow.lua
+Utils\CooldownText.lua
 Utils\Helper.lua
 Utils\HookRegistry.lua
+Utils\CombatStatus.lua
 Utils\Scheduler.lua
 Utils\SpellCache.lua
 Utils\Queue.lua
 
 #Modules
 modules.xml
+
+

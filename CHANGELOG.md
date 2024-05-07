@@ -1,4 +1,10 @@
 # **Changelog**
+### Version [2.30.0] - 2024-05-06
+#### Added
+* Cata support.
+#### Changed
+* HealthBars.lua -> Removed the raidFramesDisplayPowerBars cvar as it does not exist in classic and switched to checking the DefaultCompactUnitFrameSetupOptions.displayPowerBar directly.
+
 ### Version [2.29.2] - 2024-04-16
 #### Changed
 * The update_and_get_aura_cache functions for buffs and debuffs have been reworked. The changes should improve efficiency and also fix remaining blacklisting and whitelisting issues.

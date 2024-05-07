@@ -46,7 +46,7 @@ function HealthBars:OnEnable()
 
     --callbacks
     --only apply the power bar texture if the power bar is shown
-    local raidFramesDisplayPowerBars = C_CVar.GetCVar("raidFramesDisplayPowerBars") == "1" and true or false
+    local raidFramesDisplayPowerBars = DefaultCompactUnitFrameSetupOptions and DefaultCompactUnitFrameSetupOptions.displayPowerBar == true
     --with powerbar
     local updateReal = function(frame1)
         local target

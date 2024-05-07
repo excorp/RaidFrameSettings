@@ -28,6 +28,7 @@ Utils\ProfileSwitcher.lua
 Utils\Glow.lua
 Utils\Helper.lua
 Utils\HookRegistry.lua
+Utils\CombatStatus.lua
 Utils\Scheduler.lua
 Utils\SpellCache.lua
 Utils\Queue.lua

@@ -1302,10 +1302,6 @@ end
 function Aura:SetAuraVar(srcframe, type, var, callback, filter)
     frame_registry[srcframe] = frame_registry[srcframe] or {}
     local frame = frame_registry[srcframe]
-    if frame[type] == var and frame.callback and frame.callback[type] == callback and (not filter and not frame.filter and not frame.filter[type] or frame.filter[type] == filter) then
-        updateAuras(srcframe)
-        return
-    end
     frame[type] = var
     frame.callback = frame.callback or {}
     frame.callback[type] = callback

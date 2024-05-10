@@ -412,7 +412,13 @@ local function secureframeSetFrame(no, frame, p)
     secureframe:SetFrameRef("frame" .. no, frame)
     if p then
         if p[2] then
-            p[2]:SetProtected()
+            -- p[2]:SetProtected()
+            local frameName = p[2]:GetName() .. "Secured"
+            if not _G[frameName] then
+                local wrapper = CreateFrame("Frame", frameName, p[2], "SecureFrameTemplate")
+                wrapper:SetAllPoints()
+            end
+            p[2] = _G[frameName]
         end
         secureframe:SetAttributeNoHandler("frame" .. no .. "p1", p[1])
         secureframe:SetFrameRef("frame" .. no .. "p2", p[2])
@@ -836,8 +842,10 @@ function Sort:OnEnable()
                 ConfigureHeader(header)
             end
 
-            _G.CompactPartyFrameBorderFrame:SetProtected()
-            secureframe:SetFrameRef("CompactPartyFrameBorderFrame", _G.CompactPartyFrameBorderFrame)
+            -- _G.CompactPartyFrameBorderFrame:SetProtected()
+            local wrapper = CreateFrame("Frame", nil, _G.CompactPartyFrameBorderFrame, "SecureFrameTemplate")
+            wrapper:SetAllPoints()
+            secureframe:SetFrameRef("CompactPartyFrameBorderFrame", wrapper)
         end
         secureframe:SetAttributeNoHandler("frameCount", 0)
         secureframe:SetAttributeNoHandler("petframeStart", 0)

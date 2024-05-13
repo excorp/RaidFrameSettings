@@ -113,6 +113,8 @@ function Buffs:OnEnable()
     frameOpt.baseline = addon:ConvertDbNumberToBaseline(frameOpt.baseline)
     frameOpt.type = frameOpt.baricon and "baricon" or "blizzard"
     frameOpt.missingAura = addon.db.profile.Buffs.useMissingAura
+    frameOpt.missingAuraRangeCheck = addon.db.profile.Buffs.useMissingAuraRangeCheck
+    frameOpt.missingAuraNotCombat = addon.db.profile.Buffs.useMissingAuraNotCombat
 
     --Timer
     local durationOpt = CopyTable(addon.db.profile.Buffs.DurationDisplay) --copy is important so that we dont overwrite the db value when fetching the real values
@@ -291,7 +293,7 @@ function Buffs:OnEnable()
         end
         local registry = frame_registry[frame]
 
-        if not (UnitIsUnit("player", frame.unit) or UnitInRange(frame.unit)) then
+        if (frameOpt.missingAuraNotCombat and InCombatLockdown()) or (frameOpt.missingAuraRangeCheck and not (UnitIsUnit("player", frame.unit) or UnitInRange(frame.unit))) then
             if registry.buffs:Size() == 0 then
                 return
             end
@@ -713,7 +715,27 @@ function Buffs:OnEnable()
 
             onUpdateMissingAuras(frame)
         end
-        self:HookFuncFiltered("CompactUnitFrame_UpdateInRange", checkRange)
+        if frameOpt.missingAuraRangeCheck then
+            self:HookFuncFiltered("CompactUnitFrame_UpdateInRange", checkRange)
+        end
+
+        if frameOpt.missingAuraNotCombat then
+            self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+                for frame, v in pairs(frame_registry) do
+                    if frame.unit and UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
+                        onUpdateMissingAuras(frame)
+                    end
+                end
+            end)
+
+            self:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+                for frame, v in pairs(frame_registry) do
+                    if frame.unit and UnitIsPlayer(frame.unit) or UnitInPartyIsAI(frame.unit) then
+                        onUpdateMissingAuras(frame)
+                    end
+                end
+            end)
+        end
     end
 
     if frameOpt.sotf then
@@ -846,6 +868,8 @@ function Buffs:OnDisable()
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("UNIT_STATS")
     self:UnregisterEvent("UNIT_PET")
+    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    self:UnregisterEvent("PLAYER_REGEN_DISABLED")
     local restoreBuffFrames = function(frame)
         -- frame.optionTable.displayDebuffs = frame_registry[frame].displayBuffs
         Aura:SetAuraVar(frame, "buffs")

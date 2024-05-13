@@ -1,4 +1,4 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Excorp_Fork", "enUS", true) -- , true)
+local L = LibStub("AceLocale-3.0"):NewLocale("RaidFrameSettings_Excorp_Fork", "enUS", true, true)
 if not L then return end
 
 L["RaidFrameSettings"]                    = "RaidFrameSettings"
@@ -410,3 +410,6 @@ L["Play a sound if dispel is available."] = "Play a sound if dispel is available
 
 L["Queue"] = "Queue"
 L["Toggle whether to use Queue."] = "Toggle whether to use Queue. Buff/Debuff modules can use queues to run in the background to even out frames (experimental)"
+
+L["Not check when members are away"] = "Not check when members are away"
+L["Not checked in combat"] = "Not checked in combat"

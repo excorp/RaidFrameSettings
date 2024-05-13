@@ -2256,7 +2256,40 @@ options = {
                                         RaidFrameSettings.db.profile.Buffs.useMissingAura = value
                                         RaidFrameSettings:UpdateModule("Buffs")
                                     end,
-                                    width = "full",
+                                    width = 0.5,
+                                },
+                                useMissingAuraRangeCheck = {
+                                    order = 1.1,
+                                    name = L["Not check when members are away"],
+                                    desc = "",
+                                    type = "toggle",
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Buffs.useMissingAuraRangeCheck
+                                    end,
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Buffs.useMissingAuraRangeCheck = value
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                    width = 1.5,
+                                },
+                                useMissingAuraNotCombat = {
+                                    order = 1.2,
+                                    name = L["Not checked in combat"],
+                                    desc = "",
+                                    type = "toggle",
+                                    get = function()
+                                        return RaidFrameSettings.db.profile.Buffs.useMissingAuraNotCombat
+                                    end,
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Buffs.useMissingAuraNotCombat = value
+                                        RaidFrameSettings:UpdateModule("Buffs")
+                                    end,
+                                    width = 1.5,
+                                },
+                                newline = {
+                                    order = 1.3,
+                                    name = "",
+                                    type = "description",
                                 },
                                 addAura = {
                                     order = 2,

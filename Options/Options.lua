@@ -13,6 +13,7 @@ local Media                                   = LibStub("LibSharedMedia-3.0")
 local lastEntry                               = 10
 local HealthBars_disabled                     = function() return not RaidFrameSettings.db.profile.Module.HealthBars end
 local Fonts_disabled                          = function() return not RaidFrameSettings.db.profile.Module.Fonts end
+local LeaderMark_disabled                     = function() return not RaidFrameSettings.db.profile.Module.LeaderMark end
 local RoleIcon_disabled                       = function() return not RaidFrameSettings.db.profile.Module.RoleIcon end
 local RaidMark_disabled                       = function() return not RaidFrameSettings.db.profile.Module.RaidMark end
 local Range_disabled                          = function() return not RaidFrameSettings.db.profile.Module.RangeAlpha end
@@ -375,6 +376,14 @@ options = {
                             type = "toggle",
                             name = L["Fonts"],
                             desc = L["Adjust the Font, Font Size, Font Color as well as the position for the Names and Status Texts.\n|cffF4A460CPU Impact: |r|cff00ff00LOW|r to |cffFFFF00MEDIUM|r"],
+                            get = "GetModuleStatus",
+                            set = "SetModuleStatus",
+                        },
+                        LeaderMark = {
+                            order = 2.9,
+                            type = "toggle",
+                            name = L["Leader Mark"],
+                            desc = L["Show the Leader Mark.\n|cffF4A460CPU Impact: |r|cff90EE90LOW|r"],
                             get = "GetModuleStatus",
                             set = "SetModuleStatus",
                         },
@@ -3596,6 +3605,94 @@ options = {
                                     RaidFrameSettings.db.profile.MinorModules.DebuffColors.Bleed   = { r = 0.8, g = 0.0, b = 0.0 }
                                     RaidFrameSettings:ReloadConfig()
                                 end,
+                        },
+                    },
+                },
+                LeaderMark = {
+                    hidden = LeaderMark_disabled,
+                    order = 1.1,
+                    name = L["Leader Mark"],
+                    type = "group",
+                    inline = true,
+                    args = {
+                        point = {
+                            order = 1,
+                            name = L["Anchor"],
+                            type = "select",
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        relativePoint = {
+                            order = 1.1,
+                            name = L["to Frames"],
+                            type = "select",
+                            values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                            sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        frame = {
+                            order = 1.2,
+                            name = L["to Attach Frame"],
+                            type = "select",
+                            values = { L["Unit Frame"], L["Role Icon"] },
+                            sorting = { 1, 2 },
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            width = 0.8,
+                        },
+                        x_offset = {
+                            order = 2,
+                            name = L["x - offset"],
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            softMin = -25,
+                            softMax = 25,
+                            step = 1,
+                            width = 0.8,
+                        },
+                        y_offset = {
+                            order = 3,
+                            name = L["y - offset"],
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            softMin = -25,
+                            softMax = 25,
+                            step = 1,
+                            width = 0.8,
+                        },
+                        newline = {
+                            order = 4,
+                            type = "description",
+                            name = "",
+                        },
+                        width = {
+                            order = 5,
+                            name = L["width"],
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 1,
+                            max = 50,
+                            step = 1,
+                            width = 1,
+                        },
+                        height = {
+                            order = 6,
+                            name = L["height"],
+                            type = "range",
+                            get = "GetStatus",
+                            set = "SetStatus",
+                            min = 1,
+                            max = 50,
+                            step = 1,
+                            width = 1,
                         },
                     },
                 },

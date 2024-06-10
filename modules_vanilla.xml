@@ -2,6 +2,7 @@
     <Script file="Modules\HealthBars.lua" />
     <Script file="Modules\Fonts.lua" />
     <Script file="Modules\Raidmark.lua" />
+    <Script file="Modules\LeaderMark.lua" />
     <Script file="Modules\Range.lua" />
     <Script file="Modules\AuraFilter.lua" />
     <Script file="Modules\Aura.lua" />

@@ -322,6 +322,15 @@ local defaults = {
             },
         },
         MinorModules = {
+            LeaderMark = {
+                point         = 1,
+                relativePoint = 1,
+                frame         = 1,
+                x_offset      = -1,
+                y_offset      = 3,
+                width         = 10,
+                height        = 12,
+            },
             RoleIcon = {
                 position    = 1,
                 x_offset    = 0,

@@ -413,3 +413,6 @@ L["Toggle whether to use Queue."] = "Toggle whether to use Queue. Buff/Debuff mo
 
 L["Not check when members are away"] = "Not check when members are away"
 L["Not checked in combat"] = "Not checked in combat"
+
+L["Leader Mark"] = "Leader Mark"
+L["Show the Leader Mark.\n|cffF4A460CPU Impact: |r|cff90EE90LOW|r"] = "Show the Leader Mark.\n|cffF4A460CPU Impact: |r|cff90EE90LOW|r"

@@ -412,3 +412,6 @@ L["Toggle whether to use Queue."] = "큐 사용 여부. 버프/디버프 모듈�
 
 L["Not check when members are away"] = "멀리 있으면 체크 안함"
 L["Not checked in combat"] = "전투중에 체크 안함"
+
+L["Leader Mark"] = "파티장 표시"
+L["Show the Leader Mark.\n|cffF4A460CPU Impact: |r|cff90EE90LOW|r"] = "파티장 아이콘을 표시 합니다.\n|cffF4A460CPU 영향: |r|cff90EE90낮음|r"

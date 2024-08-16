@@ -1,5 +1,5 @@
-## Interface: 100207
-## Version: @project-version@
+## Interface: 110002
+## Version: v2.30.2-mod3
 ## Title: RaidFrameSettings Excorp Fork
 ## Title-koKR: RaidFrameSettings 변하지롱 수정판
 ## Notes: An efficient AddOn that extends the default World of Warcraft Raid Frames.

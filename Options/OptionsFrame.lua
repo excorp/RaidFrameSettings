@@ -72,8 +72,8 @@ local function initSpellCache()
     if RaidFrameSettings.spellCache.build then
         return
     end
-    if not IsAddOnLoaded("WeakAurasOptions") then
-        local loaded, reason = LoadAddOn("WeakAurasOptions")
+    if not C_AddOns.IsAddOnLoaded("WeakAurasOptions") then
+        local loaded, reason = C_AddOns.LoadAddOn("WeakAurasOptions")
         if not loaded then
             RaidFrameSettings.spellCache.Build()
             return

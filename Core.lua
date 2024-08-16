@@ -87,3 +87,29 @@ end
 _G.RaidFrameSettings_AddOnCompartmentClick = function()
     RaidFrameSettings:SlashCommand()
 end
+
+GetSpellInfo = function(spellId)
+    local info = C_Spell.GetSpellInfo(spellId)
+    if info then
+        return info.name, 1, info.iconID, info.castTime, info.minRange, info.maxRange, info.spellID, info.originalIconID
+    end
+    return nil
+end
+
+GetSpellCooldown = function(spell)
+    local info = C_Spell.GetSpellCooldown(spell)
+    if info then
+        return info.startTime, info.duration, info.isEnabled, info.modRate
+    end
+    return info
+end
+
+UnitAura = function(unit, index, filter)
+    local aura = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
+    if aura then
+        return aura.name, aura.icon, aura.applications, aura.dispelName, aura.duration, aura.expirationTime, aura.sourceUnit, aura.isStealable,
+            aura.nameplateShowPersonal, aura.spellId, aura.canApplyAura, aura.isBossAura, aura.isFromPlayerOrPlayerPet,
+            aura.nameplateShowAll, aura.timeMod
+    end
+    return nil
+end

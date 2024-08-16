@@ -18,10 +18,9 @@ function RaidMark:UpdateRaidMarker(frame)
     local index = GetRaidTargetIndex(frame.unit)
     if index and index >= 1 and index <= 8 then
         local texture = UnitPopupRaidTarget1ButtonMixin:GetIcon() or "Interface\\TargetingFrame\\UI-RaidTargetingIcons"
-        local coords = _G["UnitPopupRaidTarget" .. index .. "ButtonMixin"]:GetTextureCoords()
         frame.raidmark:Show()
         frame.raidmark:SetTexture(texture, nil, nil, "TRILINEAR")
-        frame.raidmark:SetTexCoord(coords.tCoordLeft, coords.tCoordRight, coords.tCoordTop, coords.tCoordBottom)
+        frame.raidmark:SetTexCoord(_G["UnitPopupRaidTarget" .. index .. "ButtonMixin"]:GetTextureCoords())
     else
         frame.raidmark:Hide()
     end

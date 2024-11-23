@@ -815,7 +815,13 @@ function Debuffs:test()
                 end
                 onUpdateAuras(frame)
 
-                local fname = frame:GetName() .. "PrivateAuraTest"
+                local fname = frame:GetName() .. "PrivateAuraTest1"
+                local indicator = _G[fname]
+                if indicator then
+                    indicator:Hide()
+                end
+
+                local fname = frame:GetName() .. "PrivateAuraTest2"
                 local indicator = _G[fname]
                 if indicator then
                     indicator:Hide()

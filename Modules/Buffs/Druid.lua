@@ -1,6 +1,8 @@
 local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 
+local GetSpellInfo = addon.GetSpellInfo
+
 local _, englishClass = UnitClass("player")
 if englishClass ~= "DRUID" then
     return
@@ -26,6 +28,9 @@ local spell = {
     lifebloomVerdancy = 188550,
     adaptiveSwarm     = 391891,
     ironbark          = 102342,
+    frenziedRegen     = 22842,
+    barkskin          = 22812,
+    symbioticBlooms   = 439530,
 }
 
 local duridMasterySpell = {
@@ -41,6 +46,7 @@ local duridMasterySpell = {
     [383193]                  = true, -- Grove Tending
     [207386]                  = true, -- Spring Blossoms
     [102352]                  = true, -- Cenarion Ward
+    [spell.symbioticBlooms]   = true, -- Symbiotic Blooms
 }
 
 local lifebloom = {
@@ -50,21 +56,28 @@ local lifebloom = {
 
 local player
 player = {
-    GUID           = UnitGUID("player"),
-    GUIDS          = {},
-    spec           = 0,
-    stat           = nil,
-    aura           = {},
-    buff           = {},
-    sotfTrail      = 0,
-    sotfTrail_time = 0.2,
-    affectedSpell  = {
+    GUID            = UnitGUID("player"),
+    GUIDS           = {},
+    spec            = 0,
+    stat            = nil,
+    aura            = {},
+    buff            = {},
+    sotfTrail       = 0,
+    sotfTrail_time  = 0.2,
+    totem           = {
+        [1] = false,
+        [2] = false,
+        [3] = false,
+    },
+    totems          = 0,
+    symbioticBlooms = 0,
+    affectedSpell   = {
         [spell.rejuvenation] = true,
         [spell.germination]  = true,
         [spell.regrowth]     = true,
         [spell.wildgrowth]   = true
     },
-    talent         = {
+    talent          = {
         ger  = 0, -- 82071 Germination
         sotf = 0, -- 82059 Soul of the Forest
         hb   = 0, -- 82065 Harmonious Blooming
@@ -76,21 +89,55 @@ player = {
         nss  = 0, -- 82051 Nature's Splendor
         sb   = 0, -- 82081 Stonebark
         re   = 0, -- 82062 Regenesis
+
+        lotg = 0, -- Lore of the Grove 숲의 전승: 회복/급성 치유량 +3%/+5%
+        gi   = 0, -- Grove's Inspiration 숲의 감화: 재생,급속,신치 +9%
+        wp   = 0, -- Wildstalker's Power 야생추적자의 힘: 회복,꽃피,피생 +10%
+
+        pon  = 0, -- Power of Nature 자연의 힘: 숲수호자 있을때 회복,꽃피,피생 +10%
+        hotg = 0, -- Harmony of the Grove 숲의 조화: 숲수호자 있을때 회복,꽃피,피생 (1마리당) +5%
+
+        rn   = 0, -- Root Network 뿌리 연결망: 공생체 꽃 1개당 치유 +2%
+        vc   = 0, -- Vigorous Creepers 활력의 덩굴: 공생체 꽃 대상자에게 치유효과 +20%
+
+        fr   = 0, -- Frenzied Regeneration 광포한 재생력: 광재중에 3초간 받는 치유 +20%     -> 내가 받는 치유
+        vh   = 0, -- Verdant Heart 신록의 심장: 광재,나껍 치유 +20%                         -> 내가 받는 치유
+        bwn  = 0, -- Bond with Nature 자연과의 유대: 받는 치유 +4%                          -> 내가 받는 치유
+        hc   = 0, -- Harmonious Constitution 조화로운 체질: 자신에게 거는 재생 +35%         -> 내가 받는 치유
     },
 }
 
-local talentMap = {
-    [82071] = { key = "ger" },
-    [82059] = { key = "sotf" },
-    [82065] = { key = "hb" },
-    [82214] = { key = "ni" },
-    [82206] = { key = "nr" },
-    [82207] = { key = "rlfn" },
-    [92229] = { key = "fw" },
-    [82058] = { key = "rg" },
-    [82051] = { key = "nss" },
-    [82081] = { key = "sb" },
-    [82062] = { key = "re" },
+-- 광재: 22842
+-- 나껍: 22812
+
+-- 공생체 꽃: 439530
+
+-- 내 숲수호자가 몇마리 나와 있는지, 공생체 꽃 버프 걸린 사람이 몇명인지 추적이 필요하다. 한명한테 공생체꽃이 여러개 걸릴수 있나? -> 가능
+-- 숲수호자 -> PLAYER_TOTEM_UPDATE 에서 토템 번호가 나오면 GetTotemInfo() API로 상태를 가져올수 있다.
+
+local talents = {
+    { key = "fr",   nodeId = 82220 },                   -- Frenzied Regeneration 광포한 재생력: 광재중에 3초간 받는 치유 +20%
+    { key = "vh",   nodeId = 82218 },                   -- Verdant Heart 신록의 심장: 광재,나껍 치유 +20%
+    { key = "lotg", nodeId = 100175 },                  -- Lore of the Grove 숲의 전승: 회복/급성 치유량 +3%/+5%
+    { key = "pon",  nodeId = 94605, entryId = 117201 }, -- Power of Nature 자연의 힘: 숲수호자 있을때 회복,꽃피,피생 +10%
+    { key = "gi",   nodeId = 94595, entryId = 117189 }, -- Grove's Inspiration 숲의 감화: 재생,급속,신치 +9%
+    { key = "hotg", nodeId = 94606 },                   -- Harmony of the Grove 숲의 조화: 숲수호자 있을때 회복,꽃피,피생 (1마리당) +5%
+    { key = "wp",   nodeId = 94621 },                   -- Wildstalker's Power 야생추적자의 힘: 회복,꽃피,피생 +10%
+    { key = "bwn",  nodeId = 94625, entryId = 117225 }, -- Bond with Nature 자연과의 유대: 받는 치유 +4%
+    { key = "hc",   nodeId = 94625, entryId = 119854 }, -- Harmonious Constitution 조화로운 체질: 자신에게 거는 재생 +35%
+    { key = "rn",   nodeId = 94631, entryId = 117233 }, -- Root Network 뿌리 연결망: 공생체 꽃 1개당 치유 +2%
+    { key = "vc",   nodeId = 94627 },                   -- Vigorous Creepers 활력의 덩굴: 공생체 꽃 대상자에게 치유효과 +20%
+    { key = "ger",  nodeId = 82071 },
+    { key = "sotf", nodeId = 82059 },
+    { key = "hb",   nodeId = 82065 },
+    { key = "ni",   nodeId = 82214 }, -- 회복의 본능: 주문/치유력 +3%/+6%
+    { key = "nr",   nodeId = 82206 }, -- 자연 회복: 받는 치유 +4%
+    { key = "rlfn", nodeId = 82207 }, -- 떠오르는 빛, 몰락하는 밤: 낮 주문/치유 +3%, 밤 유연 +2%
+    { key = "fw",   nodeId = 92229 },
+    { key = "rg",   nodeId = 82058 },
+    { key = "nss",  nodeId = 82051 },
+    { key = "sb",   nodeId = 82081 },
+    { key = "re",   nodeId = 82062 },
 }
 
 local initMember
@@ -119,14 +166,30 @@ local getEstimatedHeal = function(spellId, masteryStack, GUID)
         player.stat = getPlayerStat()
     end
     local power
+    -- https://www.wowhead.com/ko/spell=137012/%ED%9A%8C%EB%B3%B5-%EB%93%9C%EB%A3%A8%EC%9D%B4%EB%93%9C
+    -- 회복,급속 +12%
+    -- 재생 +37%
+    -- 회복 주기치유 +135%
+    -- 재생 주기치유 +37%
+    -- 급속 주기치유 +61%
+
     if spellId == spell.rejuvenation or spellId == spell.germination then
+        -- https://www.wowhead.com/ko/spell=774/%ED%9A%8C%EB%B3%B5
         -- power = 0.3188889648 -- 27.608 * -7% * 15% * 8%
-        power = 0.3193403298350825
+        -- 98.6% / 12 (24.65% / 3)
+        -- 풀돌가죽으로 테스트했을때 계수는 2.352166364
+        power = 0.6087994591623
     elseif spellId == spell.regrowth then
+        -- https://www.wowhead.com/ko/spell=8936/%EC%9E%AC%EC%83%9D
         -- power = 1.855769616  -- 207.6% * -7% * -11% * 8%
-        power = 1.855322337331334
+        -- 269.88% + 51.84% / 12 (8.64% / 2)
+        -- 풀돌가죽으로 테스트했을때 계수는 즉발힐 1.378553580149055 / 지속치유 1.365893872
+        power = 3.87058810084128
     elseif spellId == spell.wildgrowth then
-        power = 0.190175753722752 -- 94.08% * -7% * 15% * 8% /7 * 1.07 * 1.07 * 1.07
+        -- https://www.wowhead.com/ko/spell=48438/%EA%B8%89%EC%86%8D-%EC%84%B1%EC%9E%A5
+        -- 94.08% / 7 -- 94.08% * -7% * 15% * 8% /7 * 1.07 * 1.07 * 1.07
+        -- 풀돌가죽으로 테스트했을때 계수는 1.583658323
+        power = 0.2737797915057453
     end
 
     local talent        = player.talent
@@ -140,6 +203,7 @@ local getEstimatedHeal = function(spellId, masteryStack, GUID)
     local unit          = player.GUIDS[GUID].unit
     local adaptiveSwarm = player.GUIDS[GUID].buff[spell.adaptiveSwarm] and 1 or 0
     local ironbark      = player.GUIDS[GUID].buff[spell.ironbark] and 1 or 0
+    local symbiotic     = player.GUIDS[GUID].buff[spell.symbioticBlooms] and 1 or 0
     local re            = 0
 
     if spellId == spell.rejuvenation or spellId == spell.germination then
@@ -148,10 +212,12 @@ local getEstimatedHeal = function(spellId, masteryStack, GUID)
         end
     end
 
-    local key = string.format("S:%d I:%d M:%f V:%f|c:%d nss:%d|me:%d ms:%d as:%d ib:%d re:%d",
-        spellId, player.stat.int, player.stat.mastery, player.stat.versatility,
+    local key = string.format("S:%d I:%d M:%f V:%f to:%d sym:%d|c:%d nss:%d|me:%d ms:%d as:%d ib:%d re:%d sym:%d|fr:%d bs:%s",
+        spellId, player.stat.int, player.stat.mastery, player.stat.versatility, player.totems, player.symbioticBlooms,
         clarity, nss,
-        me, masteryStack, adaptiveSwarm, ironbark, re
+        me, masteryStack, adaptiveSwarm, ironbark, re, symbiotic,
+        me and player.buff[spell.frenziedRegen] and 1 or 0,
+        me and player.buff[spell.barkskin] and 1 or 0
     )
     if cachedEstimatedHeal[key] then
         return cachedEstimatedHeal[key]
@@ -212,9 +278,75 @@ local getEstimatedHeal = function(spellId, masteryStack, GUID)
         end
     end
 
-    if me and forestwalk > 0 then
-        -- inc = inc + 0.05
-        estimated = estimated * 1.05
+    if me then
+        if forestwalk > 0 then
+            -- inc = inc + 0.05
+            estimated = estimated * 1.05
+        end
+        if talent.fr > 0 and player.buff[spell.frenziedRegen] then
+            -- Frenzied Regeneration 광포한 재생력: 광재중에 3초간 받는 치유 +20%     -> 내가 받는 치유
+            estimated = estimated * 1.2
+        end
+        if talent.vh > 0 then
+            -- Verdant Heart 신록의 심장: 광재,나껍 치유 +20%                         -> 내가 받는 치유
+            if player.buff[spell.frenziedRegen] or player.buff[spell.barkskin] then
+                estimated = estimated * 1.2
+            end
+        end
+        if talent.bwn > 0 then
+            -- Bond with Nature 자연과의 유대: 받는 치유 +4%                          -> 내가 받는 치유
+            estimated = estimated * 1.04
+        end
+        if talent.hc > 0 then
+            -- Harmonious Constitution 조화로운 체질: 자신에게 거는 재생 +35%         -> 내가 받는 치유
+            if spellId == spell.regrowth then
+                estimated = estimated * 1.35
+            end
+        end
+    end
+
+    if talent.lotg > 0 then
+        -- Lore of the Grove 숲의 전승: 회복/급성 치유량 +3%/+5%
+        if spellId == spell.rejuvenation or spellId == spell.germination or spellId == spell.wildgrowth then
+            if talent.lotg == 1 then
+                estimated = estimated * 1.03
+            else
+                estimated = estimated * 1.05
+            end
+        end
+    end
+    if talent.gi > 0 then
+        -- Grove's Inspiration 숲의 감화: 재생,급속,신치 +9%
+        if spellId == spell.regrowth or spellId == spell.wildgrowth then
+            estimated = estimated * 1.09
+        end
+    end
+    if talent.wp > 0 then
+        -- Wildstalker's Power 야생추적자의 힘: 회복,꽃피,피생 +10%
+        if spellId == spell.rejuvenation or spellId == spell.germination then
+            estimated = estimated * 1.1
+        end
+    end
+
+    if talent.pon > 0 and player.totems > 0 then
+        -- Power of Nature 자연의 힘: 숲수호자 있을때 회복,꽃피,피생 +10%
+        if spellId == spell.rejuvenation or spellId == spell.germination then
+            estimated = estimated * 1.1
+        end
+    end
+    if talent.hotg > 0 and player.totems > 0 then
+        -- Harmony of the Grove 숲의 조화: 숲수호자 있을때 회복,꽃피,피생 (1마리당) +5%
+        if spellId == spell.rejuvenation or spellId == spell.germination then
+            estimated = estimated * (1 + 0.05 * player.totems)
+        end
+    end
+    if talent.rn > 0 and player.symbioticBlooms > 0 then
+        -- Root Network 뿌리 연결망: 공생체 꽃 1개당 치유 +2%
+        estimated = estimated * (1 + 0.02 * player.symbioticBlooms)
+    end
+    if talent.vc > 0 and symbiotic then
+        -- Vigorous Creepers 활력의 덩굴: 공생체 꽃 대상자에게 치유효과 +20%
+        estimated = estimated * 1.2
     end
 
     -- estimated = Round(estimated * (1 + inc))
@@ -234,10 +366,14 @@ local getTalent = function()
     end
     local configId = C_ClassTalents.GetActiveConfigID()
     if not configId then return end
-    for nodeId, v in pairs(talentMap) do
-        local nodeInfo = C_Traits.GetNodeInfo(configId, nodeId)
-        if nodeInfo.activeRank > 0 then
-            player.talent[v.key] = nodeInfo.activeRank
+    for _, v in pairs(talents) do
+        local nodeInfo = C_Traits.GetNodeInfo(configId, v.nodeId)
+        if nodeInfo.subTreeActive == nil or nodeInfo.subTreeActive then
+            if not v.entryId or v.entryId == nodeInfo.activeEntry.entryID then
+                if nodeInfo.activeRank > 0 then
+                    player.talent[v.key] = nodeInfo.activeRank
+                end
+            end
         end
     end
     cachedEstimatedHeal = {}
@@ -349,11 +485,13 @@ initMember = function(GUID)
 end
 
 local trackingEvent = {
-    SPELL_AURA_APPLIED  = true,
-    SPELL_AURA_REMOVED  = true,
-    SPELL_AURA_REFRESH  = true,
-    SPELL_PERIODIC_HEAL = true,
-    SPELL_HEAL          = true,
+    SPELL_AURA_APPLIED      = true,
+    SPELL_AURA_APPLIED_DOSE = true,
+    SPELL_AURA_REMOVED      = true,
+    SPELL_AURA_REMOVED_DOSE = true,
+    SPELL_AURA_REFRESH      = true,
+    SPELL_PERIODIC_HEAL     = true,
+    SPELL_HEAL              = true,
 }
 
 local trackEmpowered = function()
@@ -373,6 +511,15 @@ local trackEmpowered = function()
         return
     end
 
+    -- 공생체 꽃 갯수 추적
+    if spellId == spell.symbioticBlooms then
+        if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_APPLIED_DOSE" then
+            player.symbioticBlooms = player.symbioticBlooms + 1
+        elseif subevent == "SPELL_AURA_REMOVED" or subevent == "SPELL_AURA_REMOVED_DOSE" then
+            player.symbioticBlooms = player.symbioticBlooms - 1
+        end
+    end
+
     local buffsChanged
     if not player.GUIDS[destGUID] then
         initMember(destGUID)
@@ -384,13 +531,13 @@ local trackEmpowered = function()
 
     -- 특화 스택 추적
     if not buffsChanged and duridMasterySpell[spellId] then
-        if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_REFRESH" then
-            if subevent == "SPELL_AURA_APPLIED" then
+        if subevent == "SPELL_AURA_APPLIED" or subevent == "SPELL_AURA_APPLIED_DOSE" or subevent == "SPELL_AURA_REFRESH" then
+            if subevent ~= "SPELL_AURA_REFRESH" then
                 -- 특화 stack 관련이 있나? -> 특화스택 증가
                 masteryChange(destGUID, spellId, 1, frameOpt.mastery)
                 buffsChanged = frameOpt.mastery and true or buffsChanged
             end
-        elseif subevent == "SPELL_AURA_REMOVED" then
+        elseif subevent == "SPELL_AURA_REMOVED" or subevent == "SPELL_AURA_REMOVED_DOSE" then
             -- 특화 stack 관련이 있나? -> 특화스택 감사
             masteryChange(destGUID, spellId, -1, frameOpt.mastery)
             buffsChanged = frameOpt.mastery and true or buffsChanged
@@ -423,6 +570,7 @@ local trackEmpowered = function()
             -- calc -> set -> display
             local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID)
             local rate = (critical and amount / 2 or amount) / estimatedHeal
+            -- DevTool:AddData(rate, spellId)
             player.GUIDS[destGUID].empowered[spellId] = rate
             for frame in pairs(player.GUIDS[destGUID].frame) do
                 if UnitGUID(frame.unit) ~= destGUID then
@@ -441,6 +589,7 @@ local trackEmpowered = function()
         local estimatedHeal = getEstimatedHeal(spellId, player.GUIDS[destGUID].masteryStack, destGUID)
         local rate = (critical and amount / 2 or amount) / estimatedHeal
         player.GUIDS[destGUID].empowered[spellId] = rate
+        -- DevTool:AddData(rate, spellId)
     end
 
     if buffsChanged then
@@ -452,6 +601,12 @@ local trackEmpowered = function()
             end
         end
     end
+end
+
+local trackPlayerTotem = function(event, totemNo)
+    local haveTotem, totemName, startTime, duration = GetTotemInfo(totemNo)
+    player.totem[totemNo] = haveTotem
+    player.totems = player.totems + (haveTotem and 1 or -1)
 end
 
 function mod:initMod(buffs_mod, buffs_frame_registry)
@@ -488,6 +643,7 @@ function mod:onSetBuff(buffFrame, aura, oldAura, opt)
 end
 
 function mod:init(frame)
+    -- DevTool:AddData(player, "player")
     if frame and frame.unit then
         initMember(UnitGUID(frame.unit))
     end
@@ -506,6 +662,7 @@ function mod:onEnable(opt)
 
     if frameOpt.sotf then
         Buffs:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", trackEmpowered)
+        Buffs:RegisterEvent("PLAYER_TOTEM_UPDATE", trackPlayerTotem)
     end
 end
 
@@ -514,6 +671,7 @@ function mod:onDisable()
     Buffs:UnregisterEvent("TRAIT_CONFIG_UPDATED")
     Buffs:UnregisterEvent("ENCOUNTER_END")
     Buffs:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    Buffs:UnregisterEvent("PLAYER_TOTEM_UPDATE")
     player.GUIDS = {}
     player.aura = {}
     player.buff = {}
@@ -523,6 +681,12 @@ function mod:rosterUpdate()
     player.GUIDS = {}
     player.aura = {}
     player.buff = {}
+    player.totems = 0
+    for i = 1, 3 do
+        player.totem[i] = GetTotemInfo(i);
+        player.totems = player.totems + (player.totem[i] and 1 or 0)
+    end
+
     for frame, v in pairs(frame_registry) do
         v.buffs:Clear()
         v.debuffs = nil

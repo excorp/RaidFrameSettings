@@ -32,6 +32,7 @@ local statusbars                              = LibStub("LibSharedMedia-3.0"):Li
 Media.MediaTable.statusbar["Blizzard Raid Bar Background"] = [[Interface\RaidFrame\Raid-Bar-Hp-Bg]]
 Media.MediaTable.statusbar["Blizzard Raid Bar Resource"]   = [[Interface\RaidFrame\Raid-Bar-Resource-Fill]]
 
+local GetSpellInfo = RaidFrameSettings.GetSpellInfo
 
 --[[
     tmp locals
@@ -2810,6 +2811,164 @@ options = {
                                     name = L["Stacks"],
                                     type = "group",
                                     args = getFontOptions()
+                                },
+                            },
+                        },
+                        PrivateAura = {
+                            order = 2,
+                            name = L["Private Auras"],
+                            desc = L["Private Auras"],
+                            type = "group",
+                            args = {
+                                width = {
+                                    order = 1,
+                                    name = L["width"],
+                                    type = "range",
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                    min = 1,
+                                    max = 50,
+                                    step = 1,
+                                    width = 1,
+                                },
+                                height = {
+                                    order = 2,
+                                    name = L["height"],
+                                    type = "range",
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                    min = 1,
+                                    max = 50,
+                                    step = 1,
+                                    width = 1,
+                                },
+                                newline1 = {
+                                    order = 3,
+                                    name = "",
+                                    type = "description",
+                                },
+                                point = {
+                                    order = 4,
+                                    name = L["Debuffframe anchor"],
+                                    type = "select",
+                                    values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                                    sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                },
+                                relativePoint = {
+                                    order = 5,
+                                    name = L["to Frames"],
+                                    type = "select",
+                                    values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
+                                    sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                },
+                                frame = {
+                                    order = 5.1,
+                                    name = L["to Attach Frame"],
+                                    type = "select",
+                                    values = { L["Debuff Frames"], L["Unit Frame"] },
+                                    sorting = { 1, 2 },
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                    width = 0.8,
+                                },
+                                orientation = {
+                                    order = 6,
+                                    name = L["Directions for growth"],
+                                    type = "select",
+                                    values = { L["Left"], L["Right"], L["Up"], L["Down"] },
+                                    sorting = { 1, 2, 3, 4 },
+                                    get = function()
+                                        local orientation = RaidFrameSettings.db.profile.Debuffs.PrivateAura.orientation
+                                        local baselineObj = options.args.Auras.args.Debuffs.args.PrivateAura.args.baseline
+                                        if orientation == 1 or orientation == 2 then
+                                            baselineObj.values = { L["Top"], L["Middle"], L["Bottom"] }
+                                        elseif orientation == 3 or orientation == 4 then
+                                            baselineObj.values = { L["Left"], L["Center"], L["Right"] }
+                                        end
+                                        return RaidFrameSettings.db.profile.Debuffs.PrivateAura.orientation
+                                    end,
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Debuffs.PrivateAura.orientation = value
+                                        local baseline = RaidFrameSettings.db.profile.Debuffs.PrivateAura.baseline
+                                        if value == 1 or value == 2 then
+                                            if baseline >= 4 then
+                                                RaidFrameSettings.db.profile.Debuffs.PrivateAura.baseline = 3
+                                            end
+                                        elseif value == 3 or value == 4 then
+                                            if baseline <= 3 then
+                                                RaidFrameSettings.db.profile.Debuffs.PrivateAura.baseline = 4
+                                            end
+                                        end
+                                        RaidFrameSettings:UpdateModule("Debuffs")
+                                    end,
+                                    width = 0.8,
+                                },
+                                baseline = {
+                                    order = 6.1,
+                                    name = L["Baseline"],
+                                    type = "select",
+                                    values = { "Top/Left", "Middle/Center", "Bottom/Right" },
+                                    sorting = { 1, 2, 3 },
+                                    get = function()
+                                        local baseline = RaidFrameSettings.db.profile.Debuffs.PrivateAura.baseline
+                                        return RaidFrameSettings.db.profile.Debuffs.PrivateAura.orientation >= 3 and (baseline - 3) or baseline
+                                    end,
+                                    set = function(_, value)
+                                        RaidFrameSettings.db.profile.Debuffs.PrivateAura.baseline = RaidFrameSettings.db.profile.Debuffs.PrivateAura.orientation >= 3 and (value + 3) or value
+                                        RaidFrameSettings:UpdateModule("Debuffs")
+                                    end,
+                                    width = 0.8,
+                                },
+                                newline2 = {
+                                    order = 7,
+                                    name = "",
+                                    type = "description",
+                                },
+                                xOffset = {
+                                    order = 8,
+                                    name = L["x - offset"],
+                                    type = "range",
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                    softMin = -100,
+                                    softMax = 100,
+                                    step = 1,
+                                    width = 1.4,
+                                },
+                                yOffset = {
+                                    order = 9,
+                                    name = L["y - offset"],
+                                    type = "range",
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                    softMin = -100,
+                                    softMax = 100,
+                                    step = 1,
+                                    width = 1.4,
+                                },
+                                gap = {
+                                    order = 9.1,
+                                    name = L["Gap"],
+                                    type = "range",
+                                    get = "GetStatus",
+                                    set = "SetStatus",
+                                    softMin = -10,
+                                    softMax = 10,
+                                    step = 1,
+                                    width = 0.8,
+                                },
+                                framestrata = {
+                                    order = 42,
+                                    name = L["Frame Strata"],
+                                    type = "select",
+                                    values = { L["Inherited"], L["BACKGROUND"], L["LOW"], L["MEDIUM"], L["HIGH"], L["DIALOG"], L["FULLSCREEN"], L["FULLSCREEN_DIALOG"], L["TOOLTIP"] },
+                                    sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+                                    get = "GetStatus",
+                                    set = "SetStatus",
                                 },
                             },
                         },

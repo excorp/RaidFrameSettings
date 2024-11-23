@@ -1,6 +1,8 @@
 local _, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 
+local GetSpellInfo = addon.GetSpellInfo
+
 --[[
 
 ]]

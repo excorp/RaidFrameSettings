@@ -18,7 +18,7 @@ local AuraFilter = addon:GetModule("AuraFilter")
 --WoW Api
 local UnitIsPlayer = UnitIsPlayer
 local UnitInPartyIsAI = UnitInPartyIsAI
-local GetSpellInfo = GetSpellInfo
+local GetSpellInfo = addon.GetSpellInfo
 local CreateFrame = CreateFrame
 local AuraUtil = AuraUtil
 local TableUtil = TableUtil
@@ -179,6 +179,13 @@ function Debuffs:OnEnable()
     local relativePoint = addon:ConvertDbNumberToPosition(frameOpt.relativePoint)
     local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap, frameOpt.baseline)
 
+    local privateAuraOpt = CopyTable(addon.db.profile.Debuffs.PrivateAura)
+    privateAuraOpt.point = addon:ConvertDbNumberToPosition(privateAuraOpt.point)
+    privateAuraOpt.relativePoint = addon:ConvertDbNumberToPosition(privateAuraOpt.relativePoint)
+    privateAuraOpt.baseline = addon:ConvertDbNumberToBaseline(privateAuraOpt.baseline)
+    privateAuraOpt.framestrata = addon:ConvertDbNumberToFrameStrata(privateAuraOpt.framestrata)
+    privateAuraOpt.followPoint, privateAuraOpt.followRelativePoint, privateAuraOpt.followOffsetX, privateAuraOpt.followOffsetY = addon:GetAuraGrowthOrientationPoints(privateAuraOpt.orientation, privateAuraOpt.gap, privateAuraOpt.baseline)
+
     local comparePriority = function(a, b)
         return a.priority > b.priority
     end
@@ -275,15 +282,21 @@ function Debuffs:OnEnable()
                 break
             end
         end
+
         frame.PrivateAuraAnchor1:ClearAllPoints()
-        if lastShownDebuff then
-            local followPoint, followRelativePoint, followOffsetX, followOffsetY = addon:GetAuraGrowthOrientationPoints(frameOpt.orientation, frameOpt.gap + 3, frameOpt.baseline)
-            frame.PrivateAuraAnchor1:SetPoint(followPoint, lastShownDebuff, followRelativePoint, followOffsetX, followOffsetY)
-        else
-            frame.PrivateAuraAnchor1:SetPoint(point, frame, relativePoint, frameOpt.xOffset, frameOpt.yOffset)
+        if privateAuraOpt.frame == 1 then
+            -- 디버프 프레임
+            if lastShownDebuff then
+                frame.PrivateAuraAnchor1:SetPoint(privateAuraOpt.followPoint, lastShownDebuff, privateAuraOpt.followRelativePoint, privateAuraOpt.followOffsetX, privateAuraOpt.followOffsetY)
+            else
+                frame.PrivateAuraAnchor1:SetPoint(privateAuraOpt.point, frame, privateAuraOpt.relativePoint, privateAuraOpt.xOffset, privateAuraOpt.yOffset)
+            end
+        elseif privateAuraOpt.frame == 2 then
+            -- 레이드 프레임
+            frame.PrivateAuraAnchor1:SetPoint(privateAuraOpt.point, frame, privateAuraOpt.relativePoint, privateAuraOpt.xOffset, privateAuraOpt.yOffset)
         end
         frame.PrivateAuraAnchor2:ClearAllPoints()
-        frame.PrivateAuraAnchor2:SetPoint(followPoint, frame.PrivateAuraAnchor1, followRelativePoint, followOffsetX, followOffsetY)
+        frame.PrivateAuraAnchor2:SetPoint(privateAuraOpt.followPoint, frame.PrivateAuraAnchor1, privateAuraOpt.followRelativePoint, privateAuraOpt.followOffsetX, privateAuraOpt.followOffsetY)
     end
     -- self:HookFunc("CompactUnitFrame_UpdatePrivateAuras", onUpdatePrivateAuras)
 
@@ -601,7 +614,8 @@ function Debuffs:OnEnable()
 
         if frame.PrivateAuraAnchors then
             for _, privateAuraAnchor in ipairs(frame.PrivateAuraAnchors) do
-                privateAuraAnchor:SetSize(boss_width, boss_height)
+                privateAuraAnchor:SetSize(privateAuraOpt.width, privateAuraOpt.height)
+                privateAuraAnchor:SetFrameStrata(privateAuraOpt.framestrata)
             end
         end
 
@@ -936,7 +950,7 @@ function Debuffs:test()
                 onUpdateAuras(frame)
 
                 if frame:IsVisible() then
-                    local fname = frame:GetName() .. "PrivateAuraTest"
+                    local fname = frame:GetName() .. "PrivateAuraTest1"
                     local indicator = _G[fname]
                     if indicator then
                         if not indicator:IsShown() then
@@ -982,6 +996,53 @@ function Debuffs:test()
                             indicator:Hide()
                         end)
                     end
+                end
+
+                local fname = frame:GetName() .. "PrivateAuraTest2"
+                local indicator2 = _G[fname]
+                if indicator2 then
+                    if not indicator2:IsShown() then
+                        indicator2:Show()
+                    end
+                else
+                    indicator2 = CreateFrame("Frame", fname)
+                    indicator2:SetAllPoints(frame.PrivateAuraAnchor2)
+
+                    indicator2.mask = indicator2:CreateMaskTexture()
+                    indicator2.mask:SetTexture("interface/framegeneral/uiframeiconmask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                    indicator2.mask:SetAllPoints(indicator2)
+
+                    indicator2.icon = indicator2:CreateTexture(nil, "ARTWORK")
+                    indicator2.icon:SetAllPoints(indicator2)
+                    indicator2.icon:SetTexture(237555)
+                    indicator2.icon:AddMaskTexture(indicator2.mask)
+
+                    indicator2.border = indicator2:CreateTexture(nil, "BORDER")
+                    indicator2.border:SetPoint("TOPLEFT", indicator2.icon, -1, 0)
+                    indicator2.border:SetPoint("BOTTOMRIGHT", indicator2.icon, 1, 0)
+                    indicator2.border:SetTexture([[Interface\Buttons\UI-Debuff-Overlays]])
+                    indicator2.border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+                    indicator2.border:SetVertexColor(0.8, 0, 0)
+
+                    indicator2.cooldown = CreateFrame("Cooldown", nil, indicator2, "CooldownFrameTemplate")
+                    indicator2.cooldown:SetAllPoints(indicator2)
+                    indicator2.cooldown:SetReverse(true)
+                    indicator2.cooldown:SetDrawEdge(false)
+                    indicator2.cooldown:SetDrawBling(false)
+
+                    local timer
+                    indicator2:HookScript("OnShow", function()
+                        if timer then timer:Cancel() end
+                        indicator2.cooldown:SetCooldown(GetTime(), 15)
+                        timer = C_Timer.NewTicker(15, function()
+                            indicator2.cooldown:SetCooldown(GetTime(), 15)
+                        end)
+                    end)
+                    frame:HookScript("OnHide", function()
+                        if timer then timer:Cancel() end
+                        indicator2.cooldown:Clear()
+                        indicator2:Hide()
+                    end)
                 end
             end
         end

@@ -1,6 +1,8 @@
 local AddonName, addonTable = ...
 local addon = addonTable.RaidFrameSettings
 
+local GetSpellInfo = addon.GetSpellInfo
+
 local spellCache = {}
 addon.spellCache = spellCache
 

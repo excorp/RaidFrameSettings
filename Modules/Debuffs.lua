@@ -630,6 +630,11 @@ function Debuffs:OnEnable()
                     auraAnchor:EnableMouse(false)
                 end
 
+                if auraAnchor.anchorID then
+                    C_UnitAuras.RemovePrivateAuraAnchor(auraAnchor.anchorID)
+                    auraAnchor.anchorID = nil
+                end
+
                 auraAnchor:ClearAllPoints()
                 if idx == 1 then
                     auraAnchor:SetPoint(privateAuraOpt.point, frame, privateAuraOpt.relativePoint, privateAuraOpt.xOffset, privateAuraOpt.yOffset)

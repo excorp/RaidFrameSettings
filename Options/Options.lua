@@ -34,6 +34,130 @@ Media.MediaTable.statusbar["Blizzard Raid Bar Resource"]   = [[Interface\RaidFra
 
 local GetSpellInfo = RaidFrameSettings.GetSpellInfo
 
+
+local AceGUI = LibStub("AceGUI-3.0")
+
+do
+    local Type = "AnchorPicker"
+    local Version = 3
+
+    local anchorNames = {
+        "TOPLEFT", "TOP", "TOPRIGHT",
+        "LEFT", "CENTER", "RIGHT",
+        "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"
+    }
+
+    local function OnAcquire(self)
+        self:SetWidth(70)
+        self:SetHeight(84)
+    end
+
+    local function SetValue(self, val)
+        self.value = val
+        local anchor = anchorNames[val]
+        for _, btn in ipairs(self.buttons) do
+            if btn.anchorName == anchor then
+                btn.tex:SetColorTexture(1, 1, 0, 1)
+            else
+                btn.tex:SetColorTexture(0.4, 0.4, 0.4, 1)
+            end
+        end
+    end
+
+    local function GetValue(self)
+        return self.value
+    end
+
+    local function SetList(self, values)
+        self.values = values -- Not used, but required
+    end
+
+    local function SetLabel(self, text)
+        if not self.label then
+            self.label = self.frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            self.label:SetPoint("TOP", self.frame, "TOP", 0, 2)
+        end
+        self.label:SetText(text)
+    end
+
+    local function Constructor()
+        local frame = CreateFrame("Frame", nil, UIParent)
+        frame:SetSize(64, 64)
+
+        local widget = {
+            type = Type,
+            frame = frame,
+            value = "CENTER",
+            buttons = {},
+            SetValue = SetValue,
+            GetValue = GetValue,
+            SetList = SetList,
+            SetLabel = SetLabel,
+            OnAcquire = OnAcquire,
+        }
+
+        AceGUI:RegisterAsWidget(widget)
+
+        -- Draw lines
+        local function drawLine(x1, y1, x2, y2)
+            local line = frame:CreateLine(nil, "ARTWORK")
+            line:SetColorTexture(0.8, 0.8, 0.8, 1)
+            line:SetThickness(2)
+            line:SetStartPoint("CENTER", x1, y1)
+            line:SetEndPoint("CENTER", x2, y2)
+        end
+
+        drawLine(-24, 24, 24, 24)
+        drawLine(-24, -24, 24, -24)
+        drawLine(-24, 24, -24, -24)
+        drawLine(24, 24, 24, -24)
+
+        -- Buttons
+        local points = {
+            { name = "TOPLEFT",     x = -24, y = 24 },
+            { name = "TOP",         x = 0,   y = 24 },
+            { name = "TOPRIGHT",    x = 24,  y = 24 },
+            { name = "LEFT",        x = -24, y = 0 },
+            { name = "CENTER",      x = 0,   y = 0 },
+            { name = "RIGHT",       x = 24,  y = 0 },
+            { name = "BOTTOMLEFT",  x = -24, y = -24 },
+            { name = "BOTTOM",      x = 0,   y = -24 },
+            { name = "BOTTOMRIGHT", x = 24,  y = -24 },
+        }
+
+        for _, point in ipairs(points) do
+            local btn = CreateFrame("Button", nil, frame)
+            btn:SetSize(10, 10)
+            btn:SetPoint("CENTER", point.x, point.y)
+            btn.anchorName = point.name
+
+            btn.tex = btn:CreateTexture(nil, "OVERLAY")
+            btn.tex:SetAllPoints()
+            btn.tex:SetColorTexture(0.4, 0.4, 0.4, 1)
+
+            btn:SetScript("OnClick", function()
+                local index
+                for i, name in ipairs(anchorNames) do
+                    if name == point.name then
+                        index = i
+                        break
+                    end
+                end
+                if index then
+                    widget:SetValue(index)
+                    widget:Fire("OnValueChanged", index)
+                end
+            end)
+
+            table.insert(widget.buttons, btn)
+        end
+
+        return widget
+    end
+
+    AceGUI:RegisterWidgetType(Type, Constructor, Version)
+end
+
 --[[
     tmp locals
 ]]
@@ -122,6 +246,8 @@ local function getFontOptions()
             order = 10,
             name = L["Anchor"],
             type = "select",
+            dialogControl = "AnchorPicker",
+            width = 0.5,
             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
             get = "GetStatus",
@@ -131,6 +257,8 @@ local function getFontOptions()
             order = 11,
             name = L["to Frames"],
             type = "select",
+            dialogControl = "AnchorPicker",
+            width = 0.5,
             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
             get = "GetStatus",
@@ -788,21 +916,23 @@ options = {
                             order = 7,
                             name = L["Anchor"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         relativePoint = {
                             order = 7.1,
                             name = L["to Frames"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         frame = {
                             order = 7.2,
@@ -925,21 +1055,23 @@ options = {
                             order = 7,
                             name = L["Anchor"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         relativePoint = {
                             order = 7.1,
                             name = L["to Frames"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         justifyH = {
                             order = 7.2,
@@ -1519,6 +1651,8 @@ options = {
                                             order = 4,
                                             name = L["Buffframe anchor"],
                                             type = "select",
+                                            dialogControl = "AnchorPicker",
+                                            width = 0.5,
                                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
@@ -1528,6 +1662,8 @@ options = {
                                             order = 5,
                                             name = L["to Frames"],
                                             type = "select",
+                                            dialogControl = "AnchorPicker",
+                                            width = 0.5,
                                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
@@ -2469,6 +2605,8 @@ options = {
                                             order = 4,
                                             name = L["Debuffframe anchor"],
                                             type = "select",
+                                            dialogControl = "AnchorPicker",
+                                            width = 0.5,
                                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
@@ -2478,6 +2616,8 @@ options = {
                                             order = 5,
                                             name = L["to Frames"],
                                             type = "select",
+                                            dialogControl = "AnchorPicker",
+                                            width = 0.5,
                                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
@@ -2713,6 +2853,8 @@ options = {
                                             order = 52,
                                             name = L["Debuffframe anchor"],
                                             type = "select",
+                                            dialogControl = "AnchorPicker",
+                                            width = 0.5,
                                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                             get = "GetStatus",
@@ -2851,6 +2993,8 @@ options = {
                                     order = 4,
                                     name = L["Debuffframe anchor"],
                                     type = "select",
+                                    dialogControl = "AnchorPicker",
+                                    width = 0.5,
                                     values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                     sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                     get = "GetStatus",
@@ -2860,6 +3004,8 @@ options = {
                                     order = 5,
                                     name = L["to Frames"],
                                     type = "select",
+                                    dialogControl = "AnchorPicker",
+                                    width = 0.5,
                                     values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                                     sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                                     get = "GetStatus",
@@ -3778,21 +3924,23 @@ options = {
                             order = 1,
                             name = L["Anchor"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         relativePoint = {
                             order = 1.1,
                             name = L["to Frames"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         frame = {
                             order = 1.2,
@@ -3917,21 +4065,23 @@ options = {
                             order = 1,
                             name = L["Anchor"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         relativePoint = {
                             order = 1.1,
                             name = L["to Frames"],
                             type = "select",
+                            dialogControl = "AnchorPicker",
                             values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                             sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                             get = "GetStatus",
                             set = "SetStatus",
-                            width = 0.8,
+                            width = 0.5,
                         },
                         frame = {
                             order = 1.2,
@@ -5175,6 +5325,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                 order = 2,
                 name = L["Anchor"],
                 type = "select",
+                dialogControl = "AnchorPicker",
                 values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                 sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
@@ -5184,12 +5335,13 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     dbObj.point = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.5,
             },
             relativePoint = {
                 order = 3,
                 name = L["to Frames"],
                 type = "select",
+                dialogControl = "AnchorPicker",
                 values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                 sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
@@ -5199,7 +5351,7 @@ function RaidFrameSettings:CreateAuraPositionEntry(spellId, category)
                     dbObj.relativePoint = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.5,
             },
             frame = {
                 order = 4,
@@ -5593,6 +5745,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                 order = 2,
                 name = L["Anchor"],
                 type = "select",
+                dialogControl = "AnchorPicker",
                 values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                 sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
@@ -5602,12 +5755,13 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     dbObj.point = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.5,
             },
             relativePoint = {
                 order = 3,
                 name = L["to Frames"],
                 type = "select",
+                dialogControl = "AnchorPicker",
                 values = { L["Top Left"], L["Top"], L["Top Right"], L["Left"], L["Center"], L["Right"], L["Bottom Left"], L["Bottom"], L["Bottom Right"] },
                 sorting = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
                 get = function()
@@ -5617,7 +5771,7 @@ function RaidFrameSettings:CreateAuraGroup(groupNo, category)
                     dbObj.relativePoint = value
                     RaidFrameSettings:UpdateModule(category)
                 end,
-                width = 0.6,
+                width = 0.5,
             },
             frame = {
                 order = 3.1,

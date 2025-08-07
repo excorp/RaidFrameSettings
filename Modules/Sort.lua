@@ -853,7 +853,7 @@ function Sort:OnEnable()
         self:getFramePoint()
         self:TrySort()
 
-        LS:Register(addon, function(specId, role, position, sender, channel)
+        LS:RegisterGroup(addon, function(specId, role, position, sender, channel)
             unit_spec[sender] = {
                 specId = specId,
                 role = role,

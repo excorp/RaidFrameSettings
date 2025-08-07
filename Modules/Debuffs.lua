@@ -642,7 +642,11 @@ function Debuffs:OnEnable()
                     auraAnchor:SetPoint(privateAuraOpt.followPoint, prevFrame, privateAuraOpt.followRelativePoint, privateAuraOpt.followOffsetX, privateAuraOpt.followOffsetY)
                 end
                 auraAnchor:SetSize(privateAuraOpt.width, privateAuraOpt.height)
-                auraAnchor:SetFrameStrata(privateAuraOpt.framestrata)
+                if privateAuraOpt.framestrata == "Inherited" then
+                    auraAnchor:SetFrameStrata(auraAnchor:GetParent():GetFrameStrata())
+                else
+                    auraAnchor:SetFrameStrata(privateAuraOpt.framestrata)
+                end
 
                 frame_registry[frame][name] = auraAnchor
 

@@ -369,7 +369,7 @@ local getTalent = function()
     for _, v in pairs(talents) do
         local nodeInfo = C_Traits.GetNodeInfo(configId, v.nodeId)
         if nodeInfo.subTreeActive == nil or nodeInfo.subTreeActive then
-            if not v.entryId or v.entryId == nodeInfo.activeEntry.entryID then
+            if not v.entryId or (nodeInfo.activeEntry and nodeInfo.activeEntry.entryID and v.entryId == nodeInfo.activeEntry.entryID) then
                 if nodeInfo.activeRank > 0 then
                     player.talent[v.key] = nodeInfo.activeRank
                 end

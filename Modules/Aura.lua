@@ -746,7 +746,9 @@ function Aura:createAuraFrame(frame, category, type, idx) -- category:Buff,Debuf
     end
 
     -- Modify Aura Frame
-    if frameOpt.framestrata ~= "Inherited" then
+    if frameOpt.framestrata == "Inherited" then
+        auraFrame:SetFrameStrata(auraFrame:GetParent():GetFrameStrata())
+    else
         auraFrame:SetFrameStrata(frameOpt.framestrata)
     end
     --Timer Settings

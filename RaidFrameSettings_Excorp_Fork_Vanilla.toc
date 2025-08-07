@@ -1,4 +1,4 @@
-## Interface: 11503
+## Interface: 11507
 ## Version: @project-version@
 ## Title: RaidFrameSettings Excorp Fork
 ## Title-koKR: RaidFrameSettings 변하지롱 수정판

@@ -573,7 +573,7 @@ local trackEmpowered = function()
             -- DevTool:AddData(rate, spellId)
             player.GUIDS[destGUID].empowered[spellId] = rate
             for frame in pairs(player.GUIDS[destGUID].frame) do
-                if UnitGUID(frame.unit) ~= destGUID then
+                if frame.unit and UnitGUID(frame.unit) ~= destGUID then
                     player.GUIDS[destGUID].frame[frame] = nil
                 else
                     CompactUnitFrame_HideAllBuffs(frame, #frame.buffFrames + 1)

@@ -853,7 +853,7 @@ function Sort:OnEnable()
         self:getFramePoint()
         self:TrySort()
 
-        LS:RegisterGroup(addon, function(specId, role, position, sender, channel)
+        LS.RegisterGroup(addon, function(specId, role, position, sender, channel)
             unit_spec[sender] = {
                 specId = specId,
                 role = role,
@@ -869,7 +869,7 @@ function Sort:OnEnable()
             isScheduled = false
             Sort:TrySort()
         end)
-        LS:RequestSpecialization()
+        LS.RequestGroupSpecialization()
 
         if isRetail then
             OnEditModeExited_id = EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExited)
@@ -911,7 +911,7 @@ function Sort:OnDisable()
     addon:RunWhenCombatEnds(function()
         UnregisterAttributeDriver(secureframe, "state-petstate")
 
-        LS:Unregister(addon)
+        LS.UnregisterGroup(addon)
 
         if scheduler and not scheduler:IsCancelled() then
             scheduler:Cancel()
